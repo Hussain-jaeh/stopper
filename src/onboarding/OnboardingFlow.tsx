@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, fonts } from '../theme/tokens';
 import { OnboardingState, freshState } from './state';
 
 import { SplashScreen } from './screens/SplashScreen';
@@ -38,12 +40,16 @@ function getProgress(step: number): number {
 }
 
 interface OnboardingFlowProps {
+  startStep?: number;
   onComplete?: (state: OnboardingState) => void;
+  onSignIn?: () => void;
+  onSkip?: () => void;
 }
 
-export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
-  const [step, setStep] = useState(0);
+export function OnboardingFlow({ startStep, onComplete, onSignIn, onSkip }: OnboardingFlowProps) {
+  const [step, setStep] = useState(startStep ?? 0);
   const [state, setStateRaw] = useState<OnboardingState>(freshState);
+  const insets = useSafeAreaInsets();
 
   const setState = useCallback((patch: Partial<OnboardingState>) => {
     setStateRaw(prev => ({ ...prev, ...patch }));
@@ -55,7 +61,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
   const screens: Record<number, React.ReactNode> = {
     0: <SplashScreen onNext={next} />,
-    1: <WelcomeScreen onNext={next} />,
+    1: <WelcomeScreen onNext={next} onSignIn={onSignIn} />,
     2: <HeroScreen onNext={next} />,
     3: <OvercomeScreen pct={pct} onBack={back} onNext={next} state={state} setState={setState} />,
     4: <WhyScreen pct={pct} onBack={back} onNext={next} state={state} setState={setState} />,
@@ -89,13 +95,31 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     ),
   };
 
+  const showSkip = onSkip && step < 24;
+
   return (
     <View style={styles.fill}>
       {screens[step] ?? screens[0]}
+      {showSkip && (
+        <Pressable onPress={onSkip} style={[styles.skip, { top: insets.top + 12 }]} hitSlop={12}>
+          <Text style={styles.skipLabel}>Skip</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  skip: {
+    position: 'absolute',
+    right: 20,
+    zIndex: 99,
+  },
+  skipLabel: {
+    fontFamily: fonts.ui,
+    fontSize: 14,
+    color: colors.fgMuted,
+    fontWeight: '600',
+  },
 });

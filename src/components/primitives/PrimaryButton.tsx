@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, Text, StyleSheet, ViewStyle } from 'react-native';
+import { Pressable, Text, StyleSheet, ViewStyle, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowRight } from 'lucide-react-native';
 import { colors, gradients, fonts, fontSizes, radii, shadows } from '../../theme/tokens';
@@ -8,24 +8,25 @@ interface PrimaryButtonProps {
   children: React.ReactNode;
   onPress?: () => void;
   disabled?: boolean;
+  loading?: boolean;
   icon?: React.ReactNode | null;
   style?: ViewStyle;
 }
 
-export function PrimaryButton({ children, onPress, disabled, icon, style }: PrimaryButtonProps) {
+export function PrimaryButton({ children, onPress, disabled, loading, icon, style }: PrimaryButtonProps) {
   const [pressed, setPressed] = React.useState(false);
-
-  const showIcon = icon === undefined ? true : icon !== null;
+  const isDisabled = disabled || loading;
+  const showIcon = !loading && (icon === undefined ? true : icon !== null);
 
   return (
     <Pressable
       onPress={onPress}
-      disabled={disabled}
+      disabled={isDisabled}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
       style={[
         styles.wrapper,
-        { opacity: disabled ? 0.45 : 1, transform: [{ scale: pressed ? 0.975 : 1 }] },
+        { opacity: isDisabled ? 0.45 : 1, transform: [{ scale: pressed ? 0.975 : 1 }] },
         style,
       ]}
     >
@@ -35,8 +36,13 @@ export function PrimaryButton({ children, onPress, disabled, icon, style }: Prim
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
       >
-        <Text style={styles.label}>{children}</Text>
-        {showIcon && (icon || <ArrowRight size={20} color={colors.white} strokeWidth={2} />)}
+        {loading
+          ? <ActivityIndicator color={colors.white} />
+          : <>
+              <Text style={styles.label}>{children}</Text>
+              {showIcon && (icon || <ArrowRight size={20} color={colors.white} strokeWidth={2} />)}
+            </>
+        }
       </LinearGradient>
     </Pressable>
   );

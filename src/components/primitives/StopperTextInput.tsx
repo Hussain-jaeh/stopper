@@ -7,9 +7,20 @@ interface StopperTextInputProps {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
+  secureTextEntry?: boolean;
+  keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
 }
 
-export function StopperTextInput({ label, value, onChangeText, placeholder }: StopperTextInputProps) {
+export function StopperTextInput({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  secureTextEntry,
+  keyboardType,
+  autoCapitalize,
+}: StopperTextInputProps) {
   const [focused, setFocused] = React.useState(false);
 
   return (
@@ -20,6 +31,9 @@ export function StopperTextInput({ label, value, onChangeText, placeholder }: St
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={colors.fgFaint}
+        secureTextEntry={secureTextEntry}
+        keyboardType={keyboardType}
+        autoCapitalize={autoCapitalize}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         style={[styles.input, focused && styles.inputFocused]}

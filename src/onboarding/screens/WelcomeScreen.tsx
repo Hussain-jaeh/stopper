@@ -1,14 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Wordmark, SecondaryButton, Starfield, Laurel } from '../../components/primitives';
 import { colors, fonts } from '../../theme/tokens';
 
 interface WelcomeScreenProps {
   onNext: () => void;
+  onSignIn?: () => void;
 }
 
-export function WelcomeScreen({ onNext }: WelcomeScreenProps) {
+export function WelcomeScreen({ onNext, onSignIn }: WelcomeScreenProps) {
   return (
     <LinearGradient
       colors={['#0B4A3A', '#07332A', '#04201A']}
@@ -38,7 +39,9 @@ export function WelcomeScreen({ onNext }: WelcomeScreenProps) {
           <View style={styles.ctaRow}>
             <SecondaryButton onPress={onNext}>Start Now</SecondaryButton>
           </View>
-          <Text style={styles.alreadyHave}>Already have an account?</Text>
+          <Pressable onPress={onSignIn}>
+            <Text style={styles.alreadyHave}>Already have an account?</Text>
+          </Pressable>
           <Text style={styles.legal}>
             By continuing, you agree to our Terms & Conditions and Privacy Policy
           </Text>
