@@ -1,27 +1,73 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { TrendingUp } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
+import { ProgressHeader, SummaryStrip, InsightCard, Range } from '../components/progress/ProgressBits';
+import { MilestoneRing } from '../components/progress/MilestoneRing';
+import { CalendarHeatmap, CalendarData } from '../components/progress/CalendarHeatmap';
+import { TrendChart } from '../components/progress/TrendChart';
+import { AchievementsGrid, MILESTONES } from '../components/progress/AchievementsGrid';
+import { DashboardSkeleton, EmptyState } from '../components/dashboard/states';
 import { colors } from '../constants/colors';
-import { type } from '../constants/typography';
+import { spacing } from '../constants/spacing';
+
+type ProgressData = {
+  cleanDays: number;
+  bestStreak: number;
+  successRate: number;
+  trend: number[];
+  calendar: CalendarData;
+  insight: { title: string; body: string };
+};
+
+function nextMilestoneFor(days: number): number {
+  const next = MILESTONES.find(m => m.day > days);
+  return next ? next.day : MILESTONES[MILESTONES.length - 1].day;
+}
 
 export function ProgressScreen() {
   const insets = useSafeAreaInsets();
-  return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
-      <View style={styles.center}>
-        <View style={styles.icon}><TrendingUp size={40} color={colors.jade400} /></View>
-        <Text style={styles.title}>Progress</Text>
-        <Text style={styles.sub}>Your charts and milestones will live here.</Text>
+  const [range, setRange] = useState<Range>('Month');
+  const data = useQuery(api.progress.getProgress, { range }) as ProgressData | undefined | null;
+
+  if (data === undefined) {
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingTop: insets.top + 8 }]}>
+        <DashboardSkeleton />
+      </ScrollView>
+    );
+  }
+
+  if (data === null) {
+    return (
+      <View style={[styles.screen, styles.fill]}>
+        <EmptyState onStart={() => {}} />
       </View>
-    </View>
+    );
+  }
+
+  return (
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 96 }]}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={{ gap: spacing.md }}>
+        <ProgressHeader range={range} setRange={setRange} index={0} />
+        <MilestoneRing cleanDays={data.cleanDays} nextMilestone={nextMilestoneFor(data.cleanDays)} index={1} />
+        <SummaryStrip cleanDays={data.cleanDays} bestStreak={data.bestStreak} successRate={data.successRate} index={2} />
+        <CalendarHeatmap data={data.calendar} index={3} />
+        <TrendChart trend={data.trend} index={4} />
+        <AchievementsGrid cleanDays={data.cleanDays} index={5} />
+        <InsightCard title={data.insight.title} body={data.insight.body} index={6} />
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, gap: 12 },
-  icon: { width: 80, height: 80, borderRadius: 40, backgroundColor: colors.accentGlowSoft, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
-  title: { ...type.h1, color: colors.white },
-  sub: { ...type.subtitle, color: colors.textMuted, textAlign: 'center', lineHeight: 22 },
+  fill: { flex: 1 },
+  content: { paddingHorizontal: spacing.screenPad },
 });

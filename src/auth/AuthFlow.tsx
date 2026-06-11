@@ -138,8 +138,6 @@ export function AuthFlow({ initialRoute = 'landing', onAuthenticated }: AuthFlow
             onBack={() => { setSignInError(undefined); go('landing'); }}
             onSignedIn={() => handleSignIn()}
             onForgot={() => { setSignInError(undefined); go('forgot'); }}
-            error={signInError}
-            loading={loading}
           />
         </View>
       );
