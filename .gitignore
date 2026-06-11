@@ -1,41 +1,52 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+# Environment — never commit secrets
+.env*.local
 
-# dependencies
+# Dependencies
 node_modules/
 
-# Expo
-.expo/
-dist/
-web-build/
-expo-env.d.ts
+# Convex generated (auto-rebuilt by `npx convex dev`)
+convex/_generated/api.d.ts
+convex/_generated/api.js
+convex/_generated/dataModel.d.ts
+convex/_generated/server.d.ts
+convex/_generated/server.js
 
-# Native
-.kotlin/
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
+# Expo / React Native
+stopper-app/.expo/
+stopper-app/dist/
+stopper-app/web-build/
+stopper-app/expo-env.d.ts
+stopper-app/.metro-health-check*
+stopper-app/.kotlin/
+stopper-app/*.orig.*
+stopper-app/*.jks
+stopper-app/*.p8
+stopper-app/*.p12
+stopper-app/*.key
+stopper-app/*.mobileprovision
+stopper-app/ios/
+stopper-app/android/
 
-# Metro
-.metro-health-check*
+# Wrongly-placed generated files (created by ai-files install in stopper-app/)
+stopper-app/convex/_generated/api.d.ts
+stopper-app/convex/_generated/api.js
+stopper-app/convex/_generated/dataModel.d.ts
+stopper-app/convex/_generated/server.d.ts
+stopper-app/convex/_generated/server.js
 
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
+# Claude Code / AI tooling
+stopper-app/.agents/
+stopper-app/.claude/
+stopper-app/skills-lock.json
+.agents/
+skills-lock.json
 
 # macOS
 .DS_Store
-*.pem
+**/.DS_Store
 
-# local env files
-.env*.local
-
-# typescript
+# Debug logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
 *.tsbuildinfo
-
-# generated native folders
-/ios
-/android
