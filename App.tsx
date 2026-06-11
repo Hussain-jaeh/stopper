@@ -19,9 +19,10 @@ import { ConvexAuthProvider, useConvexAuth } from '@convex-dev/auth/react';
 import { ConvexReactClient, useQuery, useMutation } from 'convex/react';
 import * as SecureStore from 'expo-secure-store';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NavigationContainer } from '@react-navigation/native';
 import { AuthFlow } from './src/auth/AuthFlow';
-import { HomeScreen } from './src/app/HomeScreen';
 import { OnboardingFlow } from './src/onboarding/OnboardingFlow';
+import { TabNavigator } from './src/navigation/TabNavigator';
 import { OnboardingState } from './src/onboarding/state';
 import { colors } from './src/theme/tokens';
 import { api } from '../convex/_generated/api';
@@ -62,10 +63,12 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ConvexAuthProvider client={convex} storage={secureStorage}>
-        <View style={styles.root}>
-          <StatusBar style="light" />
-          <AppContent />
-        </View>
+        <NavigationContainer>
+          <View style={styles.root}>
+            <StatusBar style="light" />
+            <AppContent />
+          </View>
+        </NavigationContainer>
       </ConvexAuthProvider>
     </SafeAreaProvider>
   );
@@ -77,7 +80,10 @@ function AppContent() {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const profile = useQuery(api.users.getMyProfile);
   const saveOnboarding = useMutation(api.users.completeOnboarding);
+  const upsertProfile = useMutation(api.profiles.upsertProfile);
   const [phase, setPhase] = useState<Phase>('loading');
+  // true when onboarding is triggered from the empty dashboard (profile setup required, no skip)
+  const [profileSetupMode, setProfileSetupMode] = useState(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -99,13 +105,35 @@ function AppContent() {
   }, [profile]);
 
   const handleOnboardingComplete = useCallback(async (state: OnboardingState) => {
-    await saveOnboarding({
-      habitType: [...state.overcome][0] ?? undefined,
-      displayName: state.name || undefined,
-      age: state.age || undefined,
-    });
+    setProfileSetupMode(false);
+    const addictionType = [...state.overcome][0] ?? 'other';
+    const reasonForQuitting = [...state.reasons][0] ?? 'personal growth';
+    await Promise.all([
+      saveOnboarding({
+        habitType: addictionType,
+        displayName: state.name || undefined,
+        age: state.age || undefined,
+      }),
+      upsertProfile({
+        addictionType,
+        quitDate: Date.now(),
+        reasonForQuitting,
+      }),
+    ]);
     setPhase('app');
-  }, [saveOnboarding]);
+  }, [saveOnboarding, upsertProfile]);
+
+  const handleSkipOnboarding = useCallback(async () => {
+    await Promise.all([
+      saveOnboarding({}),
+      upsertProfile({
+        addictionType: 'this habit',
+        quitDate: Date.now(),
+        reasonForQuitting: 'personal growth',
+      }),
+    ]);
+    setPhase('app');
+  }, [saveOnboarding, upsertProfile]);
 
   if (phase === 'loading') {
     return (
@@ -120,13 +148,21 @@ function AppContent() {
       <OnboardingFlow
         startStep={2}
         onComplete={handleOnboardingComplete}
-        onSkip={() => setPhase('app')}
+        // No skip when coming from the empty dashboard — user must set up a profile
+        onSkip={profileSetupMode ? undefined : handleSkipOnboarding}
       />
     );
   }
 
   if (phase === 'app') {
-    return <HomeScreen />;
+    return (
+      <TabNavigator
+        onStartOnboarding={() => {
+          setProfileSetupMode(true);
+          setPhase('onboarding');
+        }}
+      />
+    );
   }
 
   return <AuthFlow onAuthenticated={handleAuthenticated} />;

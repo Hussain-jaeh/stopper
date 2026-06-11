@@ -1,9 +1,9 @@
+
 import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { colors } from '../theme/tokens';
 import { AuthState, freshAuthState } from './state';
-
 import { AuthLandingScreen } from './screens/AuthLandingScreen';
 import { SignUpScreen } from './screens/SignUpScreen';
 import { VerifyScreen } from './screens/VerifyScreen';
