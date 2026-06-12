@@ -13,6 +13,9 @@ export default defineSchema({
     displayName: v.optional(v.string()),
     age: v.optional(v.string()),
     createdAt: v.number(),
+    remindersOn: v.optional(v.boolean()),
+    panicOn: v.optional(v.boolean()),
+    anonymous: v.optional(v.boolean()),
   }).index("by_userId", ["userId"]),
 
   // Recovery profile — quit date, addiction type, reasons.
