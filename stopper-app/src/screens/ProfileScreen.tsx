@@ -9,14 +9,13 @@ import {
 } from 'lucide-react-native';
 
 import { api } from '../../../convex/_generated/api';
+import { scheduleReminder, cancelReminder } from '../notifications/reminders';
 import { ProfileIdentity } from '../components/profile/ProfileIdentity';
 import { SettingsRow, SettingsGroup } from '../components/profile/SettingsRow';
 import { DashboardSkeleton } from '../components/dashboard/states';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
 import { type } from '../constants/typography';
-
-type SettingKey = 'remindersOn' | 'anonymous';
 
 export function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -25,11 +24,23 @@ export function ProfileScreen() {
   const p = useQuery(api.profile.getProfile);
   const updateSetting = useMutation(api.profile.updateSetting);
 
-  const [local, setLocal] = useState<Partial<Record<SettingKey, boolean>>>({});
-  const val = (k: SettingKey): boolean => local[k] ?? p?.[k] ?? false;
-  const setToggle = (key: SettingKey) => (v: boolean) => {
-    setLocal(s => ({ ...s, [key]: v }));
-    updateSetting({ key, value: v });
+  const [local, setLocal] = useState<{ remindersOn?: boolean; anonymous?: boolean }>({});
+  const val = (k: 'remindersOn' | 'anonymous'): boolean => local[k] ?? p?.[k] ?? false;
+
+  const handleRemindersToggle = async (v: boolean) => {
+    if (v) {
+      const granted = await scheduleReminder();
+      if (!granted) return; // permissions denied — leave toggle as-is
+    } else {
+      await cancelReminder();
+    }
+    setLocal(s => ({ ...s, remindersOn: v }));
+    updateSetting({ key: 'remindersOn', value: v });
+  };
+
+  const handleAnonymousToggle = (v: boolean) => {
+    setLocal(s => ({ ...s, anonymous: v }));
+    updateSetting({ key: 'anonymous', value: v });
   };
 
   return (
@@ -51,11 +62,11 @@ export function ProfileScreen() {
           <View style={{ gap: 26 }}>
             <SettingsGroup title="Recovery">
               <SettingsRow Icon={Target} tint={colors.jade500} label="My plan & goals" chevron onPress={() => {}} />
-              <SettingsRow Icon={Bell} tint={colors.gold} label="Daily reminders" toggle on={val('remindersOn')} onToggle={setToggle('remindersOn')} last />
+              <SettingsRow Icon={Bell} tint={colors.gold} label="Daily reminders" toggle on={val('remindersOn')} onToggle={handleRemindersToggle} last />
             </SettingsGroup>
 
             <SettingsGroup title="Privacy">
-              <SettingsRow Icon={VenetianMask} tint="#9B6FE4" label="Stay anonymous" toggle on={val('anonymous')} onToggle={setToggle('anonymous')} />
+              <SettingsRow Icon={VenetianMask} tint="#9B6FE4" label="Stay anonymous" toggle on={val('anonymous')} onToggle={handleAnonymousToggle} />
               <SettingsRow Icon={Lock} tint="#2E7DD1" label="App lock" chevron onPress={() => {}} last />
             </SettingsGroup>
 
