@@ -63,8 +63,8 @@ export function ProfileScreen() {
               <SettingsRow Icon={Smartphone} tint={colors.textMuted} label="Version" value="1.0.0" />
               <SettingsRow Icon={Star} tint={colors.coral400} label="Rate Stopper" external onPress={() => {}} />
               <SettingsRow Icon={Share2} tint="#2BB6C4" label="Share Stopper" chevron onPress={() => {}} />
-              <SettingsRow Icon={ShieldCheck} tint="#2E7DD1" label="Privacy Policy" external onPress={() => Linking.openURL('https://hussain-jaeh.github.io/stopper/privacy/')} />
-              <SettingsRow Icon={FileText} tint="#9B6FE4" label="Terms of Service" external onPress={() => Linking.openURL('https://hussain-jaeh.github.io/stopper/terms/')} last />
+              <SettingsRow Icon={ShieldCheck} tint="#2E7DD1" label="Privacy Policy" external onPress={() => Linking.openURL('https://stopper.mintlify.io/legal/privacy')} />
+              <SettingsRow Icon={FileText} tint="#9B6FE4" label="Terms of Service" external onPress={() => Linking.openURL('https://stopper.mintlify.io/legal/terms')} last />
             </SettingsGroup>
 
             <SettingsGroup>
