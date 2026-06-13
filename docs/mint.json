@@ -1,0 +1,31 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "Stopper",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#14B888",
+    "light": "#2DD4A0",
+    "dark": "#0C6B4E",
+    "background": {
+      "dark": "#0D0D0D"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "Contact",
+      "url": "mailto:hussaijaeh320@gmail.com"
+    }
+  ],
+  "tabs": [],
+  "navigation": [
+    {
+      "group": "Legal",
+      "pages": ["legal/privacy", "legal/terms"]
+    }
+  ],
+  "footerSocials": {}
+}
