@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import {
@@ -88,9 +89,35 @@ export default function App() {
 
 type Phase = 'loading' | 'auth' | 'onboarding' | 'app';
 
+function useAppLock() {
+  const appState = useRef<AppStateStatus>(AppState.currentState);
+  const profile = useQuery(api.users.getMyProfile);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', async (next) => {
+      const wasBackground = appState.current === 'background' || appState.current === 'inactive';
+      appState.current = next;
+      if (next === 'active' && wasBackground) {
+        // Re-query app lock setting from Convex isn't available here, so we
+        // rely on SecureStore or the profile query result cached in memory.
+        // The profile query above keeps it fresh while the app is running.
+        const lockEnabled = (profile as any)?.appLockEnabled;
+        if (!lockEnabled) return;
+        await LocalAuthentication.authenticateAsync({
+          promptMessage: 'Unlock Stopper',
+          cancelLabel: 'Cancel',
+          disableDeviceFallback: false,
+        });
+      }
+    });
+    return () => sub.remove();
+  }, [profile]);
+}
+
 function AppContent() {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const profile = useQuery(api.users.getMyProfile);
+  useAppLock();
   const saveOnboarding = useMutation(api.users.completeOnboarding);
   const upsertProfile = useMutation(api.profiles.upsertProfile);
   const [phase, setPhase] = useState<Phase>('loading');

@@ -1,12 +1,14 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { House, TrendingUp, Users, User } from 'lucide-react-native';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { ProgressScreen } from '../screens/ProgressScreen';
 import { CommunityScreen } from '../screens/CommunityScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { PlanScreen } from '../screens/PlanScreen';
 import { colors } from '../constants/colors';
 import { type } from '../constants/typography';
 
@@ -14,10 +16,25 @@ export type TabParamList = {
   Home: { onStartOnboarding: () => void };
   Progress: undefined;
   Community: undefined;
-  Profile: undefined;
+  ProfileTab: undefined;
+};
+
+export type ProfileStackParamList = {
+  ProfileMain: undefined;
+  Plan: undefined;
 };
 
 const Tab = createBottomTabNavigator<TabParamList>();
+const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
+
+function ProfileStackNavigator() {
+  return (
+    <ProfileStack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+      <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
+      <ProfileStack.Screen name="Plan" component={PlanScreen} />
+    </ProfileStack.Navigator>
+  );
+}
 
 const TAB_H = 60;
 
@@ -63,9 +80,9 @@ export function TabNavigator({ onStartOnboarding }: Props) {
       />
 
       <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{ tabBarIcon: ({ color, size }) => <User size={size} color={color} /> }}
+        name="ProfileTab"
+        component={ProfileStackNavigator}
+        options={{ tabBarLabel: 'Profile', tabBarIcon: ({ color, size }) => <User size={size} color={color} /> }}
       />
     </Tab.Navigator>
   );

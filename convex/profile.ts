@@ -40,13 +40,14 @@ export const getProfile = query({
       avatarUri: undefined as string | undefined,
       remindersOn: userProfile.remindersOn ?? false,
       anonymous: userProfile.anonymous ?? false,
+      appLockEnabled: userProfile.appLockEnabled ?? false,
     };
   },
 });
 
 export const updateSetting = mutation({
   args: {
-    key: v.union(v.literal("remindersOn"), v.literal("anonymous")),
+    key: v.union(v.literal("remindersOn"), v.literal("anonymous"), v.literal("appLockEnabled")),
     value: v.boolean(),
   },
   handler: async (ctx, args) => {

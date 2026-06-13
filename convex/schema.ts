@@ -16,6 +16,7 @@ export default defineSchema({
     remindersOn: v.optional(v.boolean()),
     panicOn: v.optional(v.boolean()),
     anonymous: v.optional(v.boolean()),
+    appLockEnabled: v.optional(v.boolean()),
   }).index("by_userId", ["userId"]),
 
   // Recovery profile — quit date, addiction type, reasons.
@@ -88,5 +89,6 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_postId", ["postId"])
-    .index("by_postId_userId", ["postId", "userId"]),
+    .index("by_postId_userId", ["postId", "userId"])
+    .index("by_userId", ["userId"]),
 });
