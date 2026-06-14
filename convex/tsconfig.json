@@ -6,6 +6,8 @@
     "jsx": "react",
     "target": "ESNext",
     "lib": ["ES2021", "dom"],
+    "types": ["node"],
+    "noEmit": true,
     "moduleResolution": "Bundler"
   }
 }

@@ -121,8 +121,6 @@ function AppContent() {
   const saveOnboarding = useMutation(api.users.completeOnboarding);
   const upsertProfile = useMutation(api.profiles.upsertProfile);
   const [phase, setPhase] = useState<Phase>('loading');
-  // true when onboarding is triggered from the empty dashboard (profile setup required, no skip)
-  const [profileSetupMode, setProfileSetupMode] = useState(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -144,7 +142,6 @@ function AppContent() {
   }, [profile]);
 
   const handleOnboardingComplete = useCallback(async (state: OnboardingState) => {
-    setProfileSetupMode(false);
     const addictionType = [...state.overcome][0] ?? 'other';
     const reasonForQuitting = [...state.reasons][0] ?? 'personal growth';
     await Promise.all([
@@ -157,18 +154,6 @@ function AppContent() {
         addictionType,
         quitDate: Date.now(),
         reasonForQuitting,
-      }),
-    ]);
-    setPhase('app');
-  }, [saveOnboarding, upsertProfile]);
-
-  const handleSkipOnboarding = useCallback(async () => {
-    await Promise.all([
-      saveOnboarding({}),
-      upsertProfile({
-        addictionType: 'this habit',
-        quitDate: Date.now(),
-        reasonForQuitting: 'personal growth',
       }),
     ]);
     setPhase('app');
@@ -187,8 +172,6 @@ function AppContent() {
       <OnboardingFlow
         startStep={2}
         onComplete={handleOnboardingComplete}
-        // No skip when coming from the empty dashboard — user must set up a profile
-        onSkip={profileSetupMode ? undefined : handleSkipOnboarding}
       />
     );
   }
@@ -196,10 +179,7 @@ function AppContent() {
   if (phase === 'app') {
     return (
       <TabNavigator
-        onStartOnboarding={() => {
-          setProfileSetupMode(true);
-          setPhase('onboarding');
-        }}
+        onStartOnboarding={() => setPhase('onboarding')}
       />
     );
   }

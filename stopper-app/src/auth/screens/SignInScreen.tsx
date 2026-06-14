@@ -13,9 +13,12 @@ interface Props {
   onBack: () => void;
   onSignedIn: () => void;
   onForgot: () => void;
+  onApple?: () => void;
+  onGoogle?: () => void;
+  loading?: boolean;
 }
 
-export function SignInScreen({ state, setState, onBack, onSignedIn, onForgot }: Props) {
+export function SignInScreen({ state, setState, onBack, onSignedIn, onForgot, onApple, onGoogle, loading }: Props) {
   const valid = isValidEmail(state.email) && (state.password || '').length >= 1;
 
   return (
@@ -40,8 +43,8 @@ export function SignInScreen({ state, setState, onBack, onSignedIn, onForgot }: 
         <PrimaryButton icon={null} onPress={onSignedIn} disabled={!valid}>Sign in</PrimaryButton>
         <OrDivider />
         <View style={styles.socialRow}>
-          <SocialButton provider="apple" label="Continue with Apple" onPress={onSignedIn} />
-          <SocialButton provider="google" label="Continue with Google" onPress={onSignedIn} />
+          {onApple && <SocialButton provider="apple" label="Continue with Apple" onPress={onApple} loading={loading} />}
+          {onGoogle && <SocialButton provider="google" label="Continue with Google" onPress={onGoogle} loading={loading} />}
         </View>
       </View>
     </View>

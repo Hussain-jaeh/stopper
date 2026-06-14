@@ -1,7 +1,10 @@
 
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert, Platform } from 'react-native';
 import { useAuthActions } from '@convex-dev/auth/react';
+import * as WebBrowser from 'expo-web-browser';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Linking from 'expo-linking';
 import { colors } from '../theme/tokens';
 import { AuthState, freshAuthState } from './state';
 import { AuthLandingScreen } from './screens/AuthLandingScreen';
@@ -81,6 +84,45 @@ export function AuthFlow({ initialRoute = 'landing', onAuthenticated }: AuthFlow
     }
   });
 
+  const handleGoogle = () => withLoading(async () => {
+    const callbackUrl = Linking.createURL('/');
+    try {
+      const result = await signIn('google', { redirectTo: callbackUrl });
+      if (!result.redirect) return;
+      const browserResult = await WebBrowser.openAuthSessionAsync(
+        result.redirect.toString(),
+        callbackUrl,
+      );
+      if (browserResult.type === 'success') {
+        const parsed = Linking.parse(browserResult.url);
+        const code = parsed.queryParams?.code as string | undefined;
+        if (code) {
+          await (signIn as Function)(undefined, { code });
+          go('success');
+        }
+      }
+    } catch (e: any) {
+      Alert.alert('Google sign in failed', e?.message ?? 'Please try again.');
+    }
+  });
+
+  const handleApple = () => withLoading(async () => {
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!credential.identityToken) throw new Error('No identity token from Apple');
+      await signIn('apple', { identityToken: credential.identityToken });
+      go('success');
+    } catch (e: any) {
+      if (e.code === 'ERR_REQUEST_CANCELED') return;
+      Alert.alert('Apple sign in failed', e?.message ?? 'Please try again.');
+    }
+  });
+
   const handleReset = async () => {
     setResetError(undefined);
     await withLoading(async () => {
@@ -98,10 +140,11 @@ export function AuthFlow({ initialRoute = 'landing', onAuthenticated }: AuthFlow
       return (
         <View style={styles.fill}>
           <AuthLandingScreen
-            onApple={() => Alert.alert('Coming soon', 'Apple Sign In will be available soon.')}
-            onGoogle={() => Alert.alert('Coming soon', 'Google Sign In will be available soon.')}
+            onApple={Platform.OS === 'ios' ? handleApple : undefined}
+            onGoogle={handleGoogle}
             onEmail={() => go('signup')}
             onSignIn={() => go('signin')}
+            loading={loading}
           />
         </View>
       );
@@ -138,6 +181,9 @@ export function AuthFlow({ initialRoute = 'landing', onAuthenticated }: AuthFlow
             onBack={() => { setSignInError(undefined); go('landing'); }}
             onSignedIn={() => handleSignIn()}
             onForgot={() => { setSignInError(undefined); go('forgot'); }}
+            onApple={Platform.OS === 'ios' ? handleApple : undefined}
+            onGoogle={handleGoogle}
+            loading={loading}
           />
         </View>
       );

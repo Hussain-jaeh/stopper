@@ -6,9 +6,11 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "scheme": "stopper",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.stopper-app"
+      "bundleIdentifier": "com.anonymous.stopper-app",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -29,7 +31,8 @@
         {
           "color": "#14B888"
         }
-      ]
+      ],
+      "expo-web-browser"
     ]
   }
 }

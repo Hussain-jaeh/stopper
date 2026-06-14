@@ -6,6 +6,7 @@ import { useAuthActions } from '@convex-dev/auth/react';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as LocalAuthentication from 'expo-local-authentication';
+import * as StoreReview from 'expo-store-review';
 import {
   Target, Bell, VenetianMask, Lock, Smartphone, Star, Share2, ShieldCheck,
   FileText, LogOut, Trash2,
@@ -143,7 +144,13 @@ export function ProfileScreen() {
 
             <SettingsGroup title="About">
               <SettingsRow Icon={Smartphone} tint={colors.textMuted} label="Version" value="1.0.0" />
-              <SettingsRow Icon={Star} tint={colors.coral400} label="Rate Stopper" external onPress={() => Linking.openURL('https://apps.apple.com/app/stopper')} />
+              <SettingsRow Icon={Star} tint={colors.coral400} label="Rate Stopper" external onPress={async () => {
+                if (await StoreReview.hasAction()) {
+                  StoreReview.requestReview();
+                } else {
+                  Linking.openURL('https://apps.apple.com/app/stopper');
+                }
+              }} />
               <SettingsRow Icon={Share2} tint="#2BB6C4" label="Share Stopper" chevron onPress={handleShare} />
               <SettingsRow Icon={ShieldCheck} tint="#2E7DD1" label="Privacy Policy" external onPress={() => Linking.openURL('https://stopper.mintlify.io/legal/privacy')} />
               <SettingsRow Icon={FileText} tint="#9B6FE4" label="Terms of Service" external onPress={() => Linking.openURL('https://stopper.mintlify.io/legal/terms')} last />

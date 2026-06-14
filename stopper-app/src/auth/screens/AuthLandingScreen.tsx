@@ -7,13 +7,14 @@ import { OrDivider } from '../components/OrDivider';
 import { colors, fonts } from '../../theme/tokens';
 
 interface Props {
-  onApple: () => void;
+  onApple?: () => void;
   onGoogle: () => void;
   onEmail: () => void;
   onSignIn: () => void;
+  loading?: boolean;
 }
 
-export function AuthLandingScreen({ onApple, onGoogle, onEmail, onSignIn }: Props) {
+export function AuthLandingScreen({ onApple, onGoogle, onEmail, onSignIn, loading }: Props) {
   return (
     <View style={styles.screen}>
       <DotTexture />
@@ -26,8 +27,8 @@ export function AuthLandingScreen({ onApple, onGoogle, onEmail, onSignIn }: Prop
       </View>
 
       <View style={styles.actions}>
-        <SocialButton provider="apple" label="Continue with Apple" onPress={onApple} />
-        <SocialButton provider="google" label="Continue with Google" onPress={onGoogle} />
+        {onApple && <SocialButton provider="apple" label="Continue with Apple" onPress={onApple} loading={loading} />}
+        <SocialButton provider="google" label="Continue with Google" onPress={onGoogle} loading={loading} />
         <OrDivider />
         <PrimaryButton icon={<Mail size={20} color={colors.white} strokeWidth={2} />} onPress={onEmail}>
           Sign up with email

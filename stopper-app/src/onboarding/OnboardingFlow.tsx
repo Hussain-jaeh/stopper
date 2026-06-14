@@ -1,7 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, fonts } from '../theme/tokens';
+import { View, StyleSheet } from 'react-native';
 import { OnboardingState, freshState } from './state';
 
 import { SplashScreen } from './screens/SplashScreen';
@@ -43,14 +41,11 @@ interface OnboardingFlowProps {
   startStep?: number;
   onComplete?: (state: OnboardingState) => void;
   onSignIn?: () => void;
-  onSkip?: () => void;
 }
 
-export function OnboardingFlow({ startStep, onComplete, onSignIn, onSkip }: OnboardingFlowProps) {
+export function OnboardingFlow({ startStep, onComplete, onSignIn }: OnboardingFlowProps) {
   const [step, setStep] = useState(startStep ?? 0);
   const [state, setStateRaw] = useState<OnboardingState>(freshState);
-  const insets = useSafeAreaInsets();
-
   const setState = useCallback((patch: Partial<OnboardingState>) => {
     setStateRaw(prev => ({ ...prev, ...patch }));
   }, []);
@@ -95,31 +90,13 @@ export function OnboardingFlow({ startStep, onComplete, onSignIn, onSkip }: Onbo
     ),
   };
 
-  const showSkip = onSkip && step < 24;
-
   return (
     <View style={styles.fill}>
       {screens[step] ?? screens[0]}
-      {showSkip && (
-        <Pressable onPress={onSkip} style={[styles.skip, { top: insets.top + 12 }]} hitSlop={12}>
-          <Text style={styles.skipLabel}>Skip</Text>
-        </Pressable>
-      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  skip: {
-    position: 'absolute',
-    right: 20,
-    zIndex: 99,
-  },
-  skipLabel: {
-    fontFamily: fonts.ui,
-    fontSize: 14,
-    color: colors.fgMuted,
-    fontWeight: '600',
-  },
 });
