@@ -7,16 +7,27 @@ auth.addHttpRoutes(http);
 
 const VOICE_ID = "EXAVITQu4vr4xnSDxMaL"; // Sarah — mature, reassuring
 
+function validateSecret(params: URLSearchParams): Response | null {
+  const expected = process.env.APP_API_SECRET;
+  if (!expected) return new Response("APP_API_SECRET not configured", { status: 500 });
+  if (params.get("s") !== expected) return new Response("Forbidden", { status: 403 });
+  return null;
+}
+
 // Proxy ElevenLabs TTS so the API key never leaves the server.
-// GET /api/tts?text=Breathe+in+slowly
+// GET /api/tts?text=Breathe+in+slowly&s=<secret>
 http.route({
   path: "/api/tts",
   method: "GET",
   handler: httpAction(async (_ctx, request) => {
+    const params = new URL(request.url).searchParams;
+    const authError = validateSecret(params);
+    if (authError) return authError;
+
     const apiKey = process.env.ELEVENLABS_API_KEY;
     if (!apiKey) return new Response("ELEVENLABS_API_KEY not set", { status: 500 });
 
-    const text = new URL(request.url).searchParams.get("text") ?? "";
+    const text = params.get("text") ?? "";
     if (!text.trim()) return new Response("text param is required", { status: 400 });
     if (text.length > 300) return new Response("text too long (max 300 chars)", { status: 400 });
 
@@ -44,11 +55,14 @@ http.route({
 });
 
 // Proxy ElevenLabs Sound Effects for ambient background.
-// GET /api/sfx  (fixed calm-rain prompt, cached for 7 days)
+// GET /api/sfx?s=<secret>  (fixed calm-rain prompt, cached for 7 days)
 http.route({
   path: "/api/sfx",
   method: "GET",
-  handler: httpAction(async (_ctx, _request) => {
+  handler: httpAction(async (_ctx, request) => {
+    const authError = validateSecret(new URL(request.url).searchParams);
+    if (authError) return authError;
+
     const apiKey = process.env.ELEVENLABS_API_KEY;
     if (!apiKey) return new Response("ELEVENLABS_API_KEY not set", { status: 500 });
 

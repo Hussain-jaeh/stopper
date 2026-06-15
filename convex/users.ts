@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { requireAuth } from "./lib/auth";
 
 export const completeOnboarding = mutation({
   args: {
@@ -9,8 +10,7 @@ export const completeOnboarding = mutation({
     age: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    const userId = await requireAuth(ctx);
 
     const existing = await ctx.db
       .query("userProfiles")

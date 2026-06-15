@@ -7,6 +7,7 @@ import { colors } from '../../constants/colors';
 import { PanicCta, TextButton } from './PanicChrome';
 
 const SITE_URL = (process.env.EXPO_PUBLIC_CONVEX_URL ?? '').replace('.convex.cloud', '.convex.site');
+const API_SECRET = process.env.EXPO_PUBLIC_APP_API_SECRET ?? '';
 
 const PHASES: { label: string; tts: string; duration: number }[] = [
   { label: 'Breathe in',  tts: 'Breathe in... slowly and deeply...',  duration: 4000 },
@@ -16,7 +17,7 @@ const PHASES: { label: string; tts: string; duration: number }[] = [
 const TOTAL_CYCLES = 3;
 
 function ttsUrl(text: string) {
-  return `${SITE_URL}/api/tts?text=${encodeURIComponent(text)}`;
+  return `${SITE_URL}/api/tts?text=${encodeURIComponent(text)}&s=${API_SECRET}`;
 }
 
 export function BreatheStep({ onDone, onSkip }: { onDone: () => void; onSkip: () => void }) {
@@ -26,7 +27,7 @@ export function BreatheStep({ onDone, onSkip }: { onDone: () => void; onSkip: ()
   const scale = useSharedValue(0.6);
 
   // Ambient rain loop
-  const ambient = useAudioPlayer({ uri: `${SITE_URL}/api/sfx` });
+  const ambient = useAudioPlayer({ uri: `${SITE_URL}/api/sfx?s=${API_SECRET}` });
 
   // Voice players — one per phase so all can be pre-buffered
   const voice0 = useAudioPlayer({ uri: ttsUrl(PHASES[0].tts) });
