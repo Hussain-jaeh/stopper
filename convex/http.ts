@@ -17,6 +17,8 @@ http.route({
     if (!apiKey) return new Response("ELEVENLABS_API_KEY not set", { status: 500 });
 
     const text = new URL(request.url).searchParams.get("text") ?? "";
+    if (!text.trim()) return new Response("text param is required", { status: 400 });
+    if (text.length > 300) return new Response("text too long (max 300 chars)", { status: 400 });
 
     const upstream = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}?output_format=mp3_44100_128`,

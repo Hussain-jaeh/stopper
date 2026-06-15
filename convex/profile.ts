@@ -1,5 +1,5 @@
 import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { requireAuth } from "./lib/auth";
 import { calculateCurrentStreak } from "./services/streak";
@@ -61,7 +61,7 @@ export const updateSetting = mutation({
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
 
-    if (!userProfile) throw new Error("Profile not found");
+    if (!userProfile) throw new ConvexError("Profile not found");
 
     await ctx.db.patch(userProfile._id, { [args.key]: args.value });
   },
@@ -87,7 +87,12 @@ export const saveAvatar = mutation({
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
 
-    if (!userProfile) throw new Error("Profile not found");
+    if (!userProfile) throw new ConvexError("Profile not found");
+
+    // Delete the previous avatar from storage to avoid orphaned files
+    if (userProfile.avatarStorageId) {
+      await ctx.storage.delete(userProfile.avatarStorageId);
+    }
 
     await ctx.db.patch(userProfile._id, { avatarStorageId: args.storageId });
   },

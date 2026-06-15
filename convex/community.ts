@@ -14,7 +14,7 @@
  */
 
 import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { requireAuth } from "./lib/auth";
 import { calculateCurrentStreak } from "./services/streak";
 import { makeHandle } from "./lib/handle";
@@ -40,6 +40,7 @@ const DEFAULT_CIRCLES = [
 export const seedCircles = mutation({
   args: {},
   handler: async (ctx) => {
+    await requireAuth(ctx);
     const existing = await ctx.db.query("circles").take(1);
     if (existing.length > 0) return;
     const now = Date.now();
@@ -254,6 +255,9 @@ export const createPost = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
-    return ctx.db.insert("posts", { userId, ...args, createdAt: Date.now() });
+    const body = args.body.trim();
+    if (!body) throw new ConvexError("Post body cannot be empty");
+    if (body.length > 500) throw new ConvexError("Post body must be 500 characters or fewer");
+    return ctx.db.insert("posts", { userId, ...args, body, createdAt: Date.now() });
   },
 });

@@ -64,10 +64,11 @@ export const logRelapse = mutation({
   args: { trigger: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
+    const trigger = args.trigger?.trim() || "Not specified";
 
     await ctx.db.insert("relapses", {
       userId,
-      trigger: args.trigger ?? "",
+      trigger,
       createdAt: Date.now(),
     });
   },
