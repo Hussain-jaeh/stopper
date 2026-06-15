@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import { colors } from '../../constants/colors';
 import { type } from '../../constants/typography';
 
@@ -10,7 +10,7 @@ function greetingFor(d = new Date()) {
   return 'Good evening';
 }
 
-export function DashboardHeader({ name, index = 0 }: { name: string; index?: number }) {
+export function DashboardHeader({ name, avatarUri, index = 0 }: { name: string; avatarUri?: string | null; index?: number }) {
   return (
     <View style={styles.row}>
       <View style={{ flex: 1 }}>
@@ -19,7 +19,10 @@ export function DashboardHeader({ name, index = 0 }: { name: string; index?: num
         <Text style={styles.sub}>Keep going. You're making progress.</Text>
       </View>
       <View style={styles.avatar}>
-        <Text style={styles.avatarTxt}>{name.slice(0, 1).toUpperCase()}</Text>
+        {avatarUri
+          ? <Image source={{ uri: avatarUri }} style={styles.avatarImg} />
+          : <Text style={styles.avatarTxt}>{name.slice(0, 1).toUpperCase()}</Text>
+        }
       </View>
     </View>
   );
@@ -30,6 +33,7 @@ const styles = StyleSheet.create({
   greeting: { ...type.subtitle, color: colors.textMuted, fontWeight: '500' },
   name: { ...type.h1, color: colors.white, marginTop: 3 },
   sub: { ...type.label, color: colors.textMuted, marginTop: 8 },
-  avatar: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface1, borderWidth: 1, borderColor: colors.border },
+  avatar: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface1, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
+  avatarImg: { width: 46, height: 46, borderRadius: 23 },
   avatarTxt: { ...type.cardTitle, color: colors.jade300 },
 });

@@ -93,9 +93,14 @@ export const getDashboard = query({
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
 
+    const avatarUri = userProfile?.avatarStorageId
+      ? await ctx.storage.getUrl(userProfile.avatarStorageId)
+      : null;
+
     return {
       profile,
       name: userProfile?.displayName ?? null,
+      avatarUri,
       currentStreak,
       longestStreak,
       daysSinceQuit,

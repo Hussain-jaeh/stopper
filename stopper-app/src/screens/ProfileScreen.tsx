@@ -8,7 +8,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as StoreReview from 'expo-store-review';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import {
   Target, Bell, VenetianMask, Lock, Smartphone, Star, Share2, ShieldCheck,
   FileText, LogOut, Trash2,
@@ -58,15 +58,21 @@ export function ProfileScreen() {
     const { uri, mimeType } = result.assets[0];
     try {
       const uploadUrl = await generateUploadUrl();
+      console.log('[avatar] uploadUrl:', uploadUrl);
+      console.log('[avatar] uri:', uri, 'mimeType:', mimeType);
       const upload = await FileSystem.uploadAsync(uploadUrl, uri, {
         httpMethod: 'POST',
         headers: { 'Content-Type': mimeType ?? 'image/jpeg' },
         uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
       });
+      console.log('[avatar] upload status:', upload.status, 'body:', upload.body);
+      if (upload.status !== 200) throw new Error(`Upload HTTP ${upload.status}: ${upload.body}`);
       const { storageId } = JSON.parse(upload.body);
       await saveAvatar({ storageId });
-    } catch {
-      Alert.alert('Upload failed', 'Could not save your photo. Please try again.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[avatar] error:', msg);
+      Alert.alert('Upload failed', msg);
     }
   };
 

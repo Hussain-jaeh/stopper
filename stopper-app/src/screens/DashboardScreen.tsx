@@ -45,7 +45,7 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
     }
     return (
       <View style={{ gap: spacing.gap + 6 }}>
-        <DashboardHeader name={data.name ?? 'there'} index={0} />
+        <DashboardHeader name={data.name ?? 'there'} avatarUri={data.avatarUri} index={0} />
         <StreakCard
           current={data.currentStreak}
           daysSinceQuit={data.daysSinceQuit}
