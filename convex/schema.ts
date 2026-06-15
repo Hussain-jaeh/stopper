@@ -17,6 +17,7 @@ export default defineSchema({
     panicOn: v.optional(v.boolean()),
     anonymous: v.optional(v.boolean()),
     appLockEnabled: v.optional(v.boolean()),
+    avatarStorageId: v.optional(v.id("_storage")),
   }).index("by_userId", ["userId"]),
 
   // Recovery profile — quit date, addiction type, reasons.

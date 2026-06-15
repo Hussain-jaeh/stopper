@@ -33,7 +33,13 @@
         }
       ],
       "expo-web-browser",
-      "expo-audio"
+      "expo-audio",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Stopper needs access to your photos to set a profile picture."
+        }
+      ]
     ]
   }
 }

@@ -7,6 +7,8 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as StoreReview from 'expo-store-review';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import {
   Target, Bell, VenetianMask, Lock, Smartphone, Star, Share2, ShieldCheck,
   FileText, LogOut, Trash2,
@@ -32,9 +34,41 @@ export function ProfileScreen() {
   const p = useQuery(api.profile.getProfile);
   const updateSetting = useMutation(api.profile.updateSetting);
   const deleteAccount = useMutation(api.account.deleteAccount);
+  const generateUploadUrl = useMutation(api.profile.generateAvatarUploadUrl);
+  const saveAvatar = useMutation(api.profile.saveAvatar);
 
   const [local, setLocal] = useState<{ remindersOn?: boolean; anonymous?: boolean; appLockEnabled?: boolean }>({});
   const val = (k: 'remindersOn' | 'anonymous' | 'appLockEnabled'): boolean => local[k] ?? p?.[k] ?? false;
+
+  // ── Avatar upload ─────────────────────────────────────────────────────────
+
+  const handleEditAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Allow photo access to change your profile picture.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (result.canceled) return;
+    const { uri, mimeType } = result.assets[0];
+    try {
+      const uploadUrl = await generateUploadUrl();
+      const upload = await FileSystem.uploadAsync(uploadUrl, uri, {
+        httpMethod: 'POST',
+        headers: { 'Content-Type': mimeType ?? 'image/jpeg' },
+        uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+      });
+      const { storageId } = JSON.parse(upload.body);
+      await saveAvatar({ storageId });
+    } catch {
+      Alert.alert('Upload failed', 'Could not save your photo. Please try again.');
+    }
+  };
 
   // ── Toggles ──────────────────────────────────────────────────────────────
 
@@ -129,7 +163,7 @@ export function ProfileScreen() {
         <View style={{ marginTop: 24 }}><DashboardSkeleton /></View>
       ) : (
         <>
-          <ProfileIdentity name={p.name} tagline={p.tagline} avatarUri={p.avatarUri} index={1} />
+          <ProfileIdentity name={p.name} tagline={p.tagline} avatarUri={p.avatarUri ?? undefined} onEditAvatar={handleEditAvatar} index={1} />
 
           <View style={{ gap: 26 }}>
             <SettingsGroup title="Recovery">

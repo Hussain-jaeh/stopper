@@ -15,6 +15,7 @@
     "expo-apple-authentication": "~56.0.4",
     "expo-audio": "~56.0.12",
     "expo-font": "^56.0.5",
+    "expo-image-picker": "~56.0.18",
     "expo-linear-gradient": "^56.0.4",
     "expo-linking": "~56.0.14",
     "expo-local-authentication": "~56.0.4",

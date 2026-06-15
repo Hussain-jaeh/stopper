@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { Id } from "./_generated/dataModel";
 import { requireAuth } from "./lib/auth";
 import { calculateCurrentStreak } from "./services/streak";
 
@@ -37,7 +38,9 @@ export const getProfile = query({
     return {
       name: userProfile.displayName ?? "Anonymous",
       tagline,
-      avatarUri: undefined as string | undefined,
+      avatarUri: userProfile.avatarStorageId
+        ? await ctx.storage.getUrl(userProfile.avatarStorageId)
+        : undefined,
       remindersOn: userProfile.remindersOn ?? false,
       anonymous: userProfile.anonymous ?? false,
       appLockEnabled: userProfile.appLockEnabled ?? false,
@@ -61,5 +64,31 @@ export const updateSetting = mutation({
     if (!userProfile) throw new Error("Profile not found");
 
     await ctx.db.patch(userProfile._id, { [args.key]: args.value });
+  },
+});
+
+/** Step 1 of avatar upload — returns a short-lived URL the client uploads to directly. */
+export const generateAvatarUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await requireAuth(ctx);
+    return ctx.storage.generateUploadUrl();
+  },
+});
+
+/** Step 2 of avatar upload — saves the storage ID after the client finishes uploading. */
+export const saveAvatar = mutation({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    const userProfile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+
+    if (!userProfile) throw new Error("Profile not found");
+
+    await ctx.db.patch(userProfile._id, { avatarStorageId: args.storageId });
   },
 });
