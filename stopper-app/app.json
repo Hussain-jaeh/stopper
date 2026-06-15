@@ -32,7 +32,8 @@
           "color": "#14B888"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-audio"
     ]
   }
 }

@@ -27,6 +27,7 @@ export default defineSchema({
     quitDate: v.number(),
     reasonForQuitting: v.string(),
     goal: v.optional(v.string()),
+    resistedUrges: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_userId", ["userId"]),
