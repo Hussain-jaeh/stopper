@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "jsx": "react",
+    "target": "ESNext",
+    "lib": ["ES2021", "dom"],
+    "types": ["node"],
+    "noEmit": true,
+    "moduleResolution": "Bundler"
+  }
+}
