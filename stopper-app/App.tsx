@@ -27,7 +27,7 @@ import { OnboardingFlow } from './src/onboarding/OnboardingFlow';
 import { TabNavigator } from './src/navigation/TabNavigator';
 import { OnboardingState } from './src/onboarding/state';
 import { colors } from './src/theme/tokens';
-import { api } from './convex/_generated/api';
+import { api } from './convex/_generated/api.js';
 
 // Show alerts and play sound when a notification arrives while the app is foregrounded.
 Notifications.setNotificationHandler({
