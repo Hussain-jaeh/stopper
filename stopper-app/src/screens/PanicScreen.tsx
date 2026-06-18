@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation } from 'convex/react';
 import { X } from 'lucide-react-native';
-import { api } from '../../convex/_generated/api.js';
+import { api } from '../../convex/_generated';
 import { BreatheStep } from '../components/panic/BreatheStep';
 import {
   IntroStep, WhyStep, RedirectStep, WinStep, RelapseStep, ResetStep, PanicProfile,

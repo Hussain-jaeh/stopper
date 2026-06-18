@@ -14,7 +14,7 @@ import {
   FileText, LogOut, Trash2,
 } from 'lucide-react-native';
 
-import { api } from '../../convex/_generated/api.js';
+import { api } from '../../convex/_generated';
 import { ProfileStackParamList } from '../navigation/TabNavigator';
 import { scheduleReminder, cancelReminder } from '../notifications/reminders';
 import { ProfileIdentity } from '../components/profile/ProfileIdentity';

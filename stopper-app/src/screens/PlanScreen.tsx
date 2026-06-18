@@ -6,7 +6,7 @@ import { useQuery } from 'convex/react';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ChevronLeft, Anchor, CalendarDays, Target, Flame, Trophy, Milestone } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { api } from '../../convex/_generated/api.js';
+import { api } from '../../convex/_generated';
 import { DashboardSkeleton } from '../components/dashboard/states';
 import { colors } from '../constants/colors';
 import { spacing, radius } from '../constants/spacing';
