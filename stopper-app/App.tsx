@@ -91,7 +91,7 @@ type Phase = 'loading' | 'auth' | 'onboarding' | 'app';
 
 function useAppLock() {
   const appState = useRef<AppStateStatus>(AppState.currentState);
-  const profile = useQuery(api.users.getMyProfile);
+  const profile = useQuery(api.users.getMyProfile) ?? {};
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', async (next) => {
@@ -116,7 +116,7 @@ function useAppLock() {
 
 function AppContent() {
   const { isLoading, isAuthenticated } = useConvexAuth();
-  const profile = useQuery(api.users.getMyProfile);
+  const profile = useQuery(api.users.getMyProfile) ?? { onboardingComplete: true };
   useAppLock();
   const saveOnboarding = useMutation(api.users.completeOnboarding);
   const upsertProfile = useMutation(api.profiles.upsertProfile);
