@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from 'convex/react';
-import { api } from '../../convex/_generated';
+import { api } from '../../convex/_generated/api';
 import { ProgressHeader, SummaryStrip, InsightCard, Range } from '../components/progress/ProgressBits';
 import { MilestoneRing } from '../components/progress/MilestoneRing';
 import { CalendarHeatmap, CalendarData } from '../components/progress/CalendarHeatmap';

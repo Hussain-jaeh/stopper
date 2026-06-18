@@ -2,7 +2,7 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { ScrollView, View, StyleSheet, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation } from 'convex/react';
-import { api } from '../../convex/_generated';
+import { api } from '../../convex/_generated/api';
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
 import { StreakCard } from '../components/dashboard/StreakCard';
 import { ProgressCard } from '../components/dashboard/ProgressCard';
