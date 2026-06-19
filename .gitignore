@@ -27,13 +27,6 @@ stopper-app/*.mobileprovision
 stopper-app/ios/
 stopper-app/android/
 
-# Wrongly-placed generated files (created by ai-files install in stopper-app/)
-stopper-app/convex/_generated/api.d.ts
-stopper-app/convex/_generated/api.js
-stopper-app/convex/_generated/dataModel.d.ts
-stopper-app/convex/_generated/server.d.ts
-stopper-app/convex/_generated/server.js
-
 # Claude Code / AI tooling
 stopper-app/.agents/
 stopper-app/.claude/
