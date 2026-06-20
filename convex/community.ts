@@ -71,61 +71,88 @@ export const getFeed = query({
       .order("desc")
       .take(50);
 
-    const result = [];
-    for (const post of posts) {
-      const profile = await ctx.db
-        .query("profiles")
-        .withIndex("by_userId", (q) => q.eq("userId", post.userId))
-        .unique();
+    if (posts.length === 0) return [];
 
-      let streak = 0;
-      if (profile) {
-        const relapses = await ctx.db
-          .query("relapses")
-          .withIndex("by_userId_createdAt", (q) => q.eq("userId", post.userId))
-          .order("asc")
-          .take(500);
-        streak = calculateCurrentStreak({
-          quitDate: profile.quitDate,
-          relapseTimestamps: relapses.map((r) => r.createdAt),
-        });
-      }
+    // Deduplicate author IDs and circle IDs to avoid redundant fetches
+    const uniqueUserIds = [...new Set(posts.map((p) => p.userId as string))];
+    const uniqueCircleIds = [
+      ...new Set(
+        posts
+          .map((p) => p.circleId as string | undefined)
+          .filter((id): id is string => !!id),
+      ),
+    ];
 
-      let circle = "Recovery";
-      if (post.circleId) {
-        const c = await ctx.db.get(post.circleId);
-        if (c) circle = c.name;
-      }
-
+    // Batch-fetch author streaks, circle names, and per-post cheer data in parallel
+    const [userStreaks, circleNames, cheerData] = await Promise.all([
+      Promise.all(
+        uniqueUserIds.map(async (uid) => {
+          const profile = await ctx.db
+            .query("profiles")
+            .withIndex("by_userId", (q) => q.eq("userId", uid as any))
+            .unique();
+          if (!profile) return [uid, 0] as const;
+          const relapses = await ctx.db
+            .query("relapses")
+            .withIndex("by_userId_createdAt", (q) => q.eq("userId", uid as any))
+            .order("asc")
+            .take(500);
+          return [
+            uid,
+            calculateCurrentStreak({
+              quitDate: profile.quitDate,
+              relapseTimestamps: relapses.map((r) => r.createdAt),
+            }),
+          ] as const;
+        }),
+      ),
+      Promise.all(
+        uniqueCircleIds.map(async (cid) => {
+          const c = await ctx.db.get(cid as any);
+          return [cid, c?.name ?? "Recovery"] as const;
+        }),
+      ),
       // MVP: bounded take for cheer count; replace with denormalized counter at scale.
-      const cheers = await ctx.db
-        .query("postCheers")
-        .withIndex("by_postId", (q) => q.eq("postId", post._id))
-        .take(1000);
+      Promise.all(
+        posts.map(async (post) => {
+          const [cheers, myCheer] = await Promise.all([
+            ctx.db
+              .query("postCheers")
+              .withIndex("by_postId", (q) => q.eq("postId", post._id))
+              .take(1000),
+            ctx.db
+              .query("postCheers")
+              .withIndex("by_postId_userId", (q) =>
+                q.eq("postId", post._id).eq("userId", userId),
+              )
+              .unique(),
+          ]);
+          return [post._id as string, cheers.length, myCheer !== null] as const;
+        }),
+      ),
+    ]);
 
-      const myCheer = await ctx.db
-        .query("postCheers")
-        .withIndex("by_postId_userId", (q) =>
-          q.eq("postId", post._id).eq("userId", userId),
-        )
-        .unique();
+    const streakMap = new Map(userStreaks);
+    const circleMap = new Map(circleNames);
+    const cheerMap = new Map(
+      cheerData.map(([id, count, cheered]) => [id, { count, cheered }]),
+    );
 
-      result.push({
-        id: post._id as string,
-        type: post.type,
-        handle: makeHandle(post.userId),
-        streak,
-        circle,
-        time: relTime(post.createdAt),
-        body: post.body,
-        milestone: post.milestone,
-        cheers: cheers.length,
-        replies: 0,
-        cheered: myCheer !== null,
-      });
-    }
-
-    return result;
+    return posts.map((post) => ({
+      id: post._id as string,
+      type: post.type,
+      handle: makeHandle(post.userId),
+      streak: streakMap.get(post.userId as string) ?? 0,
+      circle: post.circleId
+        ? (circleMap.get(post.circleId as string) ?? "Recovery")
+        : "Recovery",
+      time: relTime(post.createdAt),
+      body: post.body,
+      milestone: post.milestone,
+      cheers: cheerMap.get(post._id as string)?.count ?? 0,
+      replies: 0,
+      cheered: cheerMap.get(post._id as string)?.cheered ?? false,
+    }));
   },
 });
 
@@ -134,33 +161,34 @@ export const getCircles = query({
   handler: async (ctx) => {
     const userId = await requireAuth(ctx);
 
-    const circles = await ctx.db.query("circles").take(20);
-    const memberships = await ctx.db
-      .query("circleMemberships")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .take(100);
+    const [circles, memberships] = await Promise.all([
+      ctx.db.query("circles").take(20),
+      ctx.db
+        .query("circleMemberships")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .take(100),
+    ]);
 
     const joinedIds = new Set(memberships.map((m) => m.circleId as string));
 
-    const result = [];
-    for (const c of circles) {
-      const memberDocs = await ctx.db
-        .query("circleMemberships")
-        .withIndex("by_circleId", (q) => q.eq("circleId", c._id))
-        .take(10000);
+    return Promise.all(
+      circles.map(async (c) => {
+        const memberDocs = await ctx.db
+          .query("circleMemberships")
+          .withIndex("by_circleId", (q) => q.eq("circleId", c._id))
+          .take(10000);
 
-      result.push({
-        id: c._id as string,
-        name: c.name,
-        iconKey: c.iconKey,
-        tint: c.tint,
-        members: memberDocs.length,
-        activity: "Active",
-        joined: joinedIds.has(c._id as string),
-      });
-    }
-
-    return result;
+        return {
+          id: c._id as string,
+          name: c.name,
+          iconKey: c.iconKey,
+          tint: c.tint,
+          members: memberDocs.length,
+          activity: "Active",
+          joined: joinedIds.has(c._id as string),
+        };
+      }),
+    );
   },
 });
 
@@ -171,26 +199,27 @@ export const getLeaders = query({
 
     const profiles = await ctx.db.query("profiles").take(100);
 
-    const entries = [];
-    for (const p of profiles) {
-      const relapses = await ctx.db
-        .query("relapses")
-        .withIndex("by_userId_createdAt", (q) => q.eq("userId", p.userId))
-        .order("asc")
-        .take(500);
+    const entries = await Promise.all(
+      profiles.map(async (p) => {
+        const relapses = await ctx.db
+          .query("relapses")
+          .withIndex("by_userId_createdAt", (q) => q.eq("userId", p.userId))
+          .order("asc")
+          .take(500);
 
-      const streak = calculateCurrentStreak({
-        quitDate: p.quitDate,
-        relapseTimestamps: relapses.map((r) => r.createdAt),
-      });
+        const streak = calculateCurrentStreak({
+          quitDate: p.quitDate,
+          relapseTimestamps: relapses.map((r) => r.createdAt),
+        });
 
-      entries.push({
-        handle: makeHandle(p.userId),
-        circle: p.addictionType,
-        streak,
-        you: p.userId === userId,
-      });
-    }
+        return {
+          handle: makeHandle(p.userId),
+          circle: p.addictionType,
+          streak,
+          you: p.userId === userId,
+        };
+      }),
+    );
 
     return entries.sort((a, b) => b.streak - a.streak).slice(0, 10);
   },

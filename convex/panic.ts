@@ -18,7 +18,7 @@ export const getContext = query({
       .query("relapses")
       .withIndex("by_userId_createdAt", (q) => q.eq("userId", userId))
       .order("asc")
-      .collect();
+      .take(2000);
 
     const relapseTimestamps = relapses.map((r) => r.createdAt);
     const quitDate = profile?.quitDate ?? Date.now();

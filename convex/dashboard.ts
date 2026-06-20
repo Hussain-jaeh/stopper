@@ -36,7 +36,7 @@ export const getDashboard = query({
       .query("relapses")
       .withIndex("by_userId_createdAt", (q) => q.eq("userId", userId))
       .order("asc")
-      .collect();
+      .take(2000);
 
     const relapseTimestamps = relapses.map((r) => r.createdAt);
     const totalRelapses = relapses.length;
@@ -56,12 +56,11 @@ export const getDashboard = query({
     }
 
     // ── Check-ins ─────────────────────────────────────────────────────────────
-    const totalCheckIns = (
-      await ctx.db
-        .query("checkIns")
-        .withIndex("by_userId", (q) => q.eq("userId", userId))
-        .collect()
-    ).length;
+    const allCheckIns = await ctx.db
+      .query("checkIns")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .take(10000);
+    const totalCheckIns = allCheckIns.length;
 
     const todayCheckIn = await ctx.db
       .query("checkIns")

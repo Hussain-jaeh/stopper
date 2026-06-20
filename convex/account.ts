@@ -55,11 +55,11 @@ export const deleteAccount = mutation({
       await Promise.all([
         ctx.db.query("userProfiles").withIndex("by_userId", (q) => q.eq("userId", userId)).unique(),
         ctx.db.query("profiles").withIndex("by_userId", (q) => q.eq("userId", userId)).unique(),
-        ctx.db.query("checkIns").withIndex("by_userId", (q) => q.eq("userId", userId)).collect(),
-        ctx.db.query("relapses").withIndex("by_userId", (q) => q.eq("userId", userId)).collect(),
-        ctx.db.query("circleMemberships").withIndex("by_userId", (q) => q.eq("userId", userId)).collect(),
-        ctx.db.query("posts").withIndex("by_userId", (q) => q.eq("userId", userId)).collect(),
-        ctx.db.query("postCheers").withIndex("by_userId", (q) => q.eq("userId", userId)).collect(),
+        ctx.db.query("checkIns").withIndex("by_userId", (q) => q.eq("userId", userId)).take(5000),
+        ctx.db.query("relapses").withIndex("by_userId", (q) => q.eq("userId", userId)).take(2000),
+        ctx.db.query("circleMemberships").withIndex("by_userId", (q) => q.eq("userId", userId)).take(100),
+        ctx.db.query("posts").withIndex("by_userId", (q) => q.eq("userId", userId)).take(1000),
+        ctx.db.query("postCheers").withIndex("by_userId", (q) => q.eq("userId", userId)).take(2000),
       ]);
 
     // Delete avatar from file storage before removing the profile

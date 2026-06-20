@@ -58,11 +58,12 @@ export const getProgress = query({
       .order("desc")
       .take(14);
 
-    const trend = recentCheckIns
+    const trendValues = [...recentCheckIns]
       .reverse()
       .map((c) => Math.max(5, (10 - c.cravingLevel) * 10));
 
-    while (trend.length < 14) trend.unshift(50);
+    const padding = Array<number>(Math.max(0, 14 - trendValues.length)).fill(50);
+    const trend = [...padding, ...trendValues];
 
     // Calendar for current month
     const now = new Date();
