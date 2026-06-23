@@ -93,7 +93,7 @@ function Dots() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#064634', overflow: 'hidden' },
+  root: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', backgroundColor: '#064634', overflow: 'hidden' },
   glow: { position: 'absolute', width: 280, height: 280, borderRadius: 140 },
   center: { alignItems: 'center' },
   markArea: { width: 120, height: 120, alignItems: 'center', justifyContent: 'center' },

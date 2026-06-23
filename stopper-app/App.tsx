@@ -94,13 +94,13 @@ export default function App() {
             <AppContent onBootDone={() => setBootDone(true)} />
           </View>
         </NavigationContainer>
-        {showSplash && (
-          <SplashScreen
-            minDurationMs={1600}
-            onFinish={() => setMinDone(true)}
-          />
-        )}
       </ConvexAuthProvider>
+      {showSplash && (
+        <SplashScreen
+          minDurationMs={1600}
+          onFinish={() => setMinDone(true)}
+        />
+      )}
     </SafeAreaProvider>
   );
 }
