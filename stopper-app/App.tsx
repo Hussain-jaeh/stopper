@@ -28,6 +28,7 @@ import { OnboardingFlow } from './src/onboarding/OnboardingFlow';
 import { TabNavigator } from './src/navigation/TabNavigator';
 import { OnboardingState } from './src/onboarding/state';
 import { SplashScreen } from './src/components/splash/SplashScreen';
+import { PaywallScreen } from './src/screens/PaywallScreen';
 import { colors } from './src/theme/tokens';
 import { api } from './convex/_generated/api';
 
@@ -104,7 +105,7 @@ export default function App() {
   );
 }
 
-type Phase = 'loading' | 'auth' | 'onboarding' | 'app';
+type Phase = 'loading' | 'auth' | 'onboarding' | 'paywall' | 'app';
 
 function useAppLock() {
   const appState = useRef<AppStateStatus>(AppState.currentState);
@@ -179,7 +180,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
         reasonForQuitting,
       }),
     ]);
-    setPhase('app');
+    setPhase('paywall');
   }, [saveOnboarding, upsertProfile]);
 
   if (phase === 'loading') {
@@ -195,6 +196,15 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
       <OnboardingFlow
         startStep={2}
         onComplete={handleOnboardingComplete}
+      />
+    );
+  }
+
+  if (phase === 'paywall') {
+    return (
+      <PaywallScreen
+        onClose={() => setPhase('app')}
+        onPurchase={() => setPhase('app')}
       />
     );
   }
