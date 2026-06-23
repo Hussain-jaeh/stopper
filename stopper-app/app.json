@@ -50,7 +50,13 @@
           "photosPermission": "Stopper needs access to your photos to set a profile picture."
         }
       ],
-      "expo-font"
+      "expo-font",
+      ["expo-splash-screen", {
+        "backgroundColor": "#064634",
+        "image": "./assets/splash-icon.png",
+        "imageWidth": 120,
+        "dark": { "backgroundColor": "#064634", "image": "./assets/splash-icon.png" }
+      }]
     ],
     "extra": {
       "eas": {

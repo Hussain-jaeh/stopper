@@ -15,9 +15,7 @@ export function Wordmark({ size = 26, color = colors.white }: WordmarkProps) {
 
 const styles = StyleSheet.create({
   text: {
-    fontFamily: fonts.display,
-    fontWeight: '800',
+    fontFamily: 'BricolageGrotesque_800ExtraBold',
     letterSpacing: -1.2,
-    lineHeight: undefined,
   },
 });

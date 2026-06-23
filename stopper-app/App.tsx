@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as LocalAuthentication from 'expo-local-authentication';
+import * as ExpoSplash from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import {
@@ -26,8 +27,11 @@ import { AuthFlow } from './src/auth/AuthFlow';
 import { OnboardingFlow } from './src/onboarding/OnboardingFlow';
 import { TabNavigator } from './src/navigation/TabNavigator';
 import { OnboardingState } from './src/onboarding/state';
+import { SplashScreen } from './src/components/splash/SplashScreen';
 import { colors } from './src/theme/tokens';
 import { api } from './convex/_generated/api';
+
+ExpoSplash.preventAutoHideAsync().catch(() => {});
 
 // Show alerts and play sound when a notification arrives while the app is foregrounded.
 Notifications.setNotificationHandler({
@@ -64,14 +68,21 @@ export default function App() {
     PlusJakartaSans_700Bold,
     PlusJakartaSans_800ExtraBold,
   });
+  const [bootDone, setBootDone] = useState(false);
+  const [minDone, setMinDone] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
-  if (!fontsLoaded) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator color={colors.jade500} />
-      </View>
-    );
-  }
+  // Hide native splash the moment fonts are ready; animated splash takes over.
+  useEffect(() => {
+    if (fontsLoaded) ExpoSplash.hideAsync().catch(() => {});
+  }, [fontsLoaded]);
+
+  // Dismiss animated splash once BOTH the min duration and boot work are done.
+  useEffect(() => {
+    if (bootDone && minDone) setShowSplash(false);
+  }, [bootDone, minDone]);
+
+  if (!fontsLoaded) return null;
 
   return (
     <SafeAreaProvider>
@@ -79,9 +90,15 @@ export default function App() {
         <NavigationContainer>
           <View style={styles.root}>
             <StatusBar style="light" />
-            <AppContent />
+            <AppContent onBootDone={() => setBootDone(true)} />
           </View>
         </NavigationContainer>
+        {showSplash && (
+          <SplashScreen
+            minDurationMs={1600}
+            onFinish={() => setMinDone(true)}
+          />
+        )}
       </ConvexAuthProvider>
     </SafeAreaProvider>
   );
@@ -114,23 +131,29 @@ function useAppLock() {
   }, [profile]);
 }
 
-function AppContent() {
+function AppContent({ onBootDone }: { onBootDone: () => void }) {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const profile = useQuery(api.users.getMyProfile);
   useAppLock();
   const saveOnboarding = useMutation(api.users.completeOnboarding);
   const upsertProfile = useMutation(api.profiles.upsertProfile);
   const [phase, setPhase] = useState<Phase>('loading');
+  const bootDoneRef = useRef(false);
 
   useEffect(() => {
     if (isLoading) return;
-    if (!isAuthenticated) { setPhase('auth'); return; }
+    if (!isAuthenticated) {
+      setPhase('auth');
+      if (!bootDoneRef.current) { bootDoneRef.current = true; onBootDone(); }
+      return;
+    }
     if (profile === undefined) return; // query still in flight
     setPhase(prev => {
       if (prev === 'loading') return profile?.onboardingComplete ? 'app' : 'onboarding';
       if (prev === 'app' && !isAuthenticated) return 'auth';
       return prev;
     });
+    if (!bootDoneRef.current) { bootDoneRef.current = true; onBootDone(); }
   }, [isLoading, isAuthenticated, profile]);
 
   // Called when user taps "Enter Stopper" on the auth success screen.
