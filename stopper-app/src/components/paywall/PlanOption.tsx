@@ -2,21 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Check } from 'lucide-react-native';
 import { colors, radii } from '../../theme/tokens';
+import { RCPlan } from '../../lib/purchases';
 
-export type Plan = {
-  id: 'weekly' | 'monthly' | 'yearly';
-  label: string;
-  price: number;
-  per: string;
-  sub: string;
-  best?: boolean;
-  perMonth?: number;
-  badge?: string;
-};
-
-export const naira = (n: number) => '₦' + n.toLocaleString('en-NG');
-
-type Props = { plan: Plan; selected: boolean; onSelect: (id: Plan['id']) => void };
+type Props = { plan: RCPlan; selected: boolean; onSelect: (id: string) => void };
 
 export function PlanOption({ plan, selected, onSelect }: Props) {
   return (
@@ -24,7 +12,7 @@ export function PlanOption({ plan, selected, onSelect }: Props) {
       onPress={() => onSelect(plan.id)}
       accessibilityRole="radio"
       accessibilityState={{ selected }}
-      accessibilityLabel={`${plan.label}, ${plan.sub}`}
+      accessibilityLabel={`${plan.label}, ${plan.subLabel}`}
       style={[styles.card, selected ? styles.cardOn : styles.cardOff]}
     >
       {plan.best && plan.badge ? (
@@ -45,21 +33,16 @@ export function PlanOption({ plan, selected, onSelect }: Props) {
 
       <View style={{ flex: 1 }}>
         <Text style={styles.label}>{plan.label}</Text>
-        <Text style={styles.sub}>{plan.sub}</Text>
+        <Text style={styles.sub}>{plan.subLabel}</Text>
       </View>
 
       <View style={{ alignItems: 'flex-end' }}>
-        <Text style={styles.price}>{naira(plan.price)}</Text>
-        <Text style={[styles.per, plan.best && { color: colors.jade300 }]}>
-          {plan.best && plan.perMonth ? `≈ ${naira(plan.perMonth)}/mo` : `/${plan.per}`}
-        </Text>
+        <Text style={styles.price}>{plan.priceString}</Text>
       </View>
     </Pressable>
   );
 }
 
-// Selection is a hard state swap — do NOT animate border/background color.
-// If adding Reanimated animations here, drive transform/opacity only.
 const styles = StyleSheet.create({
   card: { position: 'relative', flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: radii.lg, paddingVertical: 17, paddingHorizontal: 18, borderWidth: 2 },
   cardOn: { backgroundColor: 'rgba(20,184,136,0.12)', borderColor: colors.jade500 },
@@ -70,5 +53,4 @@ const styles = StyleSheet.create({
   label: { fontFamily: 'PlusJakartaSans_700Bold', fontSize: 17, color: colors.white },
   sub: { fontFamily: 'PlusJakartaSans_400Regular', fontSize: 13, color: colors.fgMuted, marginTop: 3 },
   price: { fontFamily: 'BricolageGrotesque_800ExtraBold', fontSize: 19, color: colors.white },
-  per: { fontFamily: 'PlusJakartaSans_400Regular', fontSize: 12, color: colors.fgFaint, marginTop: 2 },
 });

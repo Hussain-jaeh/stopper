@@ -23,6 +23,7 @@ import { ConvexReactClient, useQuery, useMutation } from 'convex/react';
 import * as SecureStore from 'expo-secure-store';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
+import { initPurchases } from './src/lib/purchases';
 import { AuthFlow } from './src/auth/AuthFlow';
 import { OnboardingFlow } from './src/onboarding/OnboardingFlow';
 import { TabNavigator } from './src/navigation/TabNavigator';
@@ -33,6 +34,7 @@ import { colors } from './src/theme/tokens';
 import { api } from './convex/_generated/api';
 
 ExpoSplash.preventAutoHideAsync().catch(() => {});
+initPurchases();
 
 // Show alerts and play sound when a notification arrives while the app is foregrounded.
 Notifications.setNotificationHandler({
@@ -79,9 +81,15 @@ export default function App() {
   }, [fontsLoaded]);
 
   // Dismiss animated splash once BOTH the min duration and boot work are done.
+  // Hard cap of 4 s so the splash never gets stuck if Convex auth stalls.
   useEffect(() => {
     if (bootDone && minDone) setShowSplash(false);
   }, [bootDone, minDone]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setShowSplash(false), 4000);
+    return () => clearTimeout(t);
+  }, []);
 
   if (!fontsLoaded) return null;
 

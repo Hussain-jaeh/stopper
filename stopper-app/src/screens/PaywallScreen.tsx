@@ -1,20 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   X, Crown, Infinity as InfinityIcon, Bot, ChartLine, Users, Bell, ArrowRight,
 } from 'lucide-react-native';
-import { PlanOption, Plan, naira } from '../components/paywall/PlanOption';
+import Purchases, { PurchasesError, PURCHASES_ERROR_CODE } from 'react-native-purchases';
+import { PlanOption } from '../components/paywall/PlanOption';
+import { RCPlan, mapPackages } from '../lib/purchases';
 import { colors, gradients, spacing, shadows } from '../theme/tokens';
-
-const PLANS: Plan[] = [
-  { id: 'weekly',  label: 'Weekly',  price: 5000,  per: 'week',  sub: '₦5,000 billed weekly' },
-  { id: 'yearly',  label: 'Yearly',  price: 56000, per: 'year',  sub: '₦56,000 billed yearly', best: true, perMonth: 4667, badge: 'Best value · Save 78%' },
-  { id: 'monthly', label: 'Monthly', price: 7800,  per: 'month', sub: '₦7,800 billed monthly' },
-];
-const ORDER: Plan['id'][] = ['weekly', 'yearly', 'monthly'];
 
 const BENEFITS: [React.ComponentType<any>, string][] = [
   [InfinityIcon, 'Unlimited panic-mode support'],
@@ -31,12 +26,60 @@ interface Props {
 
 export function PaywallScreen({ onClose, onPurchase }: Props) {
   const insets = useSafeAreaInsets();
-  const [sel, setSel] = useState<Plan['id']>('yearly');
-  const plan = PLANS.find(p => p.id === sel)!;
+  const [plans, setPlans] = useState<RCPlan[]>([]);
+  const [selId, setSelId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [purchasing, setPurchasing] = useState(false);
+  const [restoring, setRestoring] = useState(false);
 
-  // TODO: wire RevenueCat — onPurchase → Purchases.purchasePackage(pkgFor(sel))
-  // TODO: onRestore → Purchases.restorePurchases()
-  const onRestore = () => {};
+  useEffect(() => {
+    Purchases.getOfferings()
+      .then(offerings => {
+        const pkgs = offerings.current?.availablePackages ?? [];
+        const mapped = mapPackages(pkgs);
+        setPlans(mapped);
+        const best = mapped.find(p => p.best) ?? mapped[0];
+        if (best) setSelId(best.id);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const selected = plans.find(p => p.id === selId);
+
+  const handlePurchase = async () => {
+    if (!selected || purchasing) return;
+    setPurchasing(true);
+    try {
+      await Purchases.purchasePackage(selected.pkg);
+      onPurchase();
+    } catch (e) {
+      const err = e as PurchasesError;
+      if (err.code !== PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
+        Alert.alert('Purchase failed', err.message ?? 'Something went wrong. Please try again.');
+      }
+    } finally {
+      setPurchasing(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (restoring) return;
+    setRestoring(true);
+    try {
+      const info = await Purchases.restorePurchases();
+      const active = Object.keys(info.entitlements.active).length > 0;
+      if (active) {
+        onPurchase();
+      } else {
+        Alert.alert('No active subscription', 'We could not find an active subscription linked to your account.');
+      }
+    } catch {
+      Alert.alert('Restore failed', 'Something went wrong. Please try again.');
+    } finally {
+      setRestoring(false);
+    }
+  };
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -69,30 +112,46 @@ export function PaywallScreen({ onClose, onPurchase }: Props) {
           ))}
         </View>
 
-        <View style={{ gap: 13 }}>
-          {ORDER.map(id => {
-            const p = PLANS.find(x => x.id === id)!;
-            return <PlanOption key={id} plan={p} selected={sel === id} onSelect={setSel} />;
-          })}
-        </View>
+        {loading ? (
+          <ActivityIndicator color={colors.jade500} style={{ marginVertical: 24 }} />
+        ) : (
+          <View style={{ gap: 13 }}>
+            {plans.map(plan => (
+              <PlanOption key={plan.id} plan={plan} selected={selId === plan.id} onSelect={setSelId} />
+            ))}
+          </View>
+        )}
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 14 }]}>
-        <Pressable onPress={onPurchase} accessibilityRole="button" style={shadows.glowCta}>
+        <Pressable
+          onPress={handlePurchase}
+          disabled={!selected || purchasing || loading}
+          accessibilityRole="button"
+          style={[shadows.glowCta, (!selected || purchasing || loading) && { opacity: 0.6 }]}
+        >
           <LinearGradient colors={gradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cta}>
-            <Text style={styles.ctaTxt}>Start {plan.label} — {naira(plan.price)}</Text>
-            <ArrowRight size={20} color={colors.white} />
+            {purchasing ? (
+              <ActivityIndicator color={colors.white} />
+            ) : (
+              <>
+                <Text style={styles.ctaTxt}>
+                  {selected ? `Start ${selected.label} — ${selected.priceString}` : 'Loading…'}
+                </Text>
+                <ArrowRight size={20} color={colors.white} />
+              </>
+            )}
           </LinearGradient>
         </Pressable>
         <View style={styles.metaRow}>
           <Text style={styles.meta}>Cancel anytime</Text>
           <Text style={styles.meta}>·</Text>
-          <Pressable onPress={onRestore}>
-            <Text style={[styles.meta, styles.link]}>Restore purchase</Text>
+          <Pressable onPress={handleRestore} disabled={restoring}>
+            <Text style={[styles.meta, styles.link]}>{restoring ? 'Restoring…' : 'Restore purchase'}</Text>
           </Pressable>
         </View>
         <Text style={styles.fine}>
-          Billed in Nigerian Naira. Renews automatically until cancelled. Terms apply.
+          Renews automatically until cancelled. Manage in App Store Settings. Terms apply.
         </Text>
       </View>
     </View>
