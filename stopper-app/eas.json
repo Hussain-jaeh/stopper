@@ -13,7 +13,8 @@
       "env": {
         "EXPO_PUBLIC_CONVEX_URL": "https://perceptive-sockeye-386.convex.cloud",
         "EXPO_PUBLIC_CONVEX_SITE_URL": "https://perceptive-sockeye-386.convex.site",
-        "EXPO_PUBLIC_APP_API_SECRET": "02642584528a6c37201e4f101b5b93393e4d191ae7004786"
+        "EXPO_PUBLIC_APP_API_SECRET": "02642584528a6c37201e4f101b5b93393e4d191ae7004786",
+        "EXPO_PUBLIC_RC_IOS_KEY": "appl_EDtZmeYOBhXWVWBNmZZmOlaKvAE"
       }
     },
     "production": {
@@ -21,7 +22,8 @@
       "env": {
         "EXPO_PUBLIC_CONVEX_URL": "https://perceptive-sockeye-386.convex.cloud",
         "EXPO_PUBLIC_CONVEX_SITE_URL": "https://perceptive-sockeye-386.convex.site",
-        "EXPO_PUBLIC_APP_API_SECRET": "02642584528a6c37201e4f101b5b93393e4d191ae7004786"
+        "EXPO_PUBLIC_APP_API_SECRET": "02642584528a6c37201e4f101b5b93393e4d191ae7004786",
+        "EXPO_PUBLIC_RC_IOS_KEY": "appl_EDtZmeYOBhXWVWBNmZZmOlaKvAE"
       }
     }
   },

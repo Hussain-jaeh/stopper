@@ -91,7 +91,14 @@ export default function App() {
     return () => clearTimeout(t);
   }, []);
 
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded || showSplash) {
+    return (
+      <SplashScreen
+        minDurationMs={1600}
+        onFinish={() => setMinDone(true)}
+      />
+    );
+  }
 
   return (
     <SafeAreaProvider>
@@ -103,12 +110,6 @@ export default function App() {
           </View>
         </NavigationContainer>
       </ConvexAuthProvider>
-      {showSplash && (
-        <SplashScreen
-          minDurationMs={1600}
-          onFinish={() => setMinDone(true)}
-        />
-      )}
     </SafeAreaProvider>
   );
 }

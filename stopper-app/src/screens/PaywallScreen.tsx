@@ -24,11 +24,16 @@ interface Props {
   onPurchase: () => void;
 }
 
+const PREVIEW_PLANS: RCPlan[] = [
+  { pkg: null as any, id: 'weekly',  label: 'Weekly',  priceString: '$4.99', subLabel: '$4.99 billed weekly',  best: false },
+  { pkg: null as any, id: 'monthly', label: 'Monthly', priceString: '$7.99', subLabel: '$7.99 billed monthly', best: true, badge: 'Best value' },
+];
+
 export function PaywallScreen({ onClose, onPurchase }: Props) {
   const insets = useSafeAreaInsets();
-  const [plans, setPlans] = useState<RCPlan[]>([]);
-  const [selId, setSelId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [plans, setPlans] = useState<RCPlan[]>(PREVIEW_PLANS);
+  const [selId, setSelId] = useState<string | null>('monthly');
+  const [loading, setLoading] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
   const [restoring, setRestoring] = useState(false);
 
@@ -37,9 +42,12 @@ export function PaywallScreen({ onClose, onPurchase }: Props) {
       .then(offerings => {
         const pkgs = offerings.current?.availablePackages ?? [];
         const mapped = mapPackages(pkgs);
-        setPlans(mapped);
-        const best = mapped.find(p => p.best) ?? mapped[0];
-        if (best) setSelId(best.id);
+        // Only use RC data when both weekly and monthly are configured
+        if (mapped.length >= 2) {
+          setPlans(mapped);
+          const best = mapped.find(p => p.best) ?? mapped[0];
+          if (best) setSelId(best.id);
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
