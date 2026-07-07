@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ShieldCheck, Mail } from 'lucide-react-native';
 import { PrimaryButton, Wordmark, DotTexture } from '../../components/primitives';
 import { SocialButton } from '../components/SocialButton';
@@ -15,8 +16,9 @@ interface Props {
 }
 
 export function AuthLandingScreen({ onApple, onGoogle, onEmail, onSignIn, loading }: Props) {
+  const insets = useSafeAreaInsets();
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { paddingTop: insets.top + 10 }]}>
       <DotTexture />
       <View style={styles.top}><Wordmark size={26} /></View>
 
@@ -44,7 +46,7 @@ export function AuthLandingScreen({ onApple, onGoogle, onEmail, onSignIn, loadin
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 24, paddingTop: 10, paddingBottom: 26 },
+  screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 24, paddingBottom: 26 },
   top: { alignItems: 'center', paddingTop: 10 },
   hero: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   h1: { fontFamily: fonts.display, fontWeight: '800', fontSize: 30, color: colors.white, letterSpacing: -0.3, marginTop: 20 },

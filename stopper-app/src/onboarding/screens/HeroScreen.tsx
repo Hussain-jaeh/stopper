@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Sprout } from 'lucide-react-native';
 import { Wordmark, PrimaryButton, DotTexture, PulseHero, PressRow, Dots } from '../../components/primitives';
 import { colors, fonts } from '../../theme/tokens';
@@ -10,10 +11,11 @@ interface HeroScreenProps {
 }
 
 export function HeroScreen({ onNext }: HeroScreenProps) {
+  const insets = useSafeAreaInsets();
   return (
     <View style={styles.screen}>
       <DotTexture />
-      <View style={styles.inner}>
+      <View style={[styles.inner, { paddingTop: insets.top + 18 }]}>
         {/* Wordmark */}
         <View style={styles.topBar}>
           <Wordmark size={26} />
@@ -66,7 +68,6 @@ const styles = StyleSheet.create({
   inner: {
     flex: 1,
     padding: 24,
-    paddingTop: 18,
     paddingBottom: 26,
   },
   topBar: {

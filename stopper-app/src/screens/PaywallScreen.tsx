@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
-  X, Crown, Infinity as InfinityIcon, Bot, ChartLine, Users, Bell, ArrowRight,
+  Crown, Infinity as InfinityIcon, Bot, ChartLine, Users, Bell, ArrowRight,
 } from 'lucide-react-native';
 import Purchases, { PurchasesError, PURCHASES_ERROR_CODE } from 'react-native-purchases';
 import { PlanOption } from '../components/paywall/PlanOption';
@@ -20,19 +20,17 @@ const BENEFITS: [React.ComponentType<any>, string][] = [
 ];
 
 interface Props {
-  onClose: () => void;
   onPurchase: () => void;
 }
 
 const PREVIEW_PLANS: RCPlan[] = [
-  { pkg: null as any, id: 'weekly',  label: 'Weekly',  priceString: '$4.99', subLabel: '$4.99 billed weekly',  best: false },
   { pkg: null as any, id: 'monthly', label: 'Monthly', priceString: '$7.99', subLabel: '$7.99 billed monthly', best: true, badge: 'Best value' },
 ];
 
-export function PaywallScreen({ onClose, onPurchase }: Props) {
+export function PaywallScreen({ onPurchase }: Props) {
   const insets = useSafeAreaInsets();
   const [plans, setPlans] = useState<RCPlan[]>(PREVIEW_PLANS);
-  const [selId, setSelId] = useState<string | null>('monthly');
+  const [selId, setSelId] = useState<string | null>(PREVIEW_PLANS[0].id);
   const [loading, setLoading] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -42,8 +40,7 @@ export function PaywallScreen({ onClose, onPurchase }: Props) {
       .then(offerings => {
         const pkgs = offerings.current?.availablePackages ?? [];
         const mapped = mapPackages(pkgs);
-        // Only use RC data when both weekly and monthly are configured
-        if (mapped.length >= 2) {
+        if (mapped.length >= 1) {
           setPlans(mapped);
           const best = mapped.find(p => p.best) ?? mapped[0];
           if (best) setSelId(best.id);
@@ -57,6 +54,10 @@ export function PaywallScreen({ onClose, onPurchase }: Props) {
 
   const handlePurchase = async () => {
     if (!selected || purchasing) return;
+    if (!selected.pkg) {
+      Alert.alert('Pricing unavailable', 'Could not load pricing from the App Store. Please check your connection and try again.');
+      return;
+    }
     setPurchasing(true);
     try {
       await Purchases.purchasePackage(selected.pkg);
@@ -95,12 +96,6 @@ export function PaywallScreen({ onClose, onPurchase }: Props) {
         contentContainerStyle={{ paddingHorizontal: spacing.screenPad, paddingBottom: 16 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.closeRow}>
-          <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" style={styles.close}>
-            <X size={18} color={colors.fgMuted} />
-          </Pressable>
-        </View>
-
         <Animated.View entering={FadeInDown.duration(500)} style={{ alignItems: 'center' }}>
           <LinearGradient colors={gradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.crown}>
             <Crown size={31} color={colors.white} />
@@ -168,8 +163,6 @@ export function PaywallScreen({ onClose, onPurchase }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  closeRow: { flexDirection: 'row', justifyContent: 'flex-end', paddingTop: 4 },
-  close: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface1, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   crown: { width: 64, height: 64, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
   title: { fontFamily: 'BricolageGrotesque_800ExtraBold', fontSize: 27, color: colors.white, marginTop: 18, textAlign: 'center' },
   subtitle: { fontFamily: 'PlusJakartaSans_400Regular', fontSize: 15.5, color: colors.fgMuted, marginTop: 10, textAlign: 'center', paddingHorizontal: 18, lineHeight: 21 },

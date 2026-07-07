@@ -212,7 +212,6 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
   if (phase === 'paywall') {
     return (
       <PaywallScreen
-        onClose={() => setPhase('app')}
         onPurchase={() => setPhase('app')}
       />
     );
