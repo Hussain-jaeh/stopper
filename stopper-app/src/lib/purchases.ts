@@ -1,9 +1,11 @@
 import Purchases, { LOG_LEVEL, PACKAGE_TYPE as PackageType, PurchasesPackage } from 'react-native-purchases';
 import { Platform } from 'react-native';
 
+const RC_IOS_KEY = 'appl_EDtZmeYOBhXWVWBNmZZmOlaKvAE';
+
 export function initPurchases() {
   if (Platform.OS !== 'ios') return;
-  Purchases.configure({ apiKey: process.env.EXPO_PUBLIC_RC_IOS_KEY! });
+  Purchases.configure({ apiKey: RC_IOS_KEY });
 }
 
 export type RCPlan = {
