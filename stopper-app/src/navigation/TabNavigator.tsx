@@ -11,6 +11,19 @@ import { CommunityScreen } from '../screens/CommunityScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { PlanScreen } from '../screens/PlanScreen';
 import { PanicScreen } from '../screens/PanicScreen';
+// Lazy-loaded so expo-camera / expo-video only initialise when navigated to
+function VaultScreenLazy() {
+  const { VaultScreen } = require('../screens/VaultScreen');
+  return <VaultScreen />;
+}
+function VaultRecordLazy() {
+  const { VaultRecordScreen } = require('../screens/VaultRecordScreen');
+  return <VaultRecordScreen />;
+}
+function VaultPlayLazy() {
+  const { VaultPlayScreen } = require('../screens/VaultPlayScreen');
+  return <VaultPlayScreen />;
+}
 import { SosButton } from '../components/panic/SosButton';
 import { colors } from '../constants/colors';
 import { type } from '../constants/typography';
@@ -18,6 +31,9 @@ import { type } from '../constants/typography';
 export type RootStackParamList = {
   Tabs: undefined;
   Panic: undefined;
+  Vault: undefined;
+  VaultRecord: undefined;
+  VaultPlay: { uri: string; title?: string; day?: number };
 };
 
 export type TabParamList = {
@@ -58,6 +74,21 @@ export function TabNavigator({ onStartOnboarding }: Props) {
       <RootStack.Screen
         name="Panic"
         component={PanicScreen}
+        options={{ presentation: 'fullScreenModal', animation: 'fade' }}
+      />
+      <RootStack.Screen
+        name="Vault"
+        component={VaultScreenLazy}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <RootStack.Screen
+        name="VaultRecord"
+        component={VaultRecordLazy}
+        options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', orientation: 'portrait' }}
+      />
+      <RootStack.Screen
+        name="VaultPlay"
+        component={VaultPlayLazy}
         options={{ presentation: 'fullScreenModal', animation: 'fade' }}
       />
     </RootStack.Navigator>

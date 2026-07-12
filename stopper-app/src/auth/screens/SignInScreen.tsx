@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton, DotTexture, CircleBack } from '../../components/primitives';
 import { AuthField } from '../components/AuthField';
 import { SocialButton } from '../components/SocialButton';
@@ -19,10 +20,11 @@ interface Props {
 }
 
 export function SignInScreen({ state, setState, onBack, onSignedIn, onForgot, onApple, onGoogle, loading }: Props) {
+  const insets = useSafeAreaInsets();
   const valid = isValidEmail(state.email) && (state.password || '').length >= 1;
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { paddingTop: insets.top + 10 }]}>
       <DotTexture />
       <View style={styles.header}><CircleBack onBack={onBack} /></View>
       <View style={styles.intro}>
@@ -52,7 +54,7 @@ export function SignInScreen({ state, setState, onBack, onSignedIn, onForgot, on
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 24, paddingTop: 10, paddingBottom: 26 },
+  screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 24, paddingBottom: 26 },
   header: { paddingVertical: 4 },
   intro: { paddingTop: 10 },
   h1: { fontFamily: fonts.display, fontWeight: '800', fontSize: 30, color: colors.white, letterSpacing: -0.3 },

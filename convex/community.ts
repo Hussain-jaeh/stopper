@@ -109,7 +109,7 @@ export const getFeed = query({
       Promise.all(
         uniqueCircleIds.map(async (cid) => {
           const c = await ctx.db.get(cid as any);
-          return [cid, c?.name ?? "Recovery"] as const;
+          return [cid, (c as any)?.name ?? "Recovery"] as const;
         }),
       ),
       // MVP: bounded take for cheer count; replace with denormalized counter at scale.

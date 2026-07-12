@@ -3,6 +3,7 @@ import { View, Text, Animated, StyleSheet } from 'react-native';
 import { BellRing } from 'lucide-react-native';
 import { CircleBack, PrimaryButton, SkipLink, DotTexture } from '../../components/primitives';
 import { colors, fonts } from '../../theme/tokens';
+import { scheduleReminder } from '../../notifications/reminders';
 
 interface NotificationsScreenProps {
   onBack: () => void;
@@ -39,7 +40,7 @@ export function NotificationsScreen({ onBack, onNext }: NotificationsScreenProps
         </Text>
       </View>
       <View style={[styles.cta, { zIndex: 1 }]}>
-        <PrimaryButton onPress={onNext}>Enable notifications</PrimaryButton>
+        <PrimaryButton onPress={async () => { await scheduleReminder(); onNext(); }}>Enable notifications</PrimaryButton>
         <SkipLink onPress={onNext}>Not now</SkipLink>
       </View>
     </View>

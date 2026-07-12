@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useMutation } from 'convex/react';
 import { X } from 'lucide-react-native';
 import { api } from '../../convex/_generated/api';
@@ -10,28 +11,51 @@ import {
   IntroStep, WhyStep, RedirectStep, WinStep, RelapseStep, ResetStep, PanicProfile,
 } from '../components/panic/PanicSteps';
 import { PanicCta, TextButton } from '../components/panic/PanicChrome';
+import { CravingVaultPrompt } from '../components/vault/VaultPrompts';
+import { scheduleMilestoneNotifications } from '../notifications/reminders';
 import { colors } from '../constants/colors';
+import { RootStackParamList } from '../navigation/TabNavigator';
 
-type Step = 'intro' | 'breathe' | 'why' | 'redirect' | 'outcome' | 'win' | 'relapse' | 'reset';
+type Nav = NativeStackNavigationProp<RootStackParamList>;
+type Step = 'vault' | 'intro' | 'breathe' | 'why' | 'redirect' | 'outcome' | 'win' | 'relapse' | 'reset';
 
 export function PanicScreen() {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
-  const [step, setStep] = useState<Step>('intro');
+  const navigation = useNavigation<Nav>();
+  const [step, setStep] = useState<Step>('vault');
 
   const p = (useQuery(api.panic.getContext) ?? {
     streak: 0, longest: 0, habit: '', reason: '',
   }) as PanicProfile;
+  const latest = useQuery(api.vault.latestRecording);
   const logResistedUrge = useMutation(api.panic.logResistedUrge);
   const logRelapse = useMutation(api.panic.logRelapse);
+
+  useEffect(() => {
+    if (latest === null && step === 'vault') setStep('intro');
+  }, [latest, step]);
 
   const close = () => navigation.goBack();
 
   const onMadeIt = () => { logResistedUrge(); setStep('win'); };
-  const onReset = (trigger?: string) => { logRelapse({ trigger }); setStep('reset'); };
+  const onReset = (trigger?: string) => {
+    logRelapse({ trigger });
+    scheduleMilestoneNotifications(Date.now()).catch(() => {});
+    setStep('reset');
+  };
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      {step === 'vault' && latest && (
+        <CravingVaultPrompt
+          latest={latest as any}
+          onWatch={() => {
+            setStep('intro');
+            navigation.navigate('VaultPlay', { uri: latest.videoUri ?? '', title: latest.title, day: latest.day });
+          }}
+          onSkip={() => setStep('intro')}
+        />
+      )}
       {step === 'intro' && <IntroStep onStart={() => setStep('breathe')} onClose={close} />}
       {step === 'breathe' && <BreatheStep onDone={() => setStep('why')} onSkip={() => setStep('why')} />}
       {step === 'why' && <WhyStep p={p} onNext={() => setStep('redirect')} onClose={close} />}

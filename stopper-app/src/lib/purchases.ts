@@ -1,7 +1,7 @@
 import Purchases, { LOG_LEVEL, PACKAGE_TYPE as PackageType, PurchasesPackage } from 'react-native-purchases';
 import { Platform } from 'react-native';
 
-const RC_IOS_KEY = 'appl_EDtZmeYOBhXWVWBNmZZmOlaKvAE';
+const RC_IOS_KEY = 'appl_CxdiKAfrMSKPunCqwXIwBXDsTgr';
 
 export function initPurchases() {
   if (Platform.OS !== 'ios') return;

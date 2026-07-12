@@ -2,6 +2,8 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { ScrollView, View, StyleSheet, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation } from 'convex/react';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api } from '../../convex/_generated/api';
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
 import { StreakCard } from '../components/dashboard/StreakCard';
@@ -11,8 +13,13 @@ import { MotivationCard, QUOTES } from '../components/dashboard/MotivationCard';
 import { CheckInCard } from '../components/dashboard/CheckInCard';
 import { CheckInModal } from '../components/dashboard/CheckInModal';
 import { DashboardSkeleton, EmptyState } from '../components/dashboard/states';
+import { FutureYouCard, Recording } from '../components/vault/FutureYouCard';
+import { MilestoneRecordPrompt } from '../components/vault/VaultPrompts';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
+import { RootStackParamList } from '../navigation/TabNavigator';
+
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 type Props = {
   onStartOnboarding: () => void;
@@ -20,11 +27,15 @@ type Props = {
 
 export function DashboardScreen({ onStartOnboarding }: Props) {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<Nav>();
   const data = useQuery(api.dashboard.getDashboard);
   const checkIn = useMutation(api.checkins.createCheckIn);
+  const latestRecording = useQuery(api.vault.latestRecording);
+  const claimMilestone = useMutation(api.vault.claimMilestonePrompt);
 
   const [refreshing, setRefreshing] = useState(false);
   const [checkInVisible, setCheckInVisible] = useState(false);
+  const [milestoneDay, setMilestoneDay] = useState<number | null>(null);
 
   const quote = useMemo(() => QUOTES[Math.floor(Math.random() * QUOTES.length)], []);
 
@@ -36,7 +47,9 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
   const handleCheckIn = useCallback(async (mood:
      string, cravingLevel: number, note?: string) => {
     await checkIn({ mood, cravingLevel, note });
-  }, [checkIn]);
+    const day = await claimMilestone();
+    if (day) setTimeout(() => setMilestoneDay(day), 400);
+  }, [checkIn, claimMilestone]);
 
   const content = (() => {
     if (data === undefined) return <DashboardSkeleton />;
@@ -66,7 +79,14 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
           totalRelapses={data.totalRelapses}
           index={4}
         />
-        <MotivationCard quote={quote} index={5} />
+        <FutureYouCard
+          latest={latestRecording ?? undefined}
+          onRecord={() => navigation.navigate('VaultRecord')}
+          onWatch={(r: Recording) => navigation.navigate('VaultPlay', { uri: r.videoUri ?? '', title: r.title, day: r.day })}
+          onViewAll={() => navigation.navigate('Vault')}
+          index={5}
+        />
+        <MotivationCard quote={quote} index={6} />
       </View>
     );
   })();
@@ -101,6 +121,12 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
           onSubmit={handleCheckIn}
         />
       )}
+      <MilestoneRecordPrompt
+        visible={milestoneDay !== null && !checkInVisible}
+        day={milestoneDay ?? 0}
+        onRecord={() => { setMilestoneDay(null); navigation.navigate('VaultRecord'); }}
+        onLater={() => setMilestoneDay(null)}
+      />
     </>
   );
 }

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "stopper-app",
+    "name": "Stopper",
     "slug": "stopper-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -59,7 +59,15 @@
           "imageWidth": 120
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Stopper uses your camera so you can record a private message to your future self.",
+          "microphonePermission": "Stopper uses your microphone to record the audio of your private message."
+        }
+      ],
+      "expo-video"
     ],
     "extra": {
       "eas": {

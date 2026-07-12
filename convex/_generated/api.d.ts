@@ -27,6 +27,8 @@ import type * as users from "../users.js";
 import type * as validators_checkin from "../validators/checkin.js";
 import type * as validators_profile from "../validators/profile.js";
 import type * as validators_relapse from "../validators/relapse.js";
+import type * as validators_vault from "../validators/vault.js";
+import type * as vault from "../vault.js";
 
 import type {
   ApiFromModules,
@@ -54,6 +56,8 @@ declare const fullApi: ApiFromModules<{
   "validators/checkin": typeof validators_checkin;
   "validators/profile": typeof validators_profile;
   "validators/relapse": typeof validators_relapse;
+  "validators/vault": typeof validators_vault;
+  vault: typeof vault;
 }>;
 
 /**

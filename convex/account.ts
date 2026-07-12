@@ -51,7 +51,7 @@ export const deleteAccount = mutation({
   handler: async (ctx) => {
     const userId = await requireAuth(ctx);
 
-    const [userProfile, recoveryProfile, checkIns, relapses, memberships, posts, cheers] =
+    const [userProfile, recoveryProfile, checkIns, relapses, memberships, posts, cheers, recordings] =
       await Promise.all([
         ctx.db.query("userProfiles").withIndex("by_userId", (q) => q.eq("userId", userId)).unique(),
         ctx.db.query("profiles").withIndex("by_userId", (q) => q.eq("userId", userId)).unique(),
@@ -60,11 +60,18 @@ export const deleteAccount = mutation({
         ctx.db.query("circleMemberships").withIndex("by_userId", (q) => q.eq("userId", userId)).take(100),
         ctx.db.query("posts").withIndex("by_userId", (q) => q.eq("userId", userId)).take(1000),
         ctx.db.query("postCheers").withIndex("by_userId", (q) => q.eq("userId", userId)).take(2000),
+        ctx.db.query("recordings").withIndex("by_userId_createdAt", (q) => q.eq("userId", userId)).take(500),
       ]);
 
     // Delete avatar from file storage before removing the profile
     if (userProfile?.avatarStorageId) {
       await ctx.storage.delete(userProfile.avatarStorageId);
+    }
+
+    // Purge vault video + thumbnail files (privacy: nothing may outlive the account)
+    for (const rec of recordings) {
+      await ctx.storage.delete(rec.storageId);
+      if (rec.thumbStorageId) await ctx.storage.delete(rec.thumbStorageId);
     }
 
     const toDelete = [
@@ -75,6 +82,7 @@ export const deleteAccount = mutation({
       ...memberships.map((d) => d._id),
       ...posts.map((d) => d._id),
       ...cheers.map((d) => d._id),
+      ...recordings.map((d) => d._id),
     ];
 
     await Promise.all(toDelete.map((id) => ctx.db.delete(id)));

@@ -29,9 +29,22 @@ export default defineSchema({
     reasonForQuitting: v.string(),
     goal: v.optional(v.string()),
     resistedUrges: v.optional(v.number()),
+    // Milestone days (7/30/90/365) for which the vault record prompt has fired.
+    promptedVaultMilestones: v.optional(v.array(v.number())),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_userId", ["userId"]),
+
+  // Private "Message to Future You" video vault. Strictly per-user; no sharing surface.
+  recordings: defineTable({
+    userId: v.id("users"),
+    title: v.string(),
+    day: v.number(), // recovery day at record time (server-computed)
+    durationSeconds: v.number(),
+    storageId: v.id("_storage"),
+    thumbStorageId: v.optional(v.id("_storage")),
+    createdAt: v.number(),
+  }).index("by_userId_createdAt", ["userId", "createdAt"]),
 
   // One check-in per user per calendar day.
   checkIns: defineTable({

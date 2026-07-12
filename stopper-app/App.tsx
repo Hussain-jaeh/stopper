@@ -23,7 +23,9 @@ import { ConvexReactClient, useQuery, useMutation } from 'convex/react';
 import * as SecureStore from 'expo-secure-store';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
+import Purchases from 'react-native-purchases';
 import { initPurchases } from './src/lib/purchases';
+import { scheduleMilestoneNotifications } from './src/notifications/reminders';
 import { AuthFlow } from './src/auth/AuthFlow';
 import { OnboardingFlow } from './src/onboarding/OnboardingFlow';
 import { TabNavigator } from './src/navigation/TabNavigator';
@@ -149,6 +151,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
   const upsertProfile = useMutation(api.profiles.upsertProfile);
   const [phase, setPhase] = useState<Phase>('loading');
   const bootDoneRef = useRef(false);
+  const rcCheckedRef = useRef(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -157,13 +160,30 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
       if (!bootDoneRef.current) { bootDoneRef.current = true; onBootDone(); }
       return;
     }
-    if (profile === undefined) return; // query still in flight
-    setPhase(prev => {
-      if (prev === 'loading') return profile?.onboardingComplete ? 'app' : 'onboarding';
-      if (prev === 'app' && !isAuthenticated) return 'auth';
-      return prev;
-    });
-    if (!bootDoneRef.current) { bootDoneRef.current = true; onBootDone(); }
+    if (profile === undefined) return;
+
+    if (!profile?.onboardingComplete) {
+      setPhase(prev => prev === 'loading' ? 'onboarding' : prev);
+      if (!bootDoneRef.current) { bootDoneRef.current = true; onBootDone(); }
+      return;
+    }
+
+    // Onboarding complete — check subscription once per session
+    if (rcCheckedRef.current) {
+      if (!bootDoneRef.current) { bootDoneRef.current = true; onBootDone(); }
+      return;
+    }
+    rcCheckedRef.current = true;
+
+    Purchases.getCustomerInfo()
+      .then(info => {
+        const hasSub = Object.keys(info.entitlements.active).length > 0;
+        setPhase(hasSub ? 'app' : 'paywall');
+      })
+      .catch(() => setPhase('paywall'))
+      .finally(() => {
+        if (!bootDoneRef.current) { bootDoneRef.current = true; onBootDone(); }
+      });
   }, [isLoading, isAuthenticated, profile]);
 
   // Called when user taps "Enter Stopper" on the auth success screen.
@@ -171,12 +191,13 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
   // effect above will settle it once the query resolves.
   const handleAuthenticated = useCallback(() => {
     if (profile === undefined) { setPhase('loading'); return; }
-    setPhase(profile?.onboardingComplete ? 'app' : 'onboarding');
+    setPhase(profile?.onboardingComplete ? 'loading' : 'onboarding');
   }, [profile]);
 
   const handleOnboardingComplete = useCallback(async (state: OnboardingState) => {
     const addictionType = [...state.overcome][0] ?? 'other';
     const reasonForQuitting = [...state.reasons][0] ?? 'personal growth';
+    const quitDate = Date.now();
     await Promise.all([
       saveOnboarding({
         habitType: addictionType,
@@ -185,10 +206,11 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
       }),
       upsertProfile({
         addictionType,
-        quitDate: Date.now(),
+        quitDate,
         reasonForQuitting,
       }),
     ]);
+    scheduleMilestoneNotifications(quitDate).catch(() => {});
     setPhase('paywall');
   }, [saveOnboarding, upsertProfile]);
 
