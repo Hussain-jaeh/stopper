@@ -13,7 +13,7 @@
  *   await update({ goal: "Stay clean for 90 days" });
  */
 
-import { ConvexError } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./lib/auth";
 import {
@@ -75,6 +75,24 @@ export const upsertProfile = mutation({
     } else {
       await ctx.db.insert("profiles", { userId, ...args, createdAt: now, updatedAt: now });
     }
+  },
+});
+
+export const updateSpending = mutation({
+  args: {
+    spendingAmount: v.optional(v.number()),
+    spendingFrequency: v.optional(v.union(v.literal("daily"), v.literal("weekly"), v.literal("monthly"))),
+    currency: v.optional(v.string()),
+    trackingEnabled: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+    const existing = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (!existing) throw new ConvexError("Profile not found");
+    await ctx.db.patch(existing._id, { ...args, updatedAt: Date.now() });
   },
 });
 

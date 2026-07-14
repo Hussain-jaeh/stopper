@@ -31,6 +31,11 @@ export default defineSchema({
     resistedUrges: v.optional(v.number()),
     // Milestone days (7/30/90/365) for which the vault record prompt has fired.
     promptedVaultMilestones: v.optional(v.array(v.number())),
+    // Money tracking — savings are derived client-side from quitDate; never stored as a running total.
+    spendingAmount: v.optional(v.number()),
+    spendingFrequency: v.optional(v.union(v.literal("daily"), v.literal("weekly"), v.literal("monthly"))),
+    currency: v.optional(v.string()),
+    trackingEnabled: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_userId", ["userId"]),
