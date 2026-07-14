@@ -149,6 +149,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
   useAppLock();
   const saveOnboarding = useMutation(api.users.completeOnboarding);
   const upsertProfile = useMutation(api.profiles.upsertProfile);
+  const updateSpending = useMutation(api.profiles.updateSpending);
   const [phase, setPhase] = useState<Phase>('loading');
   const bootDoneRef = useRef(false);
   const rcCheckedRef = useRef(false);
@@ -195,24 +196,41 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
   }, [profile]);
 
   const handleOnboardingComplete = useCallback(async (state: OnboardingState) => {
+    setPhase('loading');
+    rcCheckedRef.current = true;
+
     const addictionType = [...state.overcome][0] ?? 'other';
     const reasonForQuitting = [...state.reasons][0] ?? 'personal growth';
     const quitDate = Date.now();
-    await Promise.all([
-      saveOnboarding({
-        habitType: addictionType,
-        displayName: state.name || undefined,
-        age: state.age || undefined,
-      }),
-      upsertProfile({
-        addictionType,
-        quitDate,
-        reasonForQuitting,
-      }),
-    ]);
-    scheduleMilestoneNotifications(quitDate).catch(() => {});
+
+    try {
+      await Promise.all([
+        saveOnboarding({
+          habitType: addictionType,
+          displayName: state.name || undefined,
+          age: state.age || undefined,
+        }),
+        upsertProfile({
+          addictionType,
+          quitDate,
+          reasonForQuitting,
+        }),
+      ]);
+      if (state.trackingEnabled && state.spendingAmount) {
+        await updateSpending({
+          spendingAmount: state.spendingAmount,
+          spendingFrequency: state.spendingFrequency || 'monthly',
+          currency: state.spendingCurrency || 'USD',
+          trackingEnabled: true,
+        });
+      }
+      scheduleMilestoneNotifications(quitDate).catch(() => {});
+    } catch {
+      // mutations failed — continue to paywall anyway
+    }
+
     setPhase('paywall');
-  }, [saveOnboarding, upsertProfile]);
+  }, [saveOnboarding, upsertProfile, updateSpending]);
 
   if (phase === 'loading') {
     return (

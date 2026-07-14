@@ -27,6 +27,7 @@ import { NotificationsScreen } from './screens/NotificationsScreen';
 import { PlanScreen } from './screens/PlanScreen';
 import { StreakScreen } from './screens/StreakScreen';
 import { FinalScreen } from './screens/FinalScreen';
+import { SpendingStep, SpendingValue } from './screens/SpendingStep';
 
 // Progress bar spans screens 3–16 (overcome → profile, 0-indexed)
 const PROGRESS_START = 3;
@@ -72,14 +73,22 @@ export function OnboardingFlow({ startStep, onComplete, onSignIn }: OnboardingFl
     14: <AccountabilityScreen pct={pct} onBack={back} onNext={next} state={state} setState={setState} />,
     15: <SymptomsScreen onBack={back} onNext={next} state={state} setState={setState} />,
     16: <ProfileScreen pct={pct} onBack={back} onNext={next} state={state} setState={setState} />,
-    17: <AnalyzingScreen onNext={next} state={state} />,
-    18: <AnalysisScreen onBack={back} onNext={next} state={state} />,
-    19: <FreedomScreen onBack={back} onNext={next} />,
-    20: <StoriesScreen onBack={back} onNext={next} />,
-    21: <NotificationsScreen onBack={back} onNext={next} />,
-    22: <PlanScreen onBack={back} onNext={next} state={state} />,
-    23: <StreakScreen onBack={back} onNext={next} state={state} />,
-    24: (
+    17: (
+      <SpendingStep
+        value={{ amount: state.spendingAmount, frequency: state.spendingFrequency || 'monthly', currency: state.spendingCurrency }}
+        onChange={(v: SpendingValue) => setState({ spendingAmount: v.amount, spendingFrequency: v.frequency, spendingCurrency: v.currency })}
+        onNext={() => { setState({ trackingEnabled: true }); next(); }}
+        onSkip={() => { setState({ trackingEnabled: false }); next(); }}
+      />
+    ),
+    18: <AnalyzingScreen onNext={next} state={state} />,
+    19: <AnalysisScreen onBack={back} onNext={next} state={state} />,
+    20: <FreedomScreen onBack={back} onNext={next} />,
+    21: <StoriesScreen onBack={back} onNext={next} />,
+    22: <NotificationsScreen onBack={back} onNext={next} />,
+    23: <PlanScreen onBack={back} onNext={next} state={state} />,
+    24: <StreakScreen onBack={back} onNext={next} state={state} />,
+    25: (
       <FinalScreen
         state={state}
         onFinish={() => {

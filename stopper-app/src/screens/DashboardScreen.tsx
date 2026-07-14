@@ -15,6 +15,8 @@ import { CheckInModal } from '../components/dashboard/CheckInModal';
 import { DashboardSkeleton, EmptyState } from '../components/dashboard/states';
 import { FutureYouCard, Recording } from '../components/vault/FutureYouCard';
 import { MilestoneRecordPrompt } from '../components/vault/VaultPrompts';
+import { MoneySavedCard } from '../components/money/MoneySavedCard';
+import { SpendingSettings } from '../lib/money';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
 import { RootStackParamList } from '../navigation/TabNavigator';
@@ -86,7 +88,25 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
           onViewAll={() => navigation.navigate('Vault')}
           index={5}
         />
-        <MotivationCard quote={quote} index={6} />
+        {(() => {
+          const p = data.profile;
+          if (!p.trackingEnabled || !p.spendingAmount) return null;
+          const settings: SpendingSettings = {
+            spendingAmount: p.spendingAmount,
+            spendingFrequency: p.spendingFrequency ?? 'monthly',
+            currency: p.currency ?? 'USD',
+            trackingEnabled: true,
+          };
+          return (
+            <MoneySavedCard
+              settings={settings}
+              daysSinceQuit={data.daysSinceQuit}
+              onViewInsights={() => navigation.navigate('MoneyInsights')}
+              index={6}
+            />
+          );
+        })()}
+        <MotivationCard quote={quote} index={7} />
       </View>
     );
   })();

@@ -3,11 +3,12 @@ import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
-  Sunrise, Flame, CalendarCheck, Zap, Medal, Trophy, Crown, Gem, Lock, LucideIcon,
+  Sunrise, Flame, CalendarCheck, Zap, Medal, Trophy, Crown, Gem, Lock, PiggyBank, LucideIcon,
 } from 'lucide-react-native';
 import { colors } from '../../constants/colors';
 import { radius } from '../../constants/spacing';
 import { type } from '../../constants/typography';
+import { buildMoneyMilestones, fmtMoney } from '../../lib/money';
 
 export type Milestone = { id: string; day: number; label: string; Icon: LucideIcon };
 
@@ -22,13 +23,20 @@ export const MILESTONES: Milestone[] = [
   { id: 'd365',day: 365, label: 'One year',   Icon: Gem },
 ];
 
-export function AchievementsGrid({ cleanDays, index = 5 }: { cleanDays: number; index?: number }) {
+export function AchievementsGrid({
+  cleanDays, savedTotal, currency, index = 5,
+}: { cleanDays: number; savedTotal?: number; currency?: string; index?: number }) {
   const earnedCount = MILESTONES.filter(m => cleanDays >= m.day).length;
+  const moneyMilestones = savedTotal !== undefined && currency ? buildMoneyMilestones(currency) : [];
+  const moneyEarned = moneyMilestones.filter(m => (savedTotal ?? 0) >= m.threshold).length;
+  const totalCount = MILESTONES.length + moneyMilestones.length;
+  const totalEarned = earnedCount + moneyEarned;
+
   return (
     <Animated.View entering={FadeInDown.delay(index * 80).duration(550)} style={styles.card}>
       <View style={styles.head}>
         <Text style={styles.title}>Milestones</Text>
-        <Text style={styles.meta}>{earnedCount}/{MILESTONES.length} earned</Text>
+        <Text style={styles.meta}>{totalEarned}/{totalCount} earned</Text>
       </View>
       <View style={styles.grid}>
         {MILESTONES.map(m => {
@@ -46,6 +54,24 @@ export function AchievementsGrid({ cleanDays, index = 5 }: { cleanDays: number; 
                 </View>
               )}
               <Text style={[styles.label, { color: earned ? colors.white : colors.textFaint }]}>{m.label}</Text>
+            </View>
+          );
+        })}
+        {moneyMilestones.map((m, i) => {
+          const earned = (savedTotal ?? 0) >= m.threshold;
+          const Glyph = earned ? PiggyBank : Lock;
+          return (
+            <View key={`money-${i}`} style={[styles.item, { opacity: earned ? 1 : 0.4 }]}>
+              {earned ? (
+                <LinearGradient colors={[colors.jade400, colors.jade700]} start={{ x: 0.38, y: 0.32 }} end={{ x: 1, y: 1 }} style={styles.badge}>
+                  <Glyph size={23} color={colors.white} />
+                </LinearGradient>
+              ) : (
+                <View style={[styles.badge, styles.badgeLocked]}>
+                  <Glyph size={17} color={colors.textFaint} />
+                </View>
+              )}
+              <Text style={[styles.label, { color: earned ? colors.white : colors.textFaint }]}>{fmtMoney(m.threshold, currency!)} saved</Text>
             </View>
           );
         })}

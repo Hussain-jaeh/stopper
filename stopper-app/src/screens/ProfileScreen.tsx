@@ -19,6 +19,8 @@ import { ProfileStackParamList } from '../navigation/TabNavigator';
 import { scheduleReminder, cancelReminder } from '../notifications/reminders';
 import { ProfileIdentity } from '../components/profile/ProfileIdentity';
 import { SettingsRow, SettingsGroup } from '../components/profile/SettingsRow';
+import { MoneySettings } from '../components/money/MoneyInsightsAndSettings';
+import { SpendingSettings } from '../lib/money';
 import { DashboardSkeleton } from '../components/dashboard/states';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
@@ -32,7 +34,9 @@ export function ProfileScreen() {
   const { signOut } = useAuthActions();
 
   const p = useQuery(api.profile.getProfile);
+  const recoveryProfile = useQuery(api.profiles.getProfile);
   const updateSetting = useMutation(api.profile.updateSetting);
+  const updateSpending = useMutation(api.profiles.updateSpending);
   const deleteAccount = useMutation(api.account.deleteAccount);
   const generateUploadUrl = useMutation(api.profile.generateAvatarUploadUrl);
   const saveAvatar = useMutation(api.profile.saveAvatar);
@@ -58,21 +62,16 @@ export function ProfileScreen() {
     const { uri, mimeType } = result.assets[0];
     try {
       const uploadUrl = await generateUploadUrl();
-      console.log('[avatar] uploadUrl:', uploadUrl);
-      console.log('[avatar] uri:', uri, 'mimeType:', mimeType);
       const upload = await FileSystem.uploadAsync(uploadUrl, uri, {
         httpMethod: 'POST',
         headers: { 'Content-Type': mimeType ?? 'image/jpeg' },
         uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
       });
-      console.log('[avatar] upload status:', upload.status, 'body:', upload.body);
-      if (upload.status !== 200) throw new Error(`Upload HTTP ${upload.status}: ${upload.body}`);
+      if (upload.status !== 200) throw new Error(`Upload failed (${upload.status})`);
       const { storageId } = JSON.parse(upload.body);
       await saveAvatar({ storageId });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error('[avatar] error:', msg);
-      Alert.alert('Upload failed', msg);
+      Alert.alert('Upload failed', err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -181,6 +180,26 @@ export function ProfileScreen() {
               <SettingsRow Icon={VenetianMask} tint="#9B6FE4" label="Stay anonymous" toggle on={val('anonymous')} onToggle={handleAnonymousToggle} />
               <SettingsRow Icon={Lock} tint="#2E7DD1" label="App lock" toggle on={val('appLockEnabled')} onToggle={handleAppLockToggle} last />
             </SettingsGroup>
+
+            {recoveryProfile && (() => {
+              const moneySettings: SpendingSettings = {
+                spendingAmount: recoveryProfile.spendingAmount ?? 0,
+                spendingFrequency: recoveryProfile.spendingFrequency ?? 'monthly',
+                currency: recoveryProfile.currency ?? 'USD',
+                trackingEnabled: recoveryProfile.trackingEnabled ?? false,
+              };
+              return (
+                <MoneySettings
+                  settings={moneySettings}
+                  onChange={s => updateSpending({
+                    spendingAmount: s.spendingAmount || undefined,
+                    spendingFrequency: s.spendingFrequency,
+                    currency: s.currency,
+                    trackingEnabled: s.trackingEnabled,
+                  })}
+                />
+              );
+            })()}
 
             <SettingsGroup title="About">
               <SettingsRow Icon={Smartphone} tint={colors.textMuted} label="Version" value="1.0.0" />

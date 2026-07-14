@@ -2,6 +2,7 @@ import type {
   OvercomeId, ReasonId, TriggerId, GoalId,
   ActivityId, AccountId, TimeId, DurationValue, FreqValue
 } from './data';
+import type { SpendingFrequency } from '../lib/money';
 
 export interface OnboardingState {
   overcome: Set<OvercomeId>;
@@ -17,6 +18,10 @@ export interface OnboardingState {
   symptoms: Set<string>;
   name: string;
   age: string;
+  spendingAmount: number;
+  spendingFrequency: SpendingFrequency | '';
+  spendingCurrency: string;
+  trackingEnabled: boolean;
 }
 
 export function freshState(): OnboardingState {
@@ -34,6 +39,10 @@ export function freshState(): OnboardingState {
     symptoms: new Set(),
     name: '',
     age: '',
+    spendingAmount: 0,
+    spendingFrequency: 'monthly',
+    spendingCurrency: 'USD',
+    trackingEnabled: false,
   };
 }
 

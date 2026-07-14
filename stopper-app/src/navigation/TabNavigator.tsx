@@ -24,6 +24,7 @@ function VaultPlayLazy() {
   const { VaultPlayScreen } = require('../screens/VaultPlayScreen');
   return <VaultPlayScreen />;
 }
+import { MoneyInsightsScreen } from '../screens/MoneyInsightsScreen';
 import { SosButton } from '../components/panic/SosButton';
 import { colors } from '../constants/colors';
 import { type } from '../constants/typography';
@@ -34,6 +35,7 @@ export type RootStackParamList = {
   Vault: undefined;
   VaultRecord: undefined;
   VaultPlay: { uri: string; title?: string; day?: number };
+  MoneyInsights: undefined;
 };
 
 export type TabParamList = {
@@ -90,6 +92,11 @@ export function TabNavigator({ onStartOnboarding }: Props) {
         name="VaultPlay"
         component={VaultPlayLazy}
         options={{ presentation: 'fullScreenModal', animation: 'fade' }}
+      />
+      <RootStack.Screen
+        name="MoneyInsights"
+        component={MoneyInsightsScreen}
+        options={{ animation: 'slide_from_right' }}
       />
     </RootStack.Navigator>
   );

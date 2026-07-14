@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
+import { savedTotal as calcSavedTotal, SpendingSettings } from '../lib/money';
 import { ProgressHeader, SummaryStrip, InsightCard, Range } from '../components/progress/ProgressBits';
 import { MilestoneRing } from '../components/progress/MilestoneRing';
 import { CalendarHeatmap, CalendarData } from '../components/progress/CalendarHeatmap';
@@ -30,6 +31,7 @@ export function ProgressScreen() {
   const insets = useSafeAreaInsets();
   const [range, setRange] = useState<Range>('Month');
   const data = useQuery(api.progress.getProgress, { range }) as ProgressData | undefined | null;
+  const recoveryProfile = useQuery(api.profiles.getProfile);
 
   if (data === undefined) {
     return (
@@ -59,7 +61,25 @@ export function ProgressScreen() {
         <SummaryStrip cleanDays={data.cleanDays} bestStreak={data.bestStreak} successRate={data.successRate} index={2} />
         <CalendarHeatmap data={data.calendar} index={3} />
         <TrendChart trend={data.trend} index={4} />
-        <AchievementsGrid cleanDays={data.cleanDays} index={5} />
+        {(() => {
+          if (recoveryProfile?.trackingEnabled && recoveryProfile?.spendingAmount) {
+            const settings: SpendingSettings = {
+              spendingAmount: recoveryProfile.spendingAmount,
+              spendingFrequency: recoveryProfile.spendingFrequency ?? 'monthly',
+              currency: recoveryProfile.currency ?? 'USD',
+              trackingEnabled: true,
+            };
+            return (
+              <AchievementsGrid
+                cleanDays={data.cleanDays}
+                savedTotal={calcSavedTotal(settings, data.cleanDays)}
+                currency={settings.currency}
+                index={5}
+              />
+            );
+          }
+          return <AchievementsGrid cleanDays={data.cleanDays} index={5} />;
+        })()}
         <InsightCard title={data.insight.title} body={data.insight.body} index={6} />
       </View>
     </ScrollView>
