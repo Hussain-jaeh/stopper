@@ -96,7 +96,7 @@ export function TabNavigator({ onStartOnboarding }: Props) {
       <RootStack.Screen
         name="MoneyInsights"
         component={MoneyInsightsScreen}
-        options={{ animation: 'slide_from_right' }}
+        options={{ animation: 'slide_from_right', headerShown: false }}
       />
     </RootStack.Navigator>
   );

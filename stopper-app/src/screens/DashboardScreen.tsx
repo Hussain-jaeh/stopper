@@ -46,8 +46,7 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
     setTimeout(() => setRefreshing(false), 600);
   }, []);
 
-  const handleCheckIn = useCallback(async (mood:
-     string, cravingLevel: number, note?: string) => {
+  const handleCheckIn = useCallback(async (mood: string, cravingLevel: number, note?: string) => {
     await checkIn({ mood, cravingLevel, note });
     const day = await claimMilestone();
     if (day) setTimeout(() => setMilestoneDay(day), 400);
@@ -58,6 +57,9 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
     if (data === null || data.profile === null) {
       return <EmptyState onStart={onStartOnboarding} />;
     }
+    const p = data.profile;
+    const hasSpending = !!(p.spendingAmount);
+
     return (
       <View style={{ gap: spacing.gap + 6 }}>
         <DashboardHeader name={data.name ?? 'there'} avatarUri={data.avatarUri} index={0} />
@@ -65,7 +67,7 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
           current={data.currentStreak}
           daysSinceQuit={data.daysSinceQuit}
           longest={data.longestStreak}
-          addictionType={data.profile.addictionType}
+          addictionType={p.addictionType}
           index={1}
         />
         <ProgressCard current={data.currentStreak} milestone={data.nextMilestone} index={2} />
@@ -88,24 +90,19 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
           onViewAll={() => navigation.navigate('Vault')}
           index={5}
         />
-        {(() => {
-          const p = data.profile;
-          if (!p.trackingEnabled || !p.spendingAmount) return null;
-          const settings: SpendingSettings = {
-            spendingAmount: p.spendingAmount,
-            spendingFrequency: p.spendingFrequency ?? 'monthly',
-            currency: p.currency ?? 'USD',
-            trackingEnabled: true,
-          };
-          return (
-            <MoneySavedCard
-              settings={settings}
-              daysSinceQuit={data.daysSinceQuit}
-              onViewInsights={() => navigation.navigate('MoneyInsights')}
-              index={6}
-            />
-          );
-        })()}
+        {hasSpending && (
+          <MoneySavedCard
+            settings={{
+              spendingAmount: p.spendingAmount!,
+              spendingFrequency: p.spendingFrequency ?? 'monthly',
+              currency: p.currency ?? 'USD',
+              trackingEnabled: true,
+            } as SpendingSettings}
+            daysSinceQuit={data.daysSinceQuit}
+            onViewInsights={() => navigation.navigate('MoneyInsights')}
+            index={6}
+          />
+        )}
         <MotivationCard quote={quote} index={7} />
       </View>
     );

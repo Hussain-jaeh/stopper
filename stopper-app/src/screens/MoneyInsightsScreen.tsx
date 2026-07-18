@@ -12,15 +12,15 @@ export function MoneyInsightsScreen() {
   const data = useQuery(api.dashboard.getDashboard);
 
   const profile = data?.profile;
-  const hasTracking = !!(profile?.trackingEnabled && profile?.spendingAmount);
+  const hasSpending = !!(profile?.spendingAmount);
 
   useEffect(() => {
-    if (data !== undefined && !hasTracking) {
+    if (data !== undefined && !hasSpending) {
       navigation.goBack();
     }
-  }, [data, hasTracking, navigation]);
+  }, [data, hasSpending, navigation]);
 
-  if (!data || !profile || !hasTracking) {
+  if (!data || !profile || !hasSpending) {
     return (
       <View style={styles.center}>
         <ActivityIndicator color={colors.jade400} />

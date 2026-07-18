@@ -62,7 +62,7 @@ export function ProgressScreen() {
         <CalendarHeatmap data={data.calendar} index={3} />
         <TrendChart trend={data.trend} index={4} />
         {(() => {
-          if (recoveryProfile?.trackingEnabled && recoveryProfile?.spendingAmount) {
+          if (recoveryProfile?.spendingAmount) {
             const settings: SpendingSettings = {
               spendingAmount: recoveryProfile.spendingAmount,
               spendingFrequency: recoveryProfile.spendingFrequency ?? 'monthly',

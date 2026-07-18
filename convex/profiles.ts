@@ -59,21 +59,35 @@ export const updateProfile = mutation({
 });
 
 export const upsertProfile = mutation({
-  args: createProfileArgs,
+  args: {
+    ...createProfileArgs,
+    spendingAmount: v.optional(v.number()),
+    spendingFrequency: v.optional(v.union(v.literal("daily"), v.literal("weekly"), v.literal("monthly"))),
+    currency: v.optional(v.string()),
+    trackingEnabled: v.optional(v.boolean()),
+  },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
-    validateCreateProfile(args);
+    const { spendingAmount, spendingFrequency, currency, trackingEnabled, ...profileArgs } = args;
+    validateCreateProfile(profileArgs);
 
     const existing = await ctx.db
       .query("profiles")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
 
+    const spendingFields = {
+      ...(spendingAmount !== undefined && { spendingAmount }),
+      ...(spendingFrequency !== undefined && { spendingFrequency }),
+      ...(currency !== undefined && { currency }),
+      ...(trackingEnabled !== undefined && { trackingEnabled }),
+    };
+
     const now = Date.now();
     if (existing) {
-      await ctx.db.patch(existing._id, { ...args, updatedAt: now });
+      await ctx.db.patch(existing._id, { ...profileArgs, ...spendingFields, updatedAt: now });
     } else {
-      await ctx.db.insert("profiles", { userId, ...args, createdAt: now, updatedAt: now });
+      await ctx.db.insert("profiles", { userId, ...profileArgs, ...spendingFields, createdAt: now, updatedAt: now });
     }
   },
 });

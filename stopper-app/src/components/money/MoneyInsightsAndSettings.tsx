@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, TextInput, StyleSheet, ScrollView, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Check, Lock, PiggyBank, ChevronLeft } from 'lucide-react-native';
 import { colors } from '../../constants/colors';
@@ -13,6 +14,7 @@ import {
 export function MoneyInsights({
   settings, daysSinceQuit, onBack,
 }: { settings: SpendingSettings; daysSinceQuit: number; onBack: () => void }) {
+  const insets = useSafeAreaInsets();
   const total = savedTotal(settings, daysSinceQuit);
   const p = projection(settings);
   const pd = perDay(settings.spendingAmount, settings.spendingFrequency);
@@ -20,7 +22,7 @@ export function MoneyInsights({
   const milestones = buildMoneyMilestones(settings.currency);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: spacing.screenPad, paddingBottom: 96 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ padding: spacing.screenPad, paddingTop: insets.top + 16, paddingBottom: 96 }}>
       <View style={styles.navRow}>
         <Pressable onPress={onBack} style={styles.backBtn}><ChevronLeft size={20} color={colors.white} /></Pressable>
         <Text style={styles.navTitle}>Money saved</Text>
@@ -66,69 +68,63 @@ export function MoneySettings({
   const cur = CURRENCIES.find(c => c.code === settings.currency) ?? CURRENCIES[0];
   const freqs: [SpendingFrequency, string][] = [['daily', 'Daily'], ['weekly', 'Weekly'], ['monthly', 'Monthly']];
 
+  const emit = (patch: Partial<SpendingSettings>) => {
+    const next = { ...settings, ...patch };
+    onChange({ ...next, trackingEnabled: (next.spendingAmount ?? 0) > 0 });
+  };
+
   return (
     <View style={{ gap: 14 }}>
       <Text style={styles.section}>MONEY TRACKING</Text>
       <View style={styles.settingsCard}>
-        <View style={[styles.settingRow, settings.trackingEnabled && styles.rowDivider]}>
+        <View style={styles.settingRow}>
           <View style={styles.settingIcon}><PiggyBank size={19} color={colors.jade400} /></View>
-          <Text style={styles.settingLabel}>Track money saved</Text>
-          <Pressable
-            onPress={() => onChange({ ...settings, trackingEnabled: !settings.trackingEnabled })}
-            style={[styles.toggle, { backgroundColor: settings.trackingEnabled ? colors.jade500 : colors.surface3 }]}
-          >
-            <View style={[styles.knob, { left: settings.trackingEnabled ? 22 : 3 }]} />
-          </Pressable>
+          <Text style={styles.settingLabel}>Habit cost</Text>
         </View>
-
-        {settings.trackingEnabled && (
-          <>
-            <View style={[styles.settingRow, styles.rowDivider, { flexDirection: 'column', alignItems: 'stretch', gap: 10 }]}>
-              <Text style={styles.fieldLbl}>Amount ({settings.spendingFrequency})</Text>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <Pressable
-                  style={styles.curSmall}
-                  onPress={() => Alert.alert('Currency', undefined, [
-                    ...CURRENCIES.map(c => ({
-                      text: `${c.sym} ${c.code}`,
-                      onPress: () => onChange({ ...settings, currency: c.code }),
-                    })),
-                    { text: 'Cancel', style: 'cancel' as const },
-                  ])}
-                >
-                  <Text style={styles.curSmallTxt}>{cur.sym} {cur.code}</Text>
+        <View style={[styles.settingRow, styles.rowDivider, { flexDirection: 'column', alignItems: 'stretch', gap: 10 }]}>
+          <Text style={styles.fieldLbl}>Amount ({settings.spendingFrequency})</Text>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Pressable
+              style={styles.curSmall}
+              onPress={() => Alert.alert('Currency', undefined, [
+                ...CURRENCIES.map(c => ({
+                  text: `${c.sym} ${c.code}`,
+                  onPress: () => emit({ currency: c.code }),
+                })),
+                { text: 'Cancel', style: 'cancel' as const },
+              ])}
+            >
+              <Text style={styles.curSmallTxt}>{cur.sym} {cur.code}</Text>
+            </Pressable>
+            <View style={styles.amtSmall}>
+              <Text style={{ color: colors.textMuted, fontWeight: '600' }}>{cur.sym}</Text>
+              <TextInput
+                keyboardType="number-pad"
+                placeholder="0"
+                placeholderTextColor={colors.textFaint}
+                value={settings.spendingAmount ? settings.spendingAmount.toLocaleString() : ''}
+                onChangeText={t => emit({ spendingAmount: Number(t.replace(/[^0-9]/g, '')) })}
+                style={styles.amtSmallInput}
+              />
+            </View>
+          </View>
+        </View>
+        <View style={[styles.settingRow, { flexDirection: 'column', alignItems: 'stretch', gap: 10 }]}>
+          <Text style={styles.fieldLbl}>Frequency</Text>
+          <View style={styles.segSmall}>
+            {freqs.map(([k, l]) => {
+              const on = settings.spendingFrequency === k;
+              return (
+                <Pressable key={k} onPress={() => emit({ spendingFrequency: k })}
+                  style={[styles.segSmallItem, { backgroundColor: on ? colors.jade500 : 'transparent' }]}>
+                  <Text style={{ fontSize: 13.5, fontWeight: '700', color: on ? colors.onAccent : colors.textMuted }}>{l}</Text>
                 </Pressable>
-                <View style={styles.amtSmall}>
-                  <Text style={{ color: colors.textMuted, fontWeight: '600' }}>{cur.sym}</Text>
-                  <TextInput
-                    keyboardType="number-pad"
-                    value={settings.spendingAmount ? settings.spendingAmount.toLocaleString() : ''}
-                    onChangeText={t => onChange({ ...settings, spendingAmount: Number(t.replace(/[^0-9]/g, '')) })}
-                    style={styles.amtSmallInput}
-                  />
-                </View>
-              </View>
-            </View>
-            <View style={[styles.settingRow, { flexDirection: 'column', alignItems: 'stretch', gap: 10 }]}>
-              <Text style={styles.fieldLbl}>Frequency</Text>
-              <View style={styles.segSmall}>
-                {freqs.map(([k, l]) => {
-                  const on = settings.spendingFrequency === k;
-                  return (
-                    <Pressable key={k} onPress={() => onChange({ ...settings, spendingFrequency: k })}
-                      style={[styles.segSmallItem, { backgroundColor: on ? colors.jade500 : 'transparent' }]}>
-                      <Text style={{ fontSize: 13.5, fontWeight: '700', color: on ? colors.onAccent : colors.textMuted }}>{l}</Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          </>
-        )}
+              );
+            })}
+          </View>
+        </View>
       </View>
-      {!settings.trackingEnabled && (
-        <Text style={styles.disabledNote}>Tracking is off. Your history is kept — turn it back on anytime to pick up where you left off.</Text>
-      )}
+      <Text style={styles.disabledNote}>Enter the amount you used to spend — we'll show how much you're keeping.</Text>
     </View>
   );
 }
@@ -154,9 +150,7 @@ const styles = StyleSheet.create({
   rowDivider: { borderBottomWidth: 1, borderBottomColor: colors.border },
   settingIcon: { width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(20,184,136,0.15)' },
   settingLabel: { flex: 1, fontSize: 16, fontWeight: '500', color: colors.white },
-  toggle: { width: 48, height: 29, borderRadius: 999 },
-  knob: { position: 'absolute', top: 3, width: 23, height: 23, borderRadius: 12, backgroundColor: '#fff' },
-  fieldLbl: { fontSize: 13, color: colors.textMuted },
+fieldLbl: { fontSize: 13, color: colors.textMuted },
   curSmall: { width: 84, height: 46, borderRadius: 12, backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   curSmallTxt: { color: colors.white, fontWeight: '600', fontSize: 14 },
   amtSmall: { flex: 1, flexDirection: 'row', alignItems: 'center', height: 46, borderRadius: 12, backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 14, gap: 6 },

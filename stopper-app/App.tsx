@@ -6,8 +6,6 @@ import * as ExpoSplash from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import {
-  BricolageGrotesque_400Regular,
-  BricolageGrotesque_600SemiBold,
   BricolageGrotesque_700Bold,
   BricolageGrotesque_800ExtraBold,
 } from '@expo-google-fonts/bricolage-grotesque';
@@ -38,7 +36,8 @@ import { api } from './convex/_generated/api';
 ExpoSplash.preventAutoHideAsync().catch(() => {});
 initPurchases();
 
-// Show alerts and play sound when a notification arrives while the app is foregrounded.
+const SUB_CACHE_KEY = 'rc_has_sub';
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -62,8 +61,6 @@ const secureStorage = {
 export default function App() {
   const [fontsLoaded] = useFonts({
     BricolageGrotesque: BricolageGrotesque_800ExtraBold,
-    BricolageGrotesque_400Regular,
-    BricolageGrotesque_600SemiBold,
     BricolageGrotesque_700Bold,
     BricolageGrotesque_800ExtraBold,
     PlusJakartaSans: PlusJakartaSans_400Regular,
@@ -77,38 +74,40 @@ export default function App() {
   const [minDone, setMinDone] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
 
-  // Hide native splash the moment fonts are ready; animated splash takes over.
   useEffect(() => {
     if (fontsLoaded) ExpoSplash.hideAsync().catch(() => {});
   }, [fontsLoaded]);
 
-  // Dismiss animated splash once BOTH the min duration and boot work are done.
-  // Hard cap of 4 s so the splash never gets stuck if Convex auth stalls.
   useEffect(() => {
     if (bootDone && minDone) setShowSplash(false);
   }, [bootDone, minDone]);
 
+  // Hard cap so splash never gets permanently stuck.
   useEffect(() => {
     const t = setTimeout(() => setShowSplash(false), 4000);
     return () => clearTimeout(t);
   }, []);
 
-  if (!fontsLoaded || showSplash) {
-    return (
-      <SplashScreen
-        minDurationMs={1600}
-        onFinish={() => setMinDone(true)}
-      />
-    );
-  }
-
+  // ConvexAuthProvider + NavigationContainer wrap everything so auth and
+  // profile queries start the moment fonts are ready, running in parallel
+  // with the splash animation rather than after it.
   return (
     <SafeAreaProvider>
       <ConvexAuthProvider client={convex} storage={secureStorage}>
         <NavigationContainer>
           <View style={styles.root}>
             <StatusBar style="light" />
-            <AppContent onBootDone={() => setBootDone(true)} />
+            {fontsLoaded && (
+              <AppContent onBootDone={() => setBootDone(true)} />
+            )}
+            {(!fontsLoaded || showSplash) && (
+              <View style={StyleSheet.absoluteFill}>
+                <SplashScreen
+                  minDurationMs={800}
+                  onFinish={() => setMinDone(true)}
+                />
+              </View>
+            )}
           </View>
         </NavigationContainer>
       </ConvexAuthProvider>
@@ -127,9 +126,6 @@ function useAppLock() {
       const wasBackground = appState.current === 'background' || appState.current === 'inactive';
       appState.current = next;
       if (next === 'active' && wasBackground) {
-        // Re-query app lock setting from Convex isn't available here, so we
-        // rely on SecureStore or the profile query result cached in memory.
-        // The profile query above keeps it fresh while the app is running.
         const lockEnabled = (profile as any)?.appLockEnabled;
         if (!lockEnabled) return;
         await LocalAuthentication.authenticateAsync({
@@ -149,47 +145,80 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
   useAppLock();
   const saveOnboarding = useMutation(api.users.completeOnboarding);
   const upsertProfile = useMutation(api.profiles.upsertProfile);
-  const updateSpending = useMutation(api.profiles.updateSpending);
   const [phase, setPhase] = useState<Phase>('loading');
   const bootDoneRef = useRef(false);
   const rcCheckedRef = useRef(false);
+
+  const markBoot = useCallback(() => {
+    if (!bootDoneRef.current) { bootDoneRef.current = true; onBootDone(); }
+  }, [onBootDone]);
 
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated) {
       setPhase('auth');
-      if (!bootDoneRef.current) { bootDoneRef.current = true; onBootDone(); }
+      markBoot();
       return;
     }
     if (profile === undefined) return;
 
     if (!profile?.onboardingComplete) {
       setPhase(prev => prev === 'loading' ? 'onboarding' : prev);
-      if (!bootDoneRef.current) { bootDoneRef.current = true; onBootDone(); }
+      markBoot();
       return;
     }
 
-    // Onboarding complete — check subscription once per session
     if (rcCheckedRef.current) {
-      if (!bootDoneRef.current) { bootDoneRef.current = true; onBootDone(); }
+      markBoot();
       return;
     }
     rcCheckedRef.current = true;
 
-    Purchases.getCustomerInfo()
-      .then(info => {
-        const hasSub = Object.keys(info.entitlements.active).length > 0;
-        setPhase(hasSub ? 'app' : 'paywall');
-      })
-      .catch(() => setPhase('paywall'))
-      .finally(() => {
-        if (!bootDoneRef.current) { bootDoneRef.current = true; onBootDone(); }
-      });
+    // Skip paywall entirely in local dev / simulator.
+    if (__DEV__) {
+      setPhase('app');
+      markBoot();
+      return;
+    }
+
+    // Fast path: cached subscription status lets us skip the RC network call.
+    // We still re-verify in the background and update if it changed.
+    SecureStore.getItemAsync(SUB_CACHE_KEY).then(cached => {
+      if (cached === 'true') {
+        setPhase('app');
+        markBoot();
+        // Re-verify in background; correct phase if subscription has lapsed.
+        Purchases.getCustomerInfo()
+          .then(info => {
+            const hasSub = Object.keys(info.entitlements.active).length > 0;
+            SecureStore.setItemAsync(SUB_CACHE_KEY, hasSub ? 'true' : 'false').catch(() => {});
+            if (!hasSub) setPhase('paywall');
+          })
+          .catch(() => {});
+        return;
+      }
+
+      // No cache or cached false — wait for RC before showing anything.
+      Purchases.getCustomerInfo()
+        .then(info => {
+          const hasSub = Object.keys(info.entitlements.active).length > 0;
+          SecureStore.setItemAsync(SUB_CACHE_KEY, hasSub ? 'true' : 'false').catch(() => {});
+          setPhase(hasSub ? 'app' : 'paywall');
+        })
+        .catch(() => setPhase('paywall'))
+        .finally(markBoot);
+    }).catch(() => {
+      // SecureStore failed — fall through to live RC check.
+      Purchases.getCustomerInfo()
+        .then(info => {
+          const hasSub = Object.keys(info.entitlements.active).length > 0;
+          setPhase(hasSub ? 'app' : 'paywall');
+        })
+        .catch(() => setPhase('paywall'))
+        .finally(markBoot);
+    });
   }, [isLoading, isAuthenticated, profile]);
 
-  // Called when user taps "Enter Stopper" on the auth success screen.
-  // Route based on profile — if still loading, briefly show loader then the
-  // effect above will settle it once the query resolves.
   const handleAuthenticated = useCallback(() => {
     if (profile === undefined) { setPhase('loading'); return; }
     setPhase(profile?.onboardingComplete ? 'loading' : 'onboarding');
@@ -203,34 +232,35 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
     const reasonForQuitting = [...state.reasons][0] ?? 'personal growth';
     const quitDate = Date.now();
 
-    try {
-      await Promise.all([
-        saveOnboarding({
-          habitType: addictionType,
-          displayName: state.name || undefined,
-          age: state.age || undefined,
-        }),
-        upsertProfile({
-          addictionType,
-          quitDate,
-          reasonForQuitting,
-        }),
-      ]);
-      if (state.trackingEnabled && state.spendingAmount) {
-        await updateSpending({
+    // Save everything in one round-trip so spending is never lost.
+    await Promise.all([
+      saveOnboarding({
+        habitType: addictionType,
+        displayName: state.name || undefined,
+        age: state.age || undefined,
+      }),
+      upsertProfile({
+        addictionType,
+        quitDate,
+        reasonForQuitting,
+        ...(state.spendingAmount ? {
           spendingAmount: state.spendingAmount,
-          spendingFrequency: state.spendingFrequency || 'monthly',
+          spendingFrequency: (state.spendingFrequency || 'monthly') as 'daily' | 'weekly' | 'monthly',
           currency: state.spendingCurrency || 'USD',
           trackingEnabled: true,
-        });
-      }
-      scheduleMilestoneNotifications(quitDate).catch(() => {});
-    } catch {
-      // mutations failed — continue to paywall anyway
-    }
+        } : {}),
+      }),
+    ]);
 
-    setPhase('paywall');
-  }, [saveOnboarding, upsertProfile, updateSpending]);
+    scheduleMilestoneNotifications(quitDate).catch(() => {});
+
+    setPhase(__DEV__ ? 'app' : 'paywall');
+  }, [saveOnboarding, upsertProfile]);
+
+  const handlePurchase = useCallback(() => {
+    SecureStore.setItemAsync(SUB_CACHE_KEY, 'true').catch(() => {});
+    setPhase('app');
+  }, []);
 
   if (phase === 'loading') {
     return (
@@ -252,7 +282,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
   if (phase === 'paywall') {
     return (
       <PaywallScreen
-        onPurchase={() => setPhase('app')}
+        onPurchase={handlePurchase}
       />
     );
   }

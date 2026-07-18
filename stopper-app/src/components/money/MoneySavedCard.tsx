@@ -7,7 +7,7 @@ import { PiggyBank } from 'lucide-react-native';
 import { colors } from '../../constants/colors';
 import { radius } from '../../constants/spacing';
 import { type } from '../../constants/typography';
-import { SpendingSettings, savedBuckets, fmtMoney } from '../../lib/money';
+import { SpendingSettings, savedBuckets, perDay, fmtMoney } from '../../lib/money';
 
 function CountUp({ value, currency, style }: { value: number; currency: string; style?: object }) {
   const v = useSharedValue(0);
@@ -25,9 +25,9 @@ function CountUp({ value, currency, style }: { value: number; currency: string; 
 export function MoneySavedCard({
   settings, daysSinceQuit, onViewInsights, index = 3,
 }: { settings: SpendingSettings; daysSinceQuit: number; onViewInsights: () => void; index?: number }) {
-  if (!settings.trackingEnabled) return null;
   const b = savedBuckets(settings, daysSinceQuit);
-  const cells: [string, number][] = [['Today', b.today], ['This week', b.week], ['This month', b.month]];
+  const pd = perDay(settings.spendingAmount, settings.spendingFrequency);
+  const cells: [string, number][] = [['Per day', pd], ['Per week', pd * 7], ['Per month', pd * 30]];
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 70).duration(550)} style={styles.card}>
@@ -35,8 +35,10 @@ export function MoneySavedCard({
         <View style={styles.title}><PiggyBank size={18} color={colors.jade400} /><Text style={styles.titleTxt}>Money saved</Text></View>
         <Pressable onPress={onViewInsights}><Text style={styles.link}>Insights ›</Text></Pressable>
       </View>
-      <CountUp value={b.total} currency={settings.currency} style={styles.total} />
-      <Text style={styles.caption}>kept since day one · {daysSinceQuit} days free</Text>
+      <CountUp value={b.today} currency={settings.currency} style={styles.total} />
+      <Text style={styles.caption}>
+        saved today · {daysSinceQuit} days free
+      </Text>
       <View style={styles.row}>
         {cells.map(([label, val]) => (
           <View key={label} style={styles.cell}>
