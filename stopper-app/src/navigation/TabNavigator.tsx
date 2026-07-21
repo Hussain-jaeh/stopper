@@ -26,6 +26,7 @@ function VaultPlayLazy() {
 }
 import { MoneyInsightsScreen } from '../screens/MoneyInsightsScreen';
 import { CircleDetailScreen } from '../screens/CircleDetailScreen';
+import { CircleChatScreen } from '../screens/CircleChatScreen';
 import { SosButton } from '../components/panic/SosButton';
 import { colors } from '../constants/colors';
 import { type } from '../constants/typography';
@@ -38,6 +39,7 @@ export type RootStackParamList = {
   VaultPlay: { uri: string; title?: string; day?: number };
   MoneyInsights: undefined;
   CircleDetail: { circleId: string; name: string; tint: string; iconKey: string };
+  CircleChat: { circleId: string; name: string; tint: string };
 };
 
 export type TabParamList = {
@@ -103,6 +105,11 @@ export function TabNavigator({ onStartOnboarding }: Props) {
       <RootStack.Screen
         name="CircleDetail"
         component={CircleDetailScreen}
+        options={{ animation: 'slide_from_right', headerShown: false }}
+      />
+      <RootStack.Screen
+        name="CircleChat"
+        component={CircleChatScreen}
         options={{ animation: 'slide_from_right', headerShown: false }}
       />
     </RootStack.Navigator>

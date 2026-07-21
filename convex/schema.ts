@@ -105,6 +105,15 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_circleId_createdAt", ["circleId", "createdAt"]),
 
+  // Circle chat messages — real-time per-circle discussion.
+  messages: defineTable({
+    circleId: v.id("circles"),
+    userId: v.id("users"),
+    body: v.string(),
+    replyToId: v.optional(v.id("messages")),
+    createdAt: v.number(),
+  }).index("by_circleId_createdAt", ["circleId", "createdAt"]),
+
   // One cheer per user per post (toggle: insert / delete).
   postCheers: defineTable({
     postId: v.id("posts"),

@@ -6,7 +6,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   ChevronLeft, Users, Smartphone, Cigarette, Brain, Wine, Moon,
-  Dumbbell, Heart, Coffee, MessageSquarePlus, LucideIcon,
+  Dumbbell, Heart, Coffee, MessageSquarePlus, MessageCircle, LucideIcon,
 } from 'lucide-react-native';
 import { api } from '../../convex/_generated/api';
 import { PostCard, Post } from '../components/community/PostCard';
@@ -89,11 +89,20 @@ export function CircleDetailScreen() {
           </Pressable>
         </View>
 
-        {/* Post here button */}
-        <Pressable onPress={() => setComposerOpen(true)} style={[styles.composer, { borderColor: tint + '55' }]}>
-          <MessageSquarePlus size={18} color={tint} />
-          <Text style={[styles.composerTxt, { color: tint }]}>Write something in {name}…</Text>
-        </Pressable>
+        {/* Action buttons */}
+        <View style={styles.actions}>
+          <Pressable onPress={() => setComposerOpen(true)} style={[styles.actionBtn, { borderColor: tint + '55', flex: 1 }]}>
+            <MessageSquarePlus size={18} color={tint} />
+            <Text style={[styles.actionBtnTxt, { color: tint }]}>Post</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => navigation.navigate('CircleChat', { circleId, name, tint })}
+            style={[styles.actionBtn, { borderColor: tint + '55', flex: 1 }]}
+          >
+            <MessageCircle size={18} color={tint} />
+            <Text style={[styles.actionBtnTxt, { color: tint }]}>Chat</Text>
+          </Pressable>
+        </View>
 
         {/* Posts */}
         <View style={[styles.feed, { paddingHorizontal: spacing.screenPad }]}>
@@ -160,13 +169,16 @@ const styles = StyleSheet.create({
   },
   joinBtnJoined: { backgroundColor: 'transparent', borderColor: colors.jade500 },
   joinTxt: { fontSize: 13.5, fontWeight: '700' },
-  composer: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
+  actions: {
+    flexDirection: 'row', gap: 10,
     marginHorizontal: spacing.screenPad, marginTop: 16,
-    padding: 16, borderRadius: radius.card,
+  },
+  actionBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    padding: 14, borderRadius: radius.card,
     backgroundColor: colors.surface1, borderWidth: 1,
   },
-  composerTxt: { fontSize: 14.5, fontWeight: '500' },
+  actionBtnTxt: { fontSize: 14.5, fontWeight: '700' },
   feed: { marginTop: 16, gap: 12 },
   empty: { alignItems: 'center', paddingTop: 60, paddingBottom: 20 },
   emptyTitle: { ...type.body, fontWeight: '700', color: colors.white },
