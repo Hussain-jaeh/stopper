@@ -10,6 +10,7 @@
 
 import type * as account from "../account.js";
 import type * as auth from "../auth.js";
+import type * as chat from "../chat.js";
 import type * as checkins from "../checkins.js";
 import type * as community from "../community.js";
 import type * as dashboard from "../dashboard.js";
@@ -39,6 +40,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   account: typeof account;
   auth: typeof auth;
+  chat: typeof chat;
   checkins: typeof checkins;
   community: typeof community;
   dashboard: typeof dashboard;
