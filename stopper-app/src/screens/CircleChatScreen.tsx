@@ -14,7 +14,6 @@ import { Avatar } from '../components/community/Avatar';
 import { colors } from '../constants/colors';
 import { spacing, radius } from '../constants/spacing';
 import { type } from '../constants/typography';
-import { RootStackParamList } from '../navigation/TabNavigator';
 
 type Route = RouteProp<RootStackParamList, 'CircleChat'>;
 type Nav = NativeStackNavigationProp<RootStackParamList>;
