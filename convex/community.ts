@@ -205,15 +205,7 @@ export const getCircles = query({
   handler: async (ctx) => {
     const userId = await requireAuth(ctx);
 
-    const [circles, memberships] = await Promise.all([
-      ctx.db.query("circles").take(20),
-      ctx.db
-        .query("circleMemberships")
-        .withIndex("by_userId", (q) => q.eq("userId", userId))
-        .take(100),
-    ]);
-
-    const joinedIds = new Set(memberships.map((m) => m.circleId as string));
+    const circles = await ctx.db.query("circles").take(50);
 
     return Promise.all(
       circles.map(async (c) => {
@@ -222,6 +214,8 @@ export const getCircles = query({
           .withIndex("by_circleId", (q) => q.eq("circleId", c._id))
           .take(10000);
 
+        const joined = memberDocs.some((m) => m.userId === userId);
+
         return {
           id: c._id as string,
           name: c.name,
@@ -229,7 +223,7 @@ export const getCircles = query({
           tint: c.tint,
           members: memberDocs.length,
           activity: "Active",
-          joined: joinedIds.has(c._id as string),
+          joined,
         };
       }),
     );

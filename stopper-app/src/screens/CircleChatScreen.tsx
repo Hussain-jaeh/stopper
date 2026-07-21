@@ -39,16 +39,20 @@ export function CircleChatScreen() {
   const [text, setText] = useState('');
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [sending, setSending] = useState(false);
+  const [cachedMessages, setCachedMessages] = useState<Message[]>([]);
   const listRef = useRef<FlatList>(null);
 
   const messages = useQuery(api.chat.getMessages, { circleId: circleId as any }) as Message[] | undefined;
   const sendMessage = useMutation(api.chat.sendMessage);
 
   useEffect(() => {
-    if (messages?.length) {
-      listRef.current?.scrollToEnd({ animated: true });
+    if (messages) {
+      setCachedMessages(messages);
+      if (messages.length) {
+        listRef.current?.scrollToEnd({ animated: true });
+      }
     }
-  }, [messages?.length]);
+  }, [messages]);
 
   const handleSend = useCallback(async () => {
     const body = text.trim();
@@ -83,11 +87,11 @@ export function CircleChatScreen() {
       </View>
 
       {/* Messages */}
-      {messages === undefined ? (
+      {messages === undefined && cachedMessages.length === 0 ? (
         <View style={styles.loader}>
           <ActivityIndicator color={colors.jade400} />
         </View>
-      ) : messages.length === 0 ? (
+      ) : cachedMessages.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyTitle}>No messages yet</Text>
           <Text style={styles.emptySub}>Be the first to say something 👋</Text>
@@ -95,7 +99,7 @@ export function CircleChatScreen() {
       ) : (
         <FlatList
           ref={listRef}
-          data={messages}
+          data={cachedMessages}
           keyExtractor={(m) => m.id}
           renderItem={({ item }) => (
             <MessageBubble message={item} tint={tint} onReply={() => setReplyTo(item)} />
@@ -149,11 +153,16 @@ function MessageBubble({ message, tint, onReply }: {
   const { isMe, handle, body, time, replyTo } = message;
 
   return (
-    <View style={[styles.msgRow, isMe && styles.msgRowMe]}>
-      {!isMe && <Avatar handle={handle} size={34} />}
+    <View style={styles.msgRow}>
+      {/* Avatar on left for others, spacer for me */}
+      {!isMe ? <Avatar handle={handle} size={34} /> : <View style={{ flex: 1 }} />}
+
       <View style={[styles.msgCol, isMe && { alignItems: 'flex-end' }]}>
         {!isMe && <Text style={styles.msgHandle}>{handle}</Text>}
-        <Pressable onLongPress={onReply} style={[styles.bubble, isMe ? { backgroundColor: tint + 'CC' } : styles.bubbleOther]}>
+        <Pressable
+          onLongPress={onReply}
+          style={[styles.bubble, isMe ? { backgroundColor: tint + 'CC' } : styles.bubbleOther]}
+        >
           {replyTo && (
             <View style={[styles.replyInBubble, { borderLeftColor: tint }]}>
               <Text style={[styles.replyInHandle, { color: tint }]}>@{replyTo.handle}</Text>
@@ -162,14 +171,16 @@ function MessageBubble({ message, tint, onReply }: {
           )}
           <Text style={styles.bubbleTxt}>{body}</Text>
         </Pressable>
-        <View style={styles.msgMeta}>
+        <View style={[styles.msgMeta, isMe && { flexDirection: 'row-reverse' }]}>
           <Text style={styles.msgTime}>{time}</Text>
           <Pressable onPress={onReply} hitSlop={8} style={styles.replyIconBtn}>
             <Reply size={12} color={colors.textFaint} />
           </Pressable>
         </View>
       </View>
-      {isMe && <Avatar handle={handle} size={34} />}
+
+      {/* Avatar on right for me, spacer for others */}
+      {isMe ? <Avatar handle={handle} size={34} /> : <View style={{ flex: 1 }} />}
     </View>
   );
 }
@@ -197,12 +208,10 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: spacing.screenPad, paddingTop: 16, paddingBottom: 8, gap: 12 },
 
   msgRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
-  msgRowMe: { flexDirection: 'row-reverse' },
-  msgCol: { flex: 1, gap: 4 },
+  msgCol: { maxWidth: '75%', gap: 4 },
   msgHandle: { fontSize: 12, fontWeight: '700', color: colors.textMuted, marginLeft: 4 },
   bubble: {
     borderRadius: radius.card, paddingHorizontal: 14, paddingVertical: 10,
-    maxWidth: '85%',
   },
   bubbleOther: { backgroundColor: colors.surface1, borderWidth: 1, borderColor: colors.border },
   bubbleTxt: { fontSize: 15, color: colors.white, lineHeight: 21 },
