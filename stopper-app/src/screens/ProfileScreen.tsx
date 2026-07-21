@@ -57,68 +57,73 @@ function HabitCostSheet({ visible, initial, onClose, onSave }: {
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={[styles.sheet, { paddingBottom: insets.bottom + 24 }]}
+        style={{ flex: 1, backgroundColor: colors.bg }}
       >
-        <View style={styles.sheetHead}>
-          <Text style={styles.sheetTitle}>Habit cost</Text>
-          <Pressable onPress={onClose} style={styles.closeBtn}>
-            <X size={20} color={colors.textMuted} />
-          </Pressable>
-        </View>
-        <Text style={styles.sheetSub}>How much were you spending on this habit?</Text>
-
-        <View style={styles.inputRow}>
-          <Pressable
-            style={styles.curBtn}
-            onPress={() => Alert.alert('Currency', undefined, [
-              ...CURRENCIES.map(c => ({ text: `${c.sym} ${c.code}`, onPress: () => setCurrency(c.code) })),
-              { text: 'Cancel', style: 'cancel' as const },
-            ])}
-          >
-            <Text style={styles.curTxt}>{cur.sym} {cur.code}</Text>
-          </Pressable>
-          <View style={styles.amtBox}>
-            <Text style={styles.amtSym}>{cur.sym}</Text>
-            <TextInput
-              autoFocus
-              keyboardType="number-pad"
-              placeholder="0"
-              placeholderTextColor={colors.textFaint}
-              value={amount}
-              onChangeText={t => setAmount(t.replace(/[^0-9]/g, ''))}
-              style={styles.amtInput}
-            />
-          </View>
-        </View>
-
-        <View style={styles.segRow}>
-          {FREQS.map(([k, l]) => (
-            <Pressable key={k} onPress={() => setFreq(k)}
-              style={[styles.segItem, { backgroundColor: freq === k ? colors.jade500 : colors.surface2 }]}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: freq === k ? colors.onAccent : colors.textMuted }}>{l}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {preview > 0 && (
-          <View style={styles.preview}>
-            <Text style={styles.previewTxt}>
-              That's{' '}
-              <Text style={{ color: colors.jade300, fontWeight: '700' }}>{fmtMoney(preview, currency)}/month</Text>
-              {' '}you'll be keeping.
-            </Text>
-          </View>
-        )}
-
-        <View style={{ flex: 1 }} />
-
-        <Pressable
-          onPress={handleSave}
-          disabled={!amount || saving}
-          style={[styles.saveBtn, { opacity: amount && !saving ? 1 : 0.45 }]}
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={[styles.sheet, { paddingBottom: insets.bottom + 24 }]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.saveBtnTxt}>{saving ? 'Saving…' : 'Save'}</Text>
-        </Pressable>
+          <View style={styles.sheetHead}>
+            <Text style={styles.sheetTitle}>Habit cost</Text>
+            <Pressable onPress={onClose} style={styles.closeBtn}>
+              <X size={20} color={colors.textMuted} />
+            </Pressable>
+          </View>
+          <Text style={styles.sheetSub}>How much were you spending on this habit?</Text>
+
+          <View style={styles.inputRow}>
+            <Pressable
+              style={styles.curBtn}
+              onPress={() => Alert.alert('Currency', undefined, [
+                ...CURRENCIES.map(c => ({ text: `${c.sym} ${c.code}`, onPress: () => setCurrency(c.code) })),
+                { text: 'Cancel', style: 'cancel' as const },
+              ])}
+            >
+              <Text style={styles.curTxt}>{cur.sym} {cur.code}</Text>
+            </Pressable>
+            <View style={styles.amtBox}>
+              <Text style={styles.amtSym}>{cur.sym}</Text>
+              <TextInput
+                autoFocus
+                keyboardType="number-pad"
+                placeholder="0"
+                placeholderTextColor={colors.textFaint}
+                value={amount}
+                onChangeText={t => setAmount(t.replace(/[^0-9]/g, ''))}
+                style={styles.amtInput}
+              />
+            </View>
+          </View>
+
+          <View style={styles.segRow}>
+            {FREQS.map(([k, l]) => (
+              <Pressable key={k} onPress={() => setFreq(k)}
+                style={[styles.segItem, { backgroundColor: freq === k ? colors.jade500 : colors.surface2 }]}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: freq === k ? colors.onAccent : colors.textMuted }}>{l}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {preview > 0 && (
+            <View style={styles.preview}>
+              <Text style={styles.previewTxt}>
+                That's{' '}
+                <Text style={{ color: colors.jade300, fontWeight: '700' }}>{fmtMoney(preview, currency)}/month</Text>
+                {' '}you'll be keeping.
+              </Text>
+            </View>
+          )}
+
+          <Pressable
+            onPress={handleSave}
+            disabled={!amount || saving}
+            style={[styles.saveBtn, { opacity: amount && !saving ? 1 : 0.45, marginTop: 28 }]}
+          >
+            <Text style={styles.saveBtnTxt}>{saving ? 'Saving…' : 'Save'}</Text>
+          </Pressable>
+        </ScrollView>
       </KeyboardAvoidingView>
     </Modal>
   );

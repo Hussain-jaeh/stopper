@@ -9,6 +9,7 @@ export type Circle = {
   id: string;
   name: string;
   icon: LucideIcon;
+  iconKey: string;
   tint: string;
   members: number;
   activity: string;
@@ -20,12 +21,16 @@ function tintBg(hex: string, a = 0.18) {
   return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${a})`;
 }
 
-export function CirclesList({ circles, onJoin }: { circles: Circle[]; onJoin: (id: string) => void }) {
+export function CirclesList({ circles, onJoin, onOpen }: {
+  circles: Circle[];
+  onJoin: (id: string) => void;
+  onOpen: (c: Circle) => void;
+}) {
   return (
     <View style={{ gap: 12 }}>
       {circles.map((c, i) => (
         <Animated.View key={c.id} entering={FadeInDown.delay((i + 1) * 70).duration(500)}>
-          <View style={styles.card}>
+          <Pressable style={styles.card} onPress={() => onOpen(c)} accessibilityRole="button" accessibilityLabel={`Open ${c.name}`}>
             <View style={[styles.icon, { backgroundColor: tintBg(c.tint) }]}>
               <c.icon size={23} color={c.tint} />
             </View>
@@ -34,7 +39,7 @@ export function CirclesList({ circles, onJoin }: { circles: Circle[]; onJoin: (i
               <Text style={styles.meta}>{c.members.toLocaleString()} members · {c.activity}</Text>
             </View>
             <Pressable
-              onPress={() => onJoin(c.id)}
+              onPress={(e) => { e.stopPropagation(); onJoin(c.id); }}
               accessibilityRole="button"
               accessibilityLabel={`${c.joined ? 'Leave' : 'Join'} ${c.name}`}
               style={[styles.btn, c.joined ? styles.btnJoined : styles.btnJoin]}
@@ -43,7 +48,7 @@ export function CirclesList({ circles, onJoin }: { circles: Circle[]; onJoin: (i
                 {c.joined ? 'Joined' : 'Join'}
               </Text>
             </Pressable>
-          </View>
+          </Pressable>
         </Animated.View>
       ))}
     </View>

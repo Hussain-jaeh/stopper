@@ -11,28 +11,33 @@ import { type } from '../../constants/typography';
 
 const APress = Animated.createAnimatedComponent(Pressable);
 
-type Props = { done: boolean; onCheckIn: () => void; index?: number };
+type Props = { done: boolean; onCheckIn: () => void; onRelapse: () => void; index?: number };
 
-export function CheckInCard({ done, onCheckIn, index = 5 }: Props) {
+export function CheckInCard({ done, onCheckIn, onRelapse, index = 5 }: Props) {
   const scale = useSharedValue(1);
   const aStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   if (done) {
     return (
-      <View style={styles.doneCard}>
-        <View style={styles.doneIcon}>
-          <Check size={22} color={colors.onAccent} strokeWidth={3} />
+      <View style={{ gap: 10 }}>
+        <View style={styles.doneCard}>
+          <View style={styles.doneIcon}>
+            <Check size={22} color={colors.onAccent} strokeWidth={3} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.doneTitle}>Today's check-in complete</Text>
+            <Text style={styles.doneSub}>See you tomorrow — keep the streak alive.</Text>
+          </View>
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.doneTitle}>Today's check-in complete</Text>
-          <Text style={styles.doneSub}>See you tomorrow — keep the streak alive.</Text>
-        </View>
+        <Pressable onPress={onRelapse} accessibilityRole="button" accessibilityLabel="I slipped up" style={styles.relapseBtn}>
+          <Text style={styles.relapseTxt}>I slipped up — log & restart</Text>
+        </Pressable>
       </View>
     );
   }
 
   return (
-    <View>
+    <View style={{ gap: 10 }}>
       <APress
         onPressIn={() => { scale.value = withTiming(0.97, { duration: 120 }); }}
         onPressOut={() => { scale.value = withTiming(1, { duration: 120 }); }}
@@ -46,7 +51,9 @@ export function CheckInCard({ done, onCheckIn, index = 5 }: Props) {
           <Text style={styles.ctaText}>Check in today</Text>
         </LinearGradient>
       </APress>
-      
+      <Pressable onPress={onRelapse} accessibilityRole="button" accessibilityLabel="I slipped up" style={styles.relapseBtn}>
+        <Text style={styles.relapseTxt}>I slipped up — log & restart</Text>
+      </Pressable>
     </View>
   );
 }
@@ -61,4 +68,6 @@ const styles = StyleSheet.create({
   doneIcon: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.jade500, alignItems: 'center', justifyContent: 'center' },
   doneTitle: { ...type.body, fontWeight: '700', color: colors.white },
   doneSub: { ...type.label, color: colors.textMuted, marginTop: 2 },
+  relapseBtn: { alignItems: 'center', paddingVertical: 10 },
+  relapseTxt: { fontSize: 13.5, color: colors.textFaint, textDecorationLine: 'underline' },
 });

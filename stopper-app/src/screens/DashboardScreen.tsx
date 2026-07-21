@@ -12,6 +12,7 @@ import { StatsGrid } from '../components/dashboard/StatsGrid';
 import { MotivationCard, QUOTES } from '../components/dashboard/MotivationCard';
 import { CheckInCard } from '../components/dashboard/CheckInCard';
 import { CheckInModal } from '../components/dashboard/CheckInModal';
+import { RelapseModal } from '../components/dashboard/RelapseModal';
 import { DashboardSkeleton, EmptyState } from '../components/dashboard/states';
 import { FutureYouCard, Recording } from '../components/vault/FutureYouCard';
 import { MilestoneRecordPrompt } from '../components/vault/VaultPrompts';
@@ -32,11 +33,13 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
   const navigation = useNavigation<Nav>();
   const data = useQuery(api.dashboard.getDashboard);
   const checkIn = useMutation(api.checkins.createCheckIn);
+  const logRelapse = useMutation(api.relapses.logRelapse);
   const latestRecording = useQuery(api.vault.latestRecording);
   const claimMilestone = useMutation(api.vault.claimMilestonePrompt);
 
   const [refreshing, setRefreshing] = useState(false);
   const [checkInVisible, setCheckInVisible] = useState(false);
+  const [relapseVisible, setRelapseVisible] = useState(false);
   const [milestoneDay, setMilestoneDay] = useState<number | null>(null);
 
   const quote = useMemo(() => QUOTES[Math.floor(Math.random() * QUOTES.length)], []);
@@ -51,6 +54,10 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
     const day = await claimMilestone();
     if (day) setTimeout(() => setMilestoneDay(day), 400);
   }, [checkIn, claimMilestone]);
+
+  const handleRelapse = useCallback(async (trigger: string, note?: string) => {
+    await logRelapse({ trigger, note });
+  }, [logRelapse]);
 
   const content = (() => {
     if (data === undefined) return <DashboardSkeleton />;
@@ -74,6 +81,7 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
         <CheckInCard
           done={data.todayCheckedIn}
           onCheckIn={() => setCheckInVisible(true)}
+          onRelapse={() => setRelapseVisible(true)}
           index={3}
         />
         <StatsGrid
@@ -138,6 +146,11 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
           onSubmit={handleCheckIn}
         />
       )}
+      <RelapseModal
+        visible={relapseVisible}
+        onClose={() => setRelapseVisible(false)}
+        onSubmit={handleRelapse}
+      />
       <MilestoneRecordPrompt
         visible={milestoneDay !== null && !checkInVisible}
         day={milestoneDay ?? 0}

@@ -12,7 +12,8 @@ export type Post = {
   type: 'post' | 'milestone';
   handle: string;
   streak: number;
-  circle: string;
+  circle?: string;
+  circleId?: string;
   time: string;
   body: string;
   milestone?: string;
@@ -37,7 +38,7 @@ export function PostCard({ post, index, onCheer, onOpen }: {
                 <Text style={styles.streakTxt}>🔥 {post.streak}d</Text>
               </View>
             </View>
-            <Text style={styles.meta}>{post.circle} · {post.time}</Text>
+            <Text style={styles.meta}>{post.circle ? `${post.circle} · ` : ''}{post.time}</Text>
           </View>
           {milestone && <Text style={{ fontSize: 22 }}>🎉</Text>}
         </Pressable>

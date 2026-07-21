@@ -60,99 +60,143 @@ export const getMe = query({
   },
 });
 
+// Shared helper: enrich raw post docs with author streak, circle name, and cheer data.
+async function enrichPosts(
+  ctx: any,
+  userId: string,
+  posts: any[],
+) {
+  if (posts.length === 0) return [];
+
+  const uniqueUserIds = [...new Set(posts.map((p) => p.userId as string))];
+  const uniqueCircleIds = [
+    ...new Set(
+      posts
+        .map((p) => p.circleId as string | undefined)
+        .filter((id): id is string => !!id),
+    ),
+  ];
+
+  const [userStreaks, circleNames, cheerData] = await Promise.all([
+    Promise.all(
+      uniqueUserIds.map(async (uid) => {
+        const profile = await ctx.db
+          .query("profiles")
+          .withIndex("by_userId", (q: any) => q.eq("userId", uid))
+          .unique();
+        if (!profile) return [uid, 0] as const;
+        const relapses = await ctx.db
+          .query("relapses")
+          .withIndex("by_userId_createdAt", (q: any) => q.eq("userId", uid))
+          .order("asc")
+          .take(500);
+        return [
+          uid,
+          calculateCurrentStreak({
+            quitDate: profile.quitDate,
+            relapseTimestamps: relapses.map((r: any) => r.createdAt),
+          }),
+        ] as const;
+      }),
+    ),
+    Promise.all(
+      uniqueCircleIds.map(async (cid) => {
+        const c = await ctx.db.get(cid as any);
+        return [cid, (c as any)?.name ?? "Recovery"] as const;
+      }),
+    ),
+    Promise.all(
+      posts.map(async (post) => {
+        const [cheers, myCheer] = await Promise.all([
+          ctx.db
+            .query("postCheers")
+            .withIndex("by_postId", (q: any) => q.eq("postId", post._id))
+            .take(1000),
+          ctx.db
+            .query("postCheers")
+            .withIndex("by_postId_userId", (q: any) =>
+              q.eq("postId", post._id).eq("userId", userId),
+            )
+            .unique(),
+        ]);
+        return [post._id as string, cheers.length, myCheer !== null] as const;
+      }),
+    ),
+  ]);
+
+  const streakMap = new Map(userStreaks);
+  const circleMap = new Map(circleNames);
+  const cheerMap = new Map(
+    cheerData.map(([id, count, cheered]) => [id, { count, cheered }]),
+  );
+
+  return posts.map((post) => ({
+    id: post._id as string,
+    type: post.type,
+    handle: makeHandle(post.userId),
+    streak: streakMap.get(post.userId as string) ?? 0,
+    circle: post.circleId
+      ? (circleMap.get(post.circleId as string) ?? "Recovery")
+      : undefined,
+    circleId: post.circleId as string | undefined,
+    time: relTime(post.createdAt),
+    body: post.body,
+    milestone: post.milestone,
+    cheers: cheerMap.get(post._id as string)?.count ?? 0,
+    replies: 0,
+    cheered: cheerMap.get(post._id as string)?.cheered ?? false,
+  }));
+}
+
 export const getFeed = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { mode: v.optional(v.union(v.literal("all"), v.literal("mine"))) },
+  handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
+    const mode = args.mode ?? "all";
 
-    const posts = await ctx.db
-      .query("posts")
-      .withIndex("by_createdAt")
-      .order("desc")
-      .take(50);
+    let posts: any[];
 
-    if (posts.length === 0) return [];
+    if (mode === "mine") {
+      // Show posts from the user's joined circles only.
+      // Fall back to all posts if user hasn't joined any circles.
+      const memberships = await ctx.db
+        .query("circleMemberships")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .take(100);
 
-    // Deduplicate author IDs and circle IDs to avoid redundant fetches
-    const uniqueUserIds = [...new Set(posts.map((p) => p.userId as string))];
-    const uniqueCircleIds = [
-      ...new Set(
-        posts
-          .map((p) => p.circleId as string | undefined)
-          .filter((id): id is string => !!id),
-      ),
-    ];
-
-    // Batch-fetch author streaks, circle names, and per-post cheer data in parallel
-    const [userStreaks, circleNames, cheerData] = await Promise.all([
-      Promise.all(
-        uniqueUserIds.map(async (uid) => {
-          const profile = await ctx.db
-            .query("profiles")
-            .withIndex("by_userId", (q) => q.eq("userId", uid as any))
-            .unique();
-          if (!profile) return [uid, 0] as const;
-          const relapses = await ctx.db
-            .query("relapses")
-            .withIndex("by_userId_createdAt", (q) => q.eq("userId", uid as any))
-            .order("asc")
-            .take(500);
-          return [
-            uid,
-            calculateCurrentStreak({
-              quitDate: profile.quitDate,
-              relapseTimestamps: relapses.map((r) => r.createdAt),
-            }),
-          ] as const;
-        }),
-      ),
-      Promise.all(
-        uniqueCircleIds.map(async (cid) => {
-          const c = await ctx.db.get(cid as any);
-          return [cid, (c as any)?.name ?? "Recovery"] as const;
-        }),
-      ),
-      // MVP: bounded take for cheer count; replace with denormalized counter at scale.
-      Promise.all(
-        posts.map(async (post) => {
-          const [cheers, myCheer] = await Promise.all([
+      if (memberships.length === 0) {
+        posts = await ctx.db
+          .query("posts")
+          .withIndex("by_createdAt")
+          .order("desc")
+          .take(50);
+      } else {
+        const joinedIds = memberships.map((m) => m.circleId as string);
+        const perCircle = await Promise.all(
+          joinedIds.map((cid) =>
             ctx.db
-              .query("postCheers")
-              .withIndex("by_postId", (q) => q.eq("postId", post._id))
-              .take(1000),
-            ctx.db
-              .query("postCheers")
-              .withIndex("by_postId_userId", (q) =>
-                q.eq("postId", post._id).eq("userId", userId),
+              .query("posts")
+              .withIndex("by_circleId_createdAt", (q) =>
+                q.eq("circleId", cid as any),
               )
-              .unique(),
-          ]);
-          return [post._id as string, cheers.length, myCheer !== null] as const;
-        }),
-      ),
-    ]);
+              .order("desc")
+              .take(30),
+          ),
+        );
+        posts = perCircle
+          .flat()
+          .sort((a, b) => b.createdAt - a.createdAt)
+          .slice(0, 50);
+      }
+    } else {
+      posts = await ctx.db
+        .query("posts")
+        .withIndex("by_createdAt")
+        .order("desc")
+        .take(50);
+    }
 
-    const streakMap = new Map(userStreaks);
-    const circleMap = new Map(circleNames);
-    const cheerMap = new Map(
-      cheerData.map(([id, count, cheered]) => [id, { count, cheered }]),
-    );
-
-    return posts.map((post) => ({
-      id: post._id as string,
-      type: post.type,
-      handle: makeHandle(post.userId),
-      streak: streakMap.get(post.userId as string) ?? 0,
-      circle: post.circleId
-        ? (circleMap.get(post.circleId as string) ?? "Recovery")
-        : "Recovery",
-      time: relTime(post.createdAt),
-      body: post.body,
-      milestone: post.milestone,
-      cheers: cheerMap.get(post._id as string)?.count ?? 0,
-      replies: 0,
-      cheered: cheerMap.get(post._id as string)?.cheered ?? false,
-    }));
+    return enrichPosts(ctx, userId as string, posts);
   },
 });
 
@@ -288,5 +332,88 @@ export const createPost = mutation({
     if (!body) throw new ConvexError("Post body cannot be empty");
     if (body.length > 500) throw new ConvexError("Post body must be 500 characters or fewer");
     return ctx.db.insert("posts", { userId, ...args, body, createdAt: Date.now() });
+  },
+});
+
+export const createCircle = mutation({
+  args: {
+    name: v.string(),
+    iconKey: v.string(),
+    tint: v.string(),
+    description: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+    const name = args.name.trim();
+    if (!name) throw new ConvexError("Circle name cannot be empty");
+    if (name.length > 40) throw new ConvexError("Circle name must be 40 characters or fewer");
+
+    const circleId = await ctx.db.insert("circles", {
+      name,
+      iconKey: args.iconKey,
+      tint: args.tint,
+      description: args.description?.trim(),
+      createdBy: userId,
+      createdAt: Date.now(),
+    });
+
+    // Auto-join the creator
+    await ctx.db.insert("circleMemberships", {
+      userId,
+      circleId,
+      joinedAt: Date.now(),
+    });
+
+    return circleId;
+  },
+});
+
+export const getCirclePosts = query({
+  args: { circleId: v.id("circles") },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    const posts = await ctx.db
+      .query("posts")
+      .withIndex("by_circleId_createdAt", (q) =>
+        q.eq("circleId", args.circleId),
+      )
+      .order("desc")
+      .take(50);
+
+    return enrichPosts(ctx, userId as string, posts);
+  },
+});
+
+export const getCircle = query({
+  args: { circleId: v.id("circles") },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+
+    const [circle, memberDocs, membership] = await Promise.all([
+      ctx.db.get(args.circleId),
+      ctx.db
+        .query("circleMemberships")
+        .withIndex("by_circleId", (q) => q.eq("circleId", args.circleId))
+        .take(10000),
+      ctx.db
+        .query("circleMemberships")
+        .withIndex("by_userId_circleId", (q) =>
+          q.eq("userId", userId).eq("circleId", args.circleId),
+        )
+        .unique(),
+    ]);
+
+    if (!circle) return null;
+
+    return {
+      id: circle._id as string,
+      name: circle.name,
+      iconKey: circle.iconKey,
+      tint: circle.tint,
+      description: circle.description,
+      members: memberDocs.length,
+      joined: membership !== null,
+    };
   },
 });

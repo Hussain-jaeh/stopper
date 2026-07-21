@@ -22,12 +22,14 @@ interface Props {
   onSubmit: (body: string, circleId?: string) => Promise<void>;
   myHandle: string;
   circles: Circle[];
+  initialCircleId?: string;
+  initialCircleName?: string;
 }
 
-export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circles }: Props) {
+export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circles, initialCircleId, initialCircleName }: Props) {
   const insets = useSafeAreaInsets();
   const [body, setBody] = useState('');
-  const [selectedCircle, setSelectedCircle] = useState<string | undefined>();
+  const [selectedCircle, setSelectedCircle] = useState<string | undefined>(initialCircleId);
   const [loading, setLoading] = useState(false);
 
   const canPost = body.trim().length > 0;
@@ -38,7 +40,7 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
     try {
       await onSubmit(body.trim(), selectedCircle);
       setBody('');
-      setSelectedCircle(undefined);
+      setSelectedCircle(initialCircleId);
       onClose();
     } finally {
       setLoading(false);
@@ -83,8 +85,15 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
               />
             </View>
 
-            {/* Circle picker */}
-            {circles.length > 0 && (
+            {/* Circle context — locked when opened from CircleDetail, picker when from global feed */}
+            {initialCircleId && initialCircleName ? (
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>Posting to</Text>
+                <View style={[styles.circleChip, { borderColor: colors.jade500, backgroundColor: 'rgba(20,184,136,0.12)' }]}>
+                  <Text style={[styles.circleChipTxt, { color: colors.jade300 }]}>{initialCircleName}</Text>
+                </View>
+              </View>
+            ) : circles.length > 0 ? (
               <View style={styles.section}>
                 <Text style={styles.sectionLabel}>Post to a circle (optional)</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.circleRow}>
@@ -104,7 +113,7 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
                   })}
                 </ScrollView>
               </View>
-            )}
+            ) : null}
           </ScrollView>
         </View>
       </KeyboardAvoidingView>

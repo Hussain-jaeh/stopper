@@ -9,6 +9,7 @@ import { MilestoneRing } from '../components/progress/MilestoneRing';
 import { CalendarHeatmap, CalendarData } from '../components/progress/CalendarHeatmap';
 import { TrendChart } from '../components/progress/TrendChart';
 import { AchievementsGrid, MILESTONES } from '../components/progress/AchievementsGrid';
+import { RelapseHistory } from '../components/progress/RelapseHistory';
 import { DashboardSkeleton, EmptyState } from '../components/dashboard/states';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
@@ -81,6 +82,7 @@ export function ProgressScreen() {
           return <AchievementsGrid cleanDays={data.cleanDays} index={5} />;
         })()}
         <InsightCard title={data.insight.title} body={data.insight.body} index={6} />
+        <RelapseHistory index={7} />
       </View>
     </ScrollView>
   );

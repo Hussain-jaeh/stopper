@@ -26,6 +26,9 @@ export function VaultRecordScreen() {
   const [count, setCount] = useState(3);
   const [sec, setSec] = useState(0);
   const [videoUri, setVideoUri] = useState<string | null>(null);
+  // Pre-fetched upload URLs so Save starts immediately
+  const prefetchedVideoUrl = useRef<string | null>(null);
+  const prefetchedThumbUrl = useRef<string | null>(null);
 
   const generateUploadUrl = useMutation(api.vault.generateUploadUrl);
   const saveRecordingMutation = useMutation(api.vault.saveRecording);
@@ -48,9 +51,19 @@ export function VaultRecordScreen() {
 
   const startRecording = async () => {
     setPhase('rec'); setSec(0);
+    prefetchedVideoUrl.current = null;
+    prefetchedThumbUrl.current = null;
     try {
       const video = await cam.current?.recordAsync({ maxDuration: LIMIT_S });
-      if (video?.uri) { setVideoUri(video.uri); setPhase('review'); }
+      if (video?.uri) {
+        setVideoUri(video.uri);
+        setPhase('review');
+        // Pre-fetch both upload URLs in the background while user decides to keep/re-record
+        Promise.all([generateUploadUrl(), generateUploadUrl()]).then(([vid, thumb]) => {
+          prefetchedVideoUrl.current = vid;
+          prefetchedThumbUrl.current = thumb;
+        }).catch(() => { /* will fall back to fetching on save */ });
+      }
     } catch { setPhase('prep'); }
   };
   const stopRecording = () => cam.current?.stopRecording();
@@ -59,25 +72,34 @@ export function VaultRecordScreen() {
     if (!videoUri) return;
     setPhase('saving');
     try {
-      let thumbStorageId: string | undefined;
-      try {
-        const { uri: thumbLocal } = await VideoThumbnails.getThumbnailAsync(videoUri, { time: 500, quality: 0.6 });
-        const thumbUrl = await generateUploadUrl();
-        const tRes = await FileSystem.uploadAsync(thumbUrl, thumbLocal, {
-          httpMethod: 'POST',
-          headers: { 'Content-Type': 'image/jpeg' },
-          uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-        });
-        if (tRes.status === 200) thumbStorageId = JSON.parse(tRes.body).storageId;
-      } catch { /* non-fatal — proceed without thumbnail */ }
+      // Use pre-fetched URLs if available, otherwise fetch both in parallel now
+      const [videoUrl, thumbUrl] = prefetchedVideoUrl.current && prefetchedThumbUrl.current
+        ? [prefetchedVideoUrl.current, prefetchedThumbUrl.current]
+        : await Promise.all([generateUploadUrl(), generateUploadUrl()]);
 
-      const videoUrl = await generateUploadUrl();
       const mime = videoUri.endsWith('.mov') ? 'video/quicktime' : 'video/mp4';
-      const vRes = await FileSystem.uploadAsync(videoUrl, videoUri, {
-        httpMethod: 'POST',
-        headers: { 'Content-Type': mime },
-        uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-      });
+
+      // Upload video and thumbnail in parallel
+      const [vRes, thumbStorageId] = await Promise.all([
+        FileSystem.uploadAsync(videoUrl, videoUri, {
+          httpMethod: 'POST',
+          headers: { 'Content-Type': mime },
+          uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+        }),
+        (async (): Promise<string | undefined> => {
+          try {
+            const { uri: thumbLocal } = await VideoThumbnails.getThumbnailAsync(videoUri, { time: 500, quality: 0.6 });
+            const tRes = await FileSystem.uploadAsync(thumbUrl, thumbLocal, {
+              httpMethod: 'POST',
+              headers: { 'Content-Type': 'image/jpeg' },
+              uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+            });
+            if (tRes.status === 200) return JSON.parse(tRes.body).storageId;
+          } catch { /* non-fatal */ }
+          return undefined;
+        })(),
+      ]);
+
       if (vRes.status !== 200) throw new Error(`Upload HTTP ${vRes.status}`);
       const { storageId } = JSON.parse(vRes.body);
 

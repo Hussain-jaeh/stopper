@@ -1,7 +1,8 @@
-import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { useEventListener } from 'expo';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { X, Play } from 'lucide-react-native';
 import { colors } from '../constants/colors';
@@ -15,11 +16,27 @@ export function VaultPlayScreen() {
   const { params } = useRoute<Route>();
   const { uri, title, day } = params;
 
+  const [showPlay, setShowPlay] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(true);
+
   const player = useVideoPlayer(uri, (p) => { p.play(); });
 
+  useEventListener(player, 'statusChange', ({ status }) => {
+    setIsBuffering(status === 'loading');
+  });
+
+  useEventListener(player, 'playingChange', ({ isPlaying }) => {
+    setShowPlay(!isPlaying);
+  });
+
   const togglePlay = useCallback(() => {
-    if (player.playing) player.pause();
-    else player.play();
+    if (player.playing) {
+      player.pause();
+      setShowPlay(true);
+    } else {
+      player.play();
+      setShowPlay(false);
+    }
   }, [player]);
 
   return (
@@ -32,7 +49,12 @@ export function VaultPlayScreen() {
       />
 
       <Pressable style={StyleSheet.absoluteFill} onPress={togglePlay}>
-        {!player.playing && (
+        {isBuffering && (
+          <View style={styles.playOverlay}>
+            <ActivityIndicator size="large" color={colors.white} />
+          </View>
+        )}
+        {!isBuffering && showPlay && (
           <View style={styles.playOverlay}>
             <View style={styles.playCircle}><Play size={28} color={colors.white} /></View>
           </View>

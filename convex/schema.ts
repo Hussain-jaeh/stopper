@@ -72,11 +72,13 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_userId_createdAt", ["userId", "createdAt"]),
 
-  // Community: topic circles (seeded server-side, not user-created).
+  // Community: topic circles (seeded server-side or user-created).
   circles: defineTable({
     name: v.string(),
     iconKey: v.string(),   // maps to a Lucide icon in the app
     tint: v.string(),      // hex accent colour
+    description: v.optional(v.string()),
+    createdBy: v.optional(v.id("users")),
     createdAt: v.number(),
   }),
 
@@ -100,7 +102,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_createdAt", ["createdAt"])
-    .index("by_userId", ["userId"]),
+    .index("by_userId", ["userId"])
+    .index("by_circleId_createdAt", ["circleId", "createdAt"]),
 
   // One cheer per user per post (toggle: insert / delete).
   postCheers: defineTable({
