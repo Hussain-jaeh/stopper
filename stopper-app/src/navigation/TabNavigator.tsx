@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,18 +11,42 @@ import { CommunityScreen } from '../screens/CommunityScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { PlanScreen } from '../screens/PlanScreen';
 import { PanicScreen } from '../screens/PanicScreen';
+
+function NativeUnavailable({ feature }: { feature: string }) {
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0a0a0a' }}>
+      <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 8 }}>{feature} unavailable</Text>
+      <Text style={{ color: '#888', fontSize: 13, textAlign: 'center', paddingHorizontal: 40 }}>
+        This feature requires a development build and is not available in Expo Go.
+      </Text>
+    </View>
+  );
+}
+
 // Lazy-loaded so expo-camera / expo-video only initialise when navigated to
 function VaultScreenLazy() {
-  const { VaultScreen } = require('../screens/VaultScreen');
-  return <VaultScreen />;
+  try {
+    const { VaultScreen } = require('../screens/VaultScreen');
+    return <VaultScreen />;
+  } catch {
+    return <NativeUnavailable feature="Memory Vault" />;
+  }
 }
 function VaultRecordLazy() {
-  const { VaultRecordScreen } = require('../screens/VaultRecordScreen');
-  return <VaultRecordScreen />;
+  try {
+    const { VaultRecordScreen } = require('../screens/VaultRecordScreen');
+    return <VaultRecordScreen />;
+  } catch {
+    return <NativeUnavailable feature="Camera recording" />;
+  }
 }
 function VaultPlayLazy() {
-  const { VaultPlayScreen } = require('../screens/VaultPlayScreen');
-  return <VaultPlayScreen />;
+  try {
+    const { VaultPlayScreen } = require('../screens/VaultPlayScreen');
+    return <VaultPlayScreen />;
+  } catch {
+    return <NativeUnavailable feature="Video playback" />;
+  }
 }
 import { MoneyInsightsScreen } from '../screens/MoneyInsightsScreen';
 import { CircleDetailScreen } from '../screens/CircleDetailScreen';
