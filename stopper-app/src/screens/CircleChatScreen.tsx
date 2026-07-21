@@ -6,8 +6,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation } from 'convex/react';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { ChevronLeft, Send, X, Reply } from 'lucide-react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { ChevronLeft, Send, X, Reply, Lock } from 'lucide-react-native';
 import { api } from '../../convex/_generated/api';
+import { RootStackParamList } from '../navigation/TabNavigator';
 import { Avatar } from '../components/community/Avatar';
 import { colors } from '../constants/colors';
 import { spacing, radius } from '../constants/spacing';
@@ -15,6 +17,7 @@ import { type } from '../constants/typography';
 import { RootStackParamList } from '../navigation/TabNavigator';
 
 type Route = RouteProp<RootStackParamList, 'CircleChat'>;
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 type Message = {
   id: string;
@@ -32,7 +35,7 @@ function tintBg(hex: string, a = 0.15) {
 
 export function CircleChatScreen() {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const navigation = useNavigation<Nav>();
   const { params } = useRoute<Route>();
   const { circleId, name, tint } = params;
 
@@ -42,6 +45,7 @@ export function CircleChatScreen() {
   const [cachedMessages, setCachedMessages] = useState<Message[]>([]);
   const listRef = useRef<FlatList>(null);
 
+  const circle = useQuery(api.community.getCircle, { circleId: circleId as any });
   const messages = useQuery(api.chat.getMessages, { circleId: circleId as any }) as Message[] | undefined;
   const sendMessage = useMutation(api.chat.sendMessage);
 
@@ -111,7 +115,7 @@ export function CircleChatScreen() {
       )}
 
       {/* Reply preview bar */}
-      {replyTo && (
+      {replyTo && circle?.joined && (
         <View style={styles.replyBar}>
           <View style={[styles.replyAccent, { backgroundColor: tint }]} />
           <View style={{ flex: 1, minWidth: 0 }}>
@@ -124,25 +128,35 @@ export function CircleChatScreen() {
         </View>
       )}
 
-      {/* Input */}
-      <View style={[styles.inputBar, { paddingBottom: insets.bottom + 8 }]}>
-        <TextInput
-          style={styles.input}
-          placeholder="Message..."
-          placeholderTextColor={colors.textFaint}
-          value={text}
-          onChangeText={setText}
-          multiline
-          maxLength={500}
-        />
+      {/* Input — only for members */}
+      {circle?.joined ? (
+        <View style={[styles.inputBar, { paddingBottom: insets.bottom + 8 }]}>
+          <TextInput
+            style={styles.input}
+            placeholder="Message..."
+            placeholderTextColor={colors.textFaint}
+            value={text}
+            onChangeText={setText}
+            multiline
+            maxLength={500}
+          />
+          <Pressable
+            onPress={handleSend}
+            disabled={!text.trim() || sending}
+            style={[styles.sendBtn, { backgroundColor: tint, opacity: text.trim() && !sending ? 1 : 0.35 }]}
+          >
+            <Send size={17} color="#fff" />
+          </Pressable>
+        </View>
+      ) : circle !== undefined ? (
         <Pressable
-          onPress={handleSend}
-          disabled={!text.trim() || sending}
-          style={[styles.sendBtn, { backgroundColor: tint, opacity: text.trim() && !sending ? 1 : 0.35 }]}
+          onPress={() => navigation.navigate('CircleDetail', { circleId, name, tint, iconKey: '' })}
+          style={[styles.joinGate, { paddingBottom: insets.bottom + 8 }]}
         >
-          <Send size={17} color="#fff" />
+          <Lock size={16} color={colors.textMuted} />
+          <Text style={styles.joinGateTxt}>Join <Text style={{ color: tint }}>{name}</Text> to send messages</Text>
         </Pressable>
-      </View>
+      ) : null}
     </KeyboardAvoidingView>
   );
 }
@@ -252,4 +266,11 @@ const styles = StyleSheet.create({
     width: 42, height: 42, borderRadius: 21,
     alignItems: 'center', justifyContent: 'center',
   },
+  joinGate: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    paddingHorizontal: spacing.screenPad, paddingTop: 16,
+    borderTopWidth: 1, borderTopColor: colors.border,
+    backgroundColor: colors.bg,
+  },
+  joinGateTxt: { fontSize: 14.5, color: colors.textMuted, fontWeight: '600' },
 });

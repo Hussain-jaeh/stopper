@@ -61,6 +61,15 @@ export const sendMessage = mutation({
     const body = args.body.trim();
     if (!body) throw new ConvexError("Message cannot be empty");
     if (body.length > 500) throw new ConvexError("Message too long");
+
+    const membership = await ctx.db
+      .query("circleMemberships")
+      .withIndex("by_userId_circleId", (q) =>
+        q.eq("userId", userId).eq("circleId", args.circleId),
+      )
+      .unique();
+    if (!membership) throw new ConvexError("You must join this circle to send messages");
+
     return ctx.db.insert("messages", {
       circleId: args.circleId,
       userId,

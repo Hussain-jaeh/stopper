@@ -130,7 +130,19 @@ export function CommunityScreen() {
               </Pressable>
               <CirclesList
                 circles={circles ?? []}
-                onJoin={(id) => toggleJoin({ circleId: id as any })}
+                onJoin={(id) => {
+                  const circle = circles?.find((c) => c.id === id);
+                  toggleJoin({ circleId: id as any });
+                  // Navigate into the circle when joining (not when leaving)
+                  if (circle && !circle.joined) {
+                    navigation.navigate('CircleDetail', {
+                      circleId: circle.id,
+                      name: circle.name,
+                      tint: circle.tint,
+                      iconKey: circle.iconKey,
+                    });
+                  }
+                }}
                 onOpen={handleOpenCircle}
               />
             </>
