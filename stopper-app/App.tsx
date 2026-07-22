@@ -23,7 +23,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import Purchases from 'react-native-purchases';
 import { initPurchases } from './src/lib/purchases';
-import { scheduleMilestoneNotifications } from './src/notifications/reminders';
+import { scheduleMilestoneNotifications, scheduleReminder } from './src/notifications/reminders';
 import { AuthFlow } from './src/auth/AuthFlow';
 import { OnboardingFlow } from './src/onboarding/OnboardingFlow';
 import { TabNavigator } from './src/navigation/TabNavigator';
@@ -142,16 +142,28 @@ function useAppLock() {
 function AppContent({ onBootDone }: { onBootDone: () => void }) {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const profile = useQuery(api.users.getMyProfile);
+  const recoveryProfile = useQuery(api.profiles.getProfile);
   useAppLock();
   const saveOnboarding = useMutation(api.users.completeOnboarding);
   const upsertProfile = useMutation(api.profiles.upsertProfile);
   const [phase, setPhase] = useState<Phase>('loading');
   const bootDoneRef = useRef(false);
   const rcCheckedRef = useRef(false);
+  const notifScheduledRef = useRef(false);
 
   const markBoot = useCallback(() => {
     if (!bootDoneRef.current) { bootDoneRef.current = true; onBootDone(); }
   }, [onBootDone]);
+
+  // Re-schedule notifications once per session when the user is in the app.
+  // Handles fresh installs, reinstalls, and returning users whose scheduled
+  // local notifications were wiped.
+  useEffect(() => {
+    if (phase !== 'app' || notifScheduledRef.current || !recoveryProfile) return;
+    notifScheduledRef.current = true;
+    scheduleMilestoneNotifications(recoveryProfile.quitDate).catch(() => {});
+    if (profile?.remindersOn) scheduleReminder().catch(() => {});
+  }, [phase, recoveryProfile, profile?.remindersOn]);
 
   useEffect(() => {
     if (isLoading) return;
