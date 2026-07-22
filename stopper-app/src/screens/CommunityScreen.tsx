@@ -55,8 +55,8 @@ export function CommunityScreen() {
 
   const loading = me === undefined || feed === undefined;
 
-  const handlePost = async (body: string, circleId?: string) => {
-    await createPost({ type: 'post', body, circleId: circleId as any });
+  const handlePost = async (body: string, circleId?: string, mediaStorageId?: string, mediaType?: 'image' | 'video') => {
+    await createPost({ type: 'post', body, circleId: circleId as any, mediaStorageId: mediaStorageId as any, mediaType });
   };
 
   const handleCreateCircle = async (name: string, iconKey: string, tint: string, description?: string) => {
@@ -118,6 +118,7 @@ export function CommunityScreen() {
                     index={i + 2}
                     onCheer={(id) => cheer({ postId: id as any })}
                     onOpen={() => {}}
+                    onPlayVideo={(url) => navigation.navigate('VaultPlay', { uri: url, title: 'Win' })}
                   />
                 ))
               )}

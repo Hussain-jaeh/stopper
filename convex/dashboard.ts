@@ -108,6 +108,8 @@ export const getDashboard = query({
       totalRelapses,
       todayCheckedIn: todayCheckIn !== null,
       cravingAverage,
+      lastCelebratedShareDay: profile?.lastCelebratedShareDay ?? null,
+      referralUrl: `https://stopper.app/u/${userId.slice(0, 8)}`,
     };
   },
 });

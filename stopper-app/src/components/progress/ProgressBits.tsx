@@ -2,14 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Flame, Trophy, Target, Lightbulb, LucideIcon } from 'lucide-react-native';
+import { Flame, Trophy, Target, Lightbulb, Share2, LucideIcon } from 'lucide-react-native';
 import { colors, gradients } from '../../constants/colors';
 import { radius } from '../../constants/spacing';
 import { type } from '../../constants/typography';
 
 export type Range = 'Week' | 'Month' | 'Year';
 
-export function ProgressHeader({ range, setRange, index = 0 }: { range: Range; setRange: (r: Range) => void; index?: number }) {
+export function ProgressHeader({ range, setRange, onShare, index = 0 }: { range: Range; setRange: (r: Range) => void; onShare?: () => void; index?: number }) {
   const ranges: Range[] = ['Week', 'Month', 'Year'];
   return (
     <Animated.View entering={FadeInDown.delay(index * 80).duration(550)}>
@@ -18,6 +18,11 @@ export function ProgressHeader({ range, setRange, index = 0 }: { range: Range; s
           <Text style={styles.h1}>Your progress</Text>
           <Text style={styles.sub}>Every clean day is a win worth seeing.</Text>
         </View>
+        {onShare && (
+          <Pressable onPress={onShare} style={styles.shareBtn} accessibilityLabel="Share your progress">
+            <Share2 size={18} color={colors.jade300} />
+          </Pressable>
+        )}
         <View style={styles.segment}>
           {ranges.map(r => {
             const on = r === range;
@@ -73,7 +78,8 @@ export function InsightCard({ title, body, index = 6 }: { title: string; body: s
 const styles = StyleSheet.create({
   h1: { ...type.h1, color: colors.white },
   sub: { ...type.label, color: colors.textMuted, marginTop: 6 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  shareBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   segment: { flexDirection: 'row', gap: 5, backgroundColor: colors.surface1,  borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 4 },
   segItem: { width: 52, height: 36, borderRadius: 11, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   segTxt: { fontSize: 13, fontWeight: '700' },

@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Share2 } from 'lucide-react-native';
 import { colors, gradients } from '../../constants/colors';
 import { radius, spacing, shadow } from '../../constants/spacing';
 import { type } from '../../constants/typography';
@@ -10,6 +11,7 @@ type Props = {
   daysSinceQuit: number;
   longest: number;
   addictionType: string;
+  onShare?: () => void;
   index?: number;
 };
 
@@ -19,7 +21,7 @@ const STATS = [
   { key: 'longest', label: 'Longest' },
 ] as const;
 
-export function StreakCard({ current, daysSinceQuit, longest, addictionType }: Props) {
+export function StreakCard({ current, daysSinceQuit, longest, addictionType, onShare }: Props) {
   const values = { current, days: daysSinceQuit, longest };
 
   return (
@@ -48,6 +50,11 @@ export function StreakCard({ current, daysSinceQuit, longest, addictionType }: P
             </View>
             <Text style={styles.sub}>{addictionType}-free and counting</Text>
           </View>
+          {onShare && (
+            <Pressable onPress={onShare} style={styles.shareBtn} accessibilityLabel="Share your streak">
+              <Share2 size={18} color="rgba(255,255,255,0.85)" />
+            </Pressable>
+          )}
         </View>
 
         <View style={styles.statsRow}>
@@ -91,6 +98,17 @@ const styles = StyleSheet.create({
   headRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  shareBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
   },
   fireWrap: {
     width: 58,

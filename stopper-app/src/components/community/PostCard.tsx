@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { HeartHandshake, MessageCircle } from 'lucide-react-native';
+import { HeartHandshake, MessageCircle, Play } from 'lucide-react-native';
 import { Avatar } from './Avatar';
 import { colors } from '../../constants/colors';
 import { radius } from '../../constants/spacing';
@@ -17,15 +17,23 @@ export type Post = {
   time: string;
   body: string;
   milestone?: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video';
   cheers: number;
   replies: number;
   cheered: boolean;
 };
 
-export function PostCard({ post, index, onCheer, onOpen }: {
-  post: Post; index: number; onCheer: (id: string) => void; onOpen?: (id: string) => void;
+export function PostCard({ post, index, onCheer, onOpen, onPlayVideo }: {
+  post: Post;
+  index: number;
+  onCheer: (id: string) => void;
+  onOpen?: (id: string) => void;
+  onPlayVideo?: (url: string) => void;
 }) {
   const milestone = post.type === 'milestone';
+  const hasMedia = !!post.mediaUrl;
+
   return (
     <Animated.View entering={FadeInDown.delay(index * 70).duration(500)}>
       <View style={[styles.card, milestone && styles.milestoneCard]}>
@@ -44,7 +52,29 @@ export function PostCard({ post, index, onCheer, onOpen }: {
         </Pressable>
 
         {milestone && post.milestone && <Text style={styles.milestoneTitle}>{post.milestone}</Text>}
-        <Text style={[styles.body, { color: milestone ? colors.white : '#D4D4D4' }]}>{post.body}</Text>
+        {!!post.body && (
+          <Text style={[styles.body, { color: milestone ? colors.white : '#D4D4D4' }]}>{post.body}</Text>
+        )}
+
+        {hasMedia && post.mediaType === 'image' && (
+          <Image
+            source={{ uri: post.mediaUrl }}
+            style={styles.mediaImage}
+            resizeMode="cover"
+          />
+        )}
+
+        {hasMedia && post.mediaType === 'video' && (
+          <Pressable
+            onPress={() => onPlayVideo?.(post.mediaUrl!)}
+            accessibilityLabel="Play video"
+            style={styles.videoThumb}
+          >
+            <View style={styles.playBtn}>
+              <Play size={28} color="#fff" fill="#fff" />
+            </View>
+          </Pressable>
+        )}
 
         <View style={styles.actions}>
           <Pressable
@@ -79,6 +109,9 @@ const styles = StyleSheet.create({
   meta: { fontSize: 12.5, color: colors.textFaint, marginTop: 2 },
   milestoneTitle: { ...type.cardTitle, fontSize: 19, color: colors.jade300, marginTop: 14 },
   body: { fontSize: 15, lineHeight: 22, marginTop: 12 },
+  mediaImage: { width: '100%', height: 220, borderRadius: 12, marginTop: 12 },
+  videoThumb: { width: '100%', height: 220, borderRadius: 12, marginTop: 12, backgroundColor: '#0a0a0a', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  playBtn: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(20,184,136,0.85)', alignItems: 'center', justifyContent: 'center' },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16 },
   action: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 15, paddingVertical: 9, borderRadius: 999, borderWidth: 1 },
   actionOff: { backgroundColor: colors.surface2, borderColor: colors.border },

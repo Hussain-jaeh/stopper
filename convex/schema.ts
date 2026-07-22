@@ -36,6 +36,8 @@ export default defineSchema({
     spendingFrequency: v.optional(v.union(v.literal("daily"), v.literal("weekly"), v.literal("monthly"))),
     currency: v.optional(v.string()),
     trackingEnabled: v.optional(v.boolean()),
+    // Share milestones — tracks which streak day last triggered the auto-celebration so it fires once.
+    lastCelebratedShareDay: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_userId", ["userId"]),
@@ -99,6 +101,8 @@ export default defineSchema({
     circleId: v.optional(v.id("circles")),
     body: v.string(),
     milestone: v.optional(v.string()),  // e.g. "30 days clean"
+    mediaStorageId: v.optional(v.id("_storage")),
+    mediaType: v.optional(v.union(v.literal("image"), v.literal("video"))),
     createdAt: v.number(),
   })
     .index("by_createdAt", ["createdAt"])

@@ -25,6 +25,10 @@ export const colors = {
 
   accentGlow: 'rgba(20,184,136,0.42)',
   accentGlowSoft: 'rgba(20,184,136,0.18)',
+
+  jade600: '#0F896E',
+  ink900: '#04201A',
+  gray100: '#F0F0F0',
 } as const;
 
 export const gradients = {

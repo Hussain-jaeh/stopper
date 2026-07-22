@@ -60,6 +60,14 @@ export const getMe = query({
   },
 });
 
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await requireAuth(ctx);
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
 // Shared helper: enrich raw post docs with author streak, circle name, and cheer data.
 async function enrichPosts(
   ctx: any,
@@ -76,6 +84,15 @@ async function enrichPosts(
         .filter((id): id is string => !!id),
     ),
   ];
+
+  const mediaUrls = await Promise.all(
+    posts.map(async (post) => {
+      if (!post.mediaStorageId) return [post._id as string, null] as const;
+      const url = await ctx.storage.getUrl(post.mediaStorageId);
+      return [post._id as string, url] as const;
+    }),
+  );
+  const mediaMap = new Map(mediaUrls);
 
   const [userStreaks, circleNames, cheerData] = await Promise.all([
     Promise.all(
@@ -142,6 +159,8 @@ async function enrichPosts(
     time: relTime(post.createdAt),
     body: post.body,
     milestone: post.milestone,
+    mediaUrl: mediaMap.get(post._id as string) ?? undefined,
+    mediaType: (post.mediaType as "image" | "video" | undefined) ?? undefined,
     cheers: cheerMap.get(post._id as string)?.count ?? 0,
     replies: 0,
     cheered: cheerMap.get(post._id as string)?.cheered ?? false,
@@ -319,11 +338,13 @@ export const createPost = mutation({
     body: v.string(),
     circleId: v.optional(v.id("circles")),
     milestone: v.optional(v.string()),
+    mediaStorageId: v.optional(v.id("_storage")),
+    mediaType: v.optional(v.union(v.literal("image"), v.literal("video"))),
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
     const body = args.body.trim();
-    if (!body) throw new ConvexError("Post body cannot be empty");
+    if (!body && !args.mediaStorageId) throw new ConvexError("Post body cannot be empty");
     if (body.length > 500) throw new ConvexError("Post body must be 500 characters or fewer");
     return ctx.db.insert("posts", { userId, ...args, body, createdAt: Date.now() });
   },

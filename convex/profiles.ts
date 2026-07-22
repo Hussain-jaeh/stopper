@@ -120,3 +120,18 @@ export const getProfile = query({
       .unique();
   },
 });
+
+export const markShareMilestoneCelebrated = mutation({
+  args: { day: v.number() },
+  handler: async (ctx, { day }) => {
+    const userId = await requireAuth(ctx);
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (!profile) return null;
+    if (profile.lastCelebratedShareDay === day) return null;
+    await ctx.db.patch(profile._id, { lastCelebratedShareDay: day, updatedAt: Date.now() });
+    return day;
+  },
+});

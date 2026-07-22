@@ -67,7 +67,8 @@
           "microphonePermission": "Stopper uses your microphone to record the audio of your private message."
         }
       ],
-      "expo-video"
+      "expo-video",
+      "expo-sharing"
     ],
     "extra": {
       "eas": {
