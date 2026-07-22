@@ -1,7 +1,7 @@
 // Card-type picker (streak/money/stats/win) · live preview · format toggle (story/square)
 // · per-share privacy toggle · Share / Save image / Copy link.
 import React, { useRef, useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet, Share, Alert, Image, TurboModuleRegistry } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, Share, Alert, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Share2, Download, Copy, Eye, EyeOff, Flame, PiggyBank, ChartLine, Trophy, ImagePlus } from 'lucide-react-native';
@@ -65,24 +65,18 @@ export function ShareSheet() {
     if (!canCapture) { Alert.alert('Add a photo first to share your win.'); return; }
     try {
       const uri = await capture();
-      // expo-sharing requires a dev/production build — fall back to native share with URL
-      if (TurboModuleRegistry.get('ExpoSharing')) {
+      try {
         const Sharing = require('expo-sharing');
-        if (await Sharing.isAvailableAsync()) { await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Share your progress' }); return; }
-      }
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Share your progress' });
+          return;
+        }
+      } catch {}
       await Share.share({ url: uri, message: `${d.days} days free with Stopper — ${shareUrl}` });
-    } catch (e: any) {
-      if (e?.message?.includes('native module')) {
-        Alert.alert('Unavailable', 'Card sharing requires a dev or TestFlight build.');
-      }
-      // otherwise user cancelled — no alert needed
-    }
+    } catch { /* user cancelled or unsupported */ }
   }
   async function onSave() {
     if (!canCapture) { Alert.alert('Add a photo first to save your win.'); return; }
-    if (!TurboModuleRegistry.get('ExpoMediaLibraryNext')) {
-      Alert.alert('Unavailable', 'Save to Photos requires a dev or TestFlight build.'); return;
-    }
     try {
       const MediaLibrary = require('expo-media-library');
       const { status } = await MediaLibrary.requestPermissionsAsync();
@@ -93,9 +87,6 @@ export function ShareSheet() {
     } catch { Alert.alert('Could not save image'); }
   }
   async function onCopy() {
-    if (!TurboModuleRegistry.get('ExpoClipboard')) {
-      Alert.alert('Unavailable', 'Copy link requires a dev or TestFlight build.'); return;
-    }
     try {
       const { setStringAsync } = require('expo-clipboard');
       await setStringAsync(shareUrl);

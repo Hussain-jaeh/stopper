@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { HeartHandshake, MessageCircle, Play } from 'lucide-react-native';
@@ -33,6 +33,20 @@ export function PostCard({ post, index, onCheer, onOpen, onPlayVideo }: {
 }) {
   const milestone = post.type === 'milestone';
   const hasMedia = !!post.mediaUrl;
+  const [thumbUri, setThumbUri] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (post.mediaType !== 'video' || !post.mediaUrl) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { getThumbnailAsync } = require('expo-video-thumbnails');
+        const { uri } = await getThumbnailAsync(post.mediaUrl!, { time: 0 });
+        if (!cancelled) setThumbUri(uri);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [post.mediaUrl, post.mediaType]);
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 70).duration(500)}>
@@ -70,7 +84,10 @@ export function PostCard({ post, index, onCheer, onOpen, onPlayVideo }: {
             accessibilityLabel="Play video"
             style={styles.videoThumb}
           >
-            <View style={styles.playBtn}>
+            {thumbUri && (
+              <Image source={{ uri: thumbUri }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+            )}
+            <View style={[styles.playBtn, thumbUri ? styles.playBtnOnThumb : undefined]}>
               <Play size={28} color="#fff" fill="#fff" />
             </View>
           </Pressable>
@@ -112,6 +129,7 @@ const styles = StyleSheet.create({
   mediaImage: { width: '100%', height: 220, borderRadius: 12, marginTop: 12 },
   videoThumb: { width: '100%', height: 220, borderRadius: 12, marginTop: 12, backgroundColor: '#0a0a0a', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   playBtn: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(20,184,136,0.85)', alignItems: 'center', justifyContent: 'center' },
+  playBtnOnThumb: { backgroundColor: 'rgba(0,0,0,0.55)' },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16 },
   action: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 15, paddingVertical: 9, borderRadius: 999, borderWidth: 1 },
   actionOff: { backgroundColor: colors.surface2, borderColor: colors.border },

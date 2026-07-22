@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Modal, View, Text, TextInput, Pressable, StyleSheet,
-  KeyboardAvoidingView, Platform, ScrollView, Image, Alert,
+  KeyboardAvoidingView, Platform, ScrollView, Image, Alert, ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation } from 'convex/react';
@@ -118,11 +118,12 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
               onPress={handlePost}
               disabled={!canPost || loading}
               accessibilityRole="button"
-              style={[styles.postBtn, (!canPost || loading) && styles.postBtnDisabled]}
+              style={[styles.postBtn, !canPost && !loading && styles.postBtnDisabled]}
             >
-              <Text style={[styles.postBtnTxt, (!canPost || loading) && { opacity: 0.4 }]}>
-                {loading ? 'Posting…' : 'Post'}
-              </Text>
+              {loading
+                ? <ActivityIndicator size="small" color={colors.onAccent} />
+                : <Text style={[styles.postBtnTxt, !canPost && { opacity: 0.4 }]}>Post</Text>
+              }
             </Pressable>
           </View>
 
