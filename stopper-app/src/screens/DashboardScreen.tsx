@@ -19,7 +19,6 @@ import { MilestoneRecordPrompt } from '../components/vault/VaultPrompts';
 import { MoneySavedCard } from '../components/money/MoneySavedCard';
 import { InviteCard } from '../components/share/InviteCard';
 import { SpendingSettings, savedTotal, fmtMoney } from '../lib/money';
-import { isShareMilestone, ShareData } from '../lib/shareCard';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
 import { RootStackParamList } from '../navigation/TabNavigator';
@@ -38,7 +37,6 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
   const logRelapse = useMutation(api.relapses.logRelapse);
   const latestRecording = useQuery(api.vault.latestRecording);
   const claimMilestone = useMutation(api.vault.claimMilestonePrompt);
-  const markShareMilestoneCelebrated = useMutation(api.profiles.markShareMilestoneCelebrated);
 
   const [refreshing, setRefreshing] = useState(false);
   const [checkInVisible, setCheckInVisible] = useState(false);
@@ -46,36 +44,6 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
   const [milestoneDay, setMilestoneDay] = useState<number | null>(null);
 
   const quote = useMemo(() => QUOTES[Math.floor(Math.random() * QUOTES.length)], []);
-
-  const buildShareParams = useCallback(() => {
-    if (!data || data === null || !data.profile) return null;
-    const p = data.profile;
-    let money = '$0';
-    if (p.spendingAmount) {
-      const settings: SpendingSettings = {
-        spendingAmount: p.spendingAmount,
-        spendingFrequency: p.spendingFrequency ?? 'monthly',
-        currency: p.currency ?? 'USD',
-        trackingEnabled: true,
-      };
-      money = fmtMoney(savedTotal(settings, data.daysSinceQuit), settings.currency);
-    }
-    return {
-      days: data.currentStreak,
-      longest: data.longestStreak,
-      money,
-      cleanPct: Math.min(100, Math.round((data.totalCheckIns / Math.max(1, data.daysSinceQuit)) * 100)),
-      resisted: data.totalCheckIns,
-      habit: p.addictionType,
-      shareUrl: data.referralUrl ?? 'https://stopper.app',
-    };
-  }, [data]);
-
-  const handleShare = useCallback(() => {
-    const params = buildShareParams();
-    if (!params) return;
-    navigation.navigate('ShareSheet', params);
-  }, [buildShareParams, navigation]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -87,15 +55,7 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
     const day = await claimMilestone();
     if (day) setTimeout(() => setMilestoneDay(day), 400);
 
-    if (data && data !== null && data.profile && isShareMilestone(data.currentStreak) &&
-        data.currentStreak !== (data.lastCelebratedShareDay ?? -1)) {
-      const shareParams = buildShareParams();
-      if (shareParams) {
-        await markShareMilestoneCelebrated({ day: data.currentStreak });
-        setTimeout(() => navigation.navigate('MilestoneCelebration', shareParams), 600);
-      }
-    }
-  }, [checkIn, claimMilestone, data, buildShareParams, markShareMilestoneCelebrated, navigation]);
+  }, [checkIn, claimMilestone]);
 
   const handleRelapse = useCallback(async (trigger: string, note?: string) => {
     await logRelapse({ trigger, note });
@@ -117,7 +77,6 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
           daysSinceQuit={data.daysSinceQuit}
           longest={data.longestStreak}
           addictionType={p.addictionType}
-          onShare={handleShare}
           index={1}
         />
         <ProgressCard current={data.currentStreak} milestone={data.nextMilestone} index={2} />

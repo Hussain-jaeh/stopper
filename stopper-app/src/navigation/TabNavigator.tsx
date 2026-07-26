@@ -51,37 +51,9 @@ function VaultPlayLazy() {
 import { MoneyInsightsScreen } from '../screens/MoneyInsightsScreen';
 import { CircleDetailScreen } from '../screens/CircleDetailScreen';
 import { CircleChatScreen } from '../screens/CircleChatScreen';
-// Lazy-loaded so expo-clipboard / expo-sharing / react-native-view-shot only
-// initialise when navigated to (requires a dev-client rebuild after npm install).
-function MilestoneCelebrationLazy() {
-  try {
-    const { MilestoneCelebration } = require('../screens/share/MilestoneCelebration');
-    return <MilestoneCelebration />;
-  } catch {
-    return <NativeUnavailable feature="Milestone celebration" />;
-  }
-}
-function ShareSheetLazy() {
-  try {
-    const { ShareSheet } = require('../screens/share/ShareSheet');
-    return <ShareSheet />;
-  } catch {
-    return <NativeUnavailable feature="Share card" />;
-  }
-}
 import { SosButton } from '../components/panic/SosButton';
 import { colors } from '../constants/colors';
 import { type } from '../constants/typography';
-
-export type ShareScreenParams = {
-  days: number;
-  longest: number;
-  money: string;
-  cleanPct: number;
-  resisted: number;
-  habit: string;
-  shareUrl: string;
-};
 
 export type RootStackParamList = {
   Tabs: undefined;
@@ -92,8 +64,6 @@ export type RootStackParamList = {
   MoneyInsights: undefined;
   CircleDetail: { circleId: string; name: string; tint: string; iconKey: string };
   CircleChat: { circleId: string; name: string; tint: string };
-  MilestoneCelebration: ShareScreenParams;
-  ShareSheet: ShareScreenParams;
 };
 
 export type TabParamList = {
@@ -165,16 +135,6 @@ export function TabNavigator({ onStartOnboarding }: Props) {
         name="CircleChat"
         component={CircleChatScreen}
         options={{ animation: 'slide_from_right', headerShown: false }}
-      />
-      <RootStack.Screen
-        name="MilestoneCelebration"
-        component={MilestoneCelebrationLazy}
-        options={{ presentation: 'fullScreenModal', animation: 'fade' }}
-      />
-      <RootStack.Screen
-        name="ShareSheet"
-        component={ShareSheetLazy}
-        options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', headerShown: false }}
       />
     </RootStack.Navigator>
   );
