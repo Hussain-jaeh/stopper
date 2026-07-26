@@ -193,20 +193,24 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
       return;
     }
 
-    // Fast path: cached subscription status lets us skip the RC network call.
-    // We still re-verify in the background and update if it changed.
+    // Fast path: cached 'true' lets us skip the RC network call entirely.
+    // We re-verify in the background and only correct to paywall if RC
+    // definitively confirms the subscription has lapsed.
+    // On any RC error we default to 'app' — it's better to briefly let a
+    // subscriber in than to wrongly block them on a network blip or RC
+    // initialization race.
     SecureStore.getItemAsync(SUB_CACHE_KEY).then(cached => {
       if (cached === 'true') {
         setPhase('app');
         markBoot();
-        // Re-verify in background; correct phase if subscription has lapsed.
+        // Re-verify in background; correct only if sub has definitively lapsed.
         Purchases.getCustomerInfo()
           .then(info => {
             const hasSub = Object.keys(info.entitlements.active).length > 0;
             SecureStore.setItemAsync(SUB_CACHE_KEY, hasSub ? 'true' : 'false').catch(() => {});
             if (!hasSub) setPhase('paywall');
           })
-          .catch(() => {});
+          .catch(() => {}); // RC error: keep showing app, don't disrupt user
         return;
       }
 
@@ -217,7 +221,11 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
           SecureStore.setItemAsync(SUB_CACHE_KEY, hasSub ? 'true' : 'false').catch(() => {});
           setPhase(hasSub ? 'app' : 'paywall');
         })
-        .catch(() => setPhase('paywall'))
+        .catch(() => {
+          // RC unavailable / not yet initialized — default to app so subscribers
+          // aren't wrongly blocked. Will re-check on next cold start.
+          setPhase('app');
+        })
         .finally(markBoot);
     }).catch(() => {
       // SecureStore failed — fall through to live RC check.
@@ -226,7 +234,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
           const hasSub = Object.keys(info.entitlements.active).length > 0;
           setPhase(hasSub ? 'app' : 'paywall');
         })
-        .catch(() => setPhase('paywall'))
+        .catch(() => setPhase('app')) // RC error: let them in, re-check next time
         .finally(markBoot);
     });
   }, [isLoading, isAuthenticated, profile]);
