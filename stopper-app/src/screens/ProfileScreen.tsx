@@ -10,7 +10,6 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as StoreReview from 'expo-store-review';
-import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import {
   Target, Bell, VenetianMask, Lock, Smartphone, Star, Share2, ShieldCheck,
@@ -147,6 +146,7 @@ export function ProfileScreen() {
   const val = (k: 'remindersOn' | 'anonymous' | 'appLockEnabled'): boolean => local[k] ?? p?.[k] ?? false;
 
   const handleEditAvatar = async () => {
+    const ImagePicker = require('expo-image-picker');
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'Allow photo access to change your profile picture.');

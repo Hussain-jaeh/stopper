@@ -55,8 +55,8 @@ export function CommunityScreen() {
 
   const loading = me === undefined || feed === undefined;
 
-  const handlePost = async (body: string, circleId?: string, mediaStorageId?: string, mediaType?: 'image' | 'video') => {
-    await createPost({ type: 'post', body, circleId: circleId as any, mediaStorageId: mediaStorageId as any, mediaType });
+  const handlePost = async (body: string, circleId?: string, mediaStorageId?: string, mediaType?: 'image' | 'video', thumbStorageId?: string) => {
+    await createPost({ type: 'post', body, circleId: circleId as any, mediaStorageId: mediaStorageId as any, mediaType, thumbStorageId: thumbStorageId as any });
   };
 
   const handleCreateCircle = async (name: string, iconKey: string, tint: string, description?: string) => {

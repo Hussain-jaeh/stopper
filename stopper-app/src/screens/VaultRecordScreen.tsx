@@ -8,7 +8,6 @@ import { X, RotateCcw, Check, Video } from 'lucide-react-native';
 import { useMutation } from 'convex/react';
 import { useNavigation } from '@react-navigation/native';
 import * as FileSystem from 'expo-file-system/legacy';
-import * as VideoThumbnails from 'expo-video-thumbnails';
 import { api } from '../../convex/_generated/api';
 import { colors, gradients } from '../constants/colors';
 import { spacing, shadow } from '../constants/spacing';
@@ -88,6 +87,7 @@ export function VaultRecordScreen() {
         }),
         (async (): Promise<string | undefined> => {
           try {
+            const VideoThumbnails = require('expo-video-thumbnails');
             const { uri: thumbLocal } = await VideoThumbnails.getThumbnailAsync(videoUri, { time: 500, quality: 0.6 });
             const tRes = await FileSystem.uploadAsync(thumbUrl, thumbLocal, {
               httpMethod: 'POST',

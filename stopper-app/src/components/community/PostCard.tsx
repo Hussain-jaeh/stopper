@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { HeartHandshake, MessageCircle, Play } from 'lucide-react-native';
@@ -19,6 +19,7 @@ export type Post = {
   milestone?: string;
   mediaUrl?: string;
   mediaType?: 'image' | 'video';
+  thumbUri?: string;
   cheers: number;
   replies: number;
   cheered: boolean;
@@ -33,20 +34,7 @@ export function PostCard({ post, index, onCheer, onOpen, onPlayVideo }: {
 }) {
   const milestone = post.type === 'milestone';
   const hasMedia = !!post.mediaUrl;
-  const [thumbUri, setThumbUri] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (post.mediaType !== 'video' || !post.mediaUrl) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const { getThumbnailAsync } = require('expo-video-thumbnails');
-        const { uri } = await getThumbnailAsync(post.mediaUrl!, { time: 0 });
-        if (!cancelled) setThumbUri(uri);
-      } catch {}
-    })();
-    return () => { cancelled = true; };
-  }, [post.mediaUrl, post.mediaType]);
+  const thumbUri = post.thumbUri ?? null;
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 70).duration(500)}>

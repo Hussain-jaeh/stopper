@@ -47,8 +47,8 @@ export function CircleDetailScreen() {
 
   const Icon = CIRCLE_ICONS[iconKey] ?? Smartphone;
 
-  const handlePost = async (body: string, _circleId?: string, mediaStorageId?: string, mediaType?: 'image' | 'video') => {
-    await createPost({ type: 'post', body, circleId: circleId as any, mediaStorageId: mediaStorageId as any, mediaType });
+  const handlePost = async (body: string, _circleId?: string, mediaStorageId?: string, mediaType?: 'image' | 'video', thumbStorageId?: string) => {
+    await createPost({ type: 'post', body, circleId: circleId as any, mediaStorageId: mediaStorageId as any, mediaType, thumbStorageId: thumbStorageId as any });
   };
 
   return (

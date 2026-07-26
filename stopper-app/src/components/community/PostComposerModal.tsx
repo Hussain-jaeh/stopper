@@ -22,7 +22,7 @@ const CIRCLE_ICONS: Record<string, LucideIcon> = {
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (body: string, circleId?: string, mediaStorageId?: string, mediaType?: 'image' | 'video') => Promise<void>;
+  onSubmit: (body: string, circleId?: string, mediaStorageId?: string, mediaType?: 'image' | 'video', thumbStorageId?: string) => Promise<void>;
   myHandle: string;
   circles: Circle[];
   initialCircleId?: string;
@@ -66,7 +66,7 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
     }
   };
 
-  const uploadMedia = async (draft: MediaDraft): Promise<{ storageId: string; mediaType: 'image' | 'video' }> => {
+  const uploadMedia = async (draft: MediaDraft): Promise<{ storageId: string; mediaType: 'image' | 'video'; thumbStorageId?: string }> => {
     const uploadUrl = await generateUploadUrl();
     const result = await FileSystem.uploadAsync(uploadUrl, draft.uri, {
       httpMethod: 'POST',
@@ -78,7 +78,23 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
     }
     const { storageId } = result.body ? JSON.parse(result.body) : {};
     if (!storageId) throw new Error(`No storageId in response: ${result.body}`);
-    return { storageId, mediaType: draft.type };
+
+    let thumbStorageId: string | undefined;
+    if (draft.type === 'video') {
+      try {
+        const VideoThumbnails = require('expo-video-thumbnails');
+        const { uri: thumbLocal } = await VideoThumbnails.getThumbnailAsync(draft.uri, { time: 500, quality: 0.6 });
+        const thumbUploadUrl = await generateUploadUrl();
+        const tRes = await FileSystem.uploadAsync(thumbUploadUrl, thumbLocal, {
+          httpMethod: 'POST',
+          headers: { 'Content-Type': 'image/jpeg' },
+          uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+        });
+        if (tRes.status === 200) thumbStorageId = JSON.parse(tRes.body).storageId;
+      } catch { /* non-fatal — post still works without thumbnail */ }
+    }
+
+    return { storageId, mediaType: draft.type, thumbStorageId };
   };
 
   const handlePost = async () => {
@@ -87,12 +103,14 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
     try {
       let storageId: string | undefined;
       let mediaType: 'image' | 'video' | undefined;
+      let thumbStorageId: string | undefined;
       if (media) {
         const result = await uploadMedia(media);
         storageId = result.storageId;
         mediaType = result.mediaType;
+        thumbStorageId = result.thumbStorageId;
       }
-      await onSubmit(body.trim(), selectedCircle, storageId, mediaType);
+      await onSubmit(body.trim(), selectedCircle, storageId, mediaType, thumbStorageId);
       setBody('');
       setMedia(null);
       setSelectedCircle(initialCircleId);

@@ -2,6 +2,7 @@
 // the share sheet's footer.
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Share } from 'react-native';
+import { requireOptionalNativeModule } from 'expo-modules-core';
 import { LinearGradient } from 'expo-linear-gradient';
 import { UserPlus, Share2 } from 'lucide-react-native';
 import { colors } from '../../constants/colors';
@@ -11,14 +12,13 @@ export function InviteCard({ inviteUrl }: { inviteUrl: string }) {
   const [copied, setCopied] = useState(false);
 
   const copyLink = async () => {
+    if (!requireOptionalNativeModule('ExpoClipboard')) return;
     try {
       const { setStringAsync } = require('expo-clipboard');
       await setStringAsync(inviteUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Expo Go — native module not in binary; long-press on URL text still works
-    }
+    } catch {}
   };
 
   // Shares a full human-readable invite message (always opens share sheet).

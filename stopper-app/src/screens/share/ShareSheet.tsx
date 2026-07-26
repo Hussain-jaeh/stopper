@@ -2,7 +2,7 @@
 // · per-share privacy toggle · Share / Save image / Copy link.
 import React, { useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet, Share, Alert, Image } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { requireOptionalNativeModule } from 'expo-modules-core';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Share2, Download, Copy, Eye, EyeOff, Flame, PiggyBank, ChartLine, Trophy, ImagePlus } from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -45,6 +45,7 @@ export function ShareSheet() {
   const canCapture = type !== 'win' || !!winPhotoUri;
 
   async function pickWinPhoto() {
+    const ImagePicker = require('expo-image-picker');
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') { Alert.alert('Allow photo access to add your win photo.'); return; }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -57,6 +58,7 @@ export function ShareSheet() {
   }
 
   async function capture(): Promise<string> {
+    if (!requireOptionalNativeModule('RNViewShot')) throw new Error('RNViewShot unavailable');
     const { w, h } = FORMAT_SIZE[format];
     const { captureRef } = require('react-native-view-shot');
     return await captureRef(shotRef, { result: 'tmpfile', format: 'png', quality: 1, width: w, height: h });
@@ -73,26 +75,40 @@ export function ShareSheet() {
         }
       } catch {}
       await Share.share({ url: uri, message: `${d.days} days free with Stopper — ${shareUrl}` });
-    } catch { /* user cancelled or unsupported */ }
+    } catch {
+      // Image capture not available — share the link instead
+      try {
+        await Share.share({ message: `${d.days} days free with Stopper 💪 ${shareUrl}` });
+      } catch {}
+    }
   }
   async function onSave() {
     if (!canCapture) { Alert.alert('Add a photo first to save your win.'); return; }
+    if (!requireOptionalNativeModule('ExpoMediaLibraryNext')) {
+      Alert.alert('Not available', 'Saving images requires the full app build. Use Share instead.');
+      return;
+    }
     try {
       const MediaLibrary = require('expo-media-library');
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== 'granted') { Alert.alert('Allow photo access to save your card.'); return; }
       const uri = await capture();
       await MediaLibrary.saveToLibraryAsync(uri);
-      Alert.alert('Saved to Photos');
-    } catch { Alert.alert('Could not save image'); }
+      Alert.alert('Saved to Photos ✓');
+    } catch { Alert.alert('Could not save — try again.'); }
   }
   async function onCopy() {
+    if (!requireOptionalNativeModule('ExpoClipboard')) {
+      // Clipboard not in this build — open native share as fallback
+      try { await Share.share({ message: shareUrl }); } catch {}
+      return;
+    }
     try {
       const { setStringAsync } = require('expo-clipboard');
       await setStringAsync(shareUrl);
-      Alert.alert('Link copied');
+      Alert.alert('Link copied ✓');
     } catch {
-      Alert.alert('Could not copy link');
+      try { await Share.share({ message: shareUrl }); } catch {}
     }
   }
 

@@ -103,6 +103,7 @@ export default defineSchema({
     milestone: v.optional(v.string()),  // e.g. "30 days clean"
     mediaStorageId: v.optional(v.id("_storage")),
     mediaType: v.optional(v.union(v.literal("image"), v.literal("video"))),
+    thumbStorageId: v.optional(v.id("_storage")),
     createdAt: v.number(),
   })
     .index("by_createdAt", ["createdAt"])

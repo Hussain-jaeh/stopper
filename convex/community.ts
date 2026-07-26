@@ -85,14 +85,24 @@ async function enrichPosts(
     ),
   ];
 
-  const mediaUrls = await Promise.all(
-    posts.map(async (post) => {
-      if (!post.mediaStorageId) return [post._id as string, null] as const;
-      const url = await ctx.storage.getUrl(post.mediaStorageId);
-      return [post._id as string, url] as const;
-    }),
-  );
+  const [mediaUrls, thumbUrls] = await Promise.all([
+    Promise.all(
+      posts.map(async (post) => {
+        if (!post.mediaStorageId) return [post._id as string, null] as const;
+        const url = await ctx.storage.getUrl(post.mediaStorageId);
+        return [post._id as string, url] as const;
+      }),
+    ),
+    Promise.all(
+      posts.map(async (post) => {
+        if (!post.thumbStorageId) return [post._id as string, null] as const;
+        const url = await ctx.storage.getUrl(post.thumbStorageId);
+        return [post._id as string, url] as const;
+      }),
+    ),
+  ]);
   const mediaMap = new Map(mediaUrls);
+  const thumbMap = new Map(thumbUrls);
 
   const [userStreaks, circleNames, cheerData] = await Promise.all([
     Promise.all(
@@ -161,6 +171,7 @@ async function enrichPosts(
     milestone: post.milestone,
     mediaUrl: mediaMap.get(post._id as string) ?? undefined,
     mediaType: (post.mediaType as "image" | "video" | undefined) ?? undefined,
+    thumbUri: thumbMap.get(post._id as string) ?? undefined,
     cheers: cheerMap.get(post._id as string)?.count ?? 0,
     replies: 0,
     cheered: cheerMap.get(post._id as string)?.cheered ?? false,
@@ -340,6 +351,7 @@ export const createPost = mutation({
     milestone: v.optional(v.string()),
     mediaStorageId: v.optional(v.id("_storage")),
     mediaType: v.optional(v.union(v.literal("image"), v.literal("video"))),
+    thumbStorageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
