@@ -16,7 +16,7 @@ export type Recording = {
   date: string;         // display date, e.g. "Jul 10, 2026"
   duration: string;     // "0:48"
   videoUri?: string;    // storage URL
-  thumbUri?: string;    // optional real thumbnail
+  thumbUri?: string;   
 };
 
 type Props = {
