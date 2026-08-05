@@ -8,6 +8,7 @@ export const completeOnboarding = mutation({
     habitType: v.optional(v.string()),
     displayName: v.optional(v.string()),
     age: v.optional(v.string()),
+    remindersOn: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);

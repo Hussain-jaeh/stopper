@@ -55,6 +55,7 @@ export async function scheduleReminder(): Promise<boolean> {
       title: 'How are you holding up?',
       body: 'Check in with yourself — every day you show up counts.',
       sound: true,
+      ...(Platform.OS === 'android' ? { channelId: 'reminders' } : {}),
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DAILY,

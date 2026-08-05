@@ -258,6 +258,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
         habitType: addictionType,
         displayName: state.name || undefined,
         age: state.age || undefined,
+        remindersOn: state.remindersOn || undefined,
       }),
       upsertProfile({
         addictionType,
@@ -273,6 +274,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
     ]);
 
     scheduleMilestoneNotifications(quitDate).catch(() => {});
+    if (state.remindersOn) scheduleReminder().catch(() => {});
 
     setPhase(__DEV__ ? 'app' : 'paywall');
   }, [saveOnboarding, upsertProfile]);

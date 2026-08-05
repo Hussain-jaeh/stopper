@@ -22,6 +22,7 @@ export interface OnboardingState {
   spendingFrequency: SpendingFrequency | '';
   spendingCurrency: string;
   trackingEnabled: boolean;
+  remindersOn: boolean;
 }
 
 export function freshState(): OnboardingState {
@@ -43,6 +44,7 @@ export function freshState(): OnboardingState {
     spendingFrequency: 'monthly',
     spendingCurrency: 'USD',
     trackingEnabled: false,
+    remindersOn: false,
   };
 }
 

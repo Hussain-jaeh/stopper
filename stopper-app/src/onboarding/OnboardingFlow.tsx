@@ -85,7 +85,7 @@ export function OnboardingFlow({ startStep, onComplete, onSignIn }: OnboardingFl
     19: <AnalysisScreen onBack={back} onNext={next} state={state} />,
     20: <FreedomScreen onBack={back} onNext={next} />,
     21: <StoriesScreen onBack={back} onNext={next} />,
-    22: <NotificationsScreen onBack={back} onNext={next} />,
+    22: <NotificationsScreen onBack={back} onNext={next} setState={setState} />,
     23: <PlanScreen onBack={back} onNext={next} state={state} />,
     24: <StreakScreen onBack={back} onNext={next} state={state} />,
     25: (
