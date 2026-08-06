@@ -42,6 +42,12 @@
           "color": "#14B888"
         }
       ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Stopper uses Face ID to keep your recovery data private."
+        }
+      ],
       "expo-web-browser",
       "expo-audio",
       [
