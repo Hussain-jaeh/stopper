@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Component, type ReactNode } from 'react';
 import { View, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as LocalAuthentication from 'expo-local-authentication';
@@ -34,7 +34,8 @@ import { colors } from './src/theme/tokens';
 import { api } from './convex/_generated/api';
 
 ExpoSplash.preventAutoHideAsync().catch(() => {});
-initPurchases();
+try { initPurchases(); } catch {}
+
 
 const SUB_CACHE_KEY = 'rc_has_sub';
 
@@ -57,6 +58,22 @@ const secureStorage = {
   setItem: SecureStore.setItemAsync,
   removeItem: SecureStore.deleteItemAsync,
 };
+
+class AppErrorBoundary extends Component<{ children: ReactNode }, { crashed: boolean }> {
+  state = { crashed: false };
+  static getDerivedStateFromError() { return { crashed: true }; }
+  componentDidCatch() {}
+  render() {
+    if (this.state.crashed) {
+      return (
+        <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator color={colors.jade500} size="large" />
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -97,17 +114,19 @@ export default function App() {
         <NavigationContainer>
           <View style={styles.root}>
             <StatusBar style="light" />
-            {fontsLoaded && (
-              <AppContent onBootDone={() => setBootDone(true)} />
-            )}
-            {(!fontsLoaded || showSplash) && (
-              <View style={StyleSheet.absoluteFill}>
-                <SplashScreen
-                  minDurationMs={800}
-                  onFinish={() => setMinDone(true)}
-                />
-              </View>
-            )}
+            <AppErrorBoundary>
+              {fontsLoaded && (
+                <AppContent onBootDone={() => setBootDone(true)} />
+              )}
+              {(!fontsLoaded || showSplash) && (
+                <View style={StyleSheet.absoluteFill}>
+                  <SplashScreen
+                    minDurationMs={800}
+                    onFinish={() => setMinDone(true)}
+                  />
+                </View>
+              )}
+            </AppErrorBoundary>
           </View>
         </NavigationContainer>
       </ConvexAuthProvider>
