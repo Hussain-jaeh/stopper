@@ -49,20 +49,25 @@ export async function scheduleReminder(): Promise<boolean> {
 
   await Notifications.cancelScheduledNotificationAsync(DAILY_ID).catch(() => {});
 
-  await Notifications.scheduleNotificationAsync({
-    identifier: DAILY_ID,
-    content: {
-      title: 'How are you holding up?',
-      body: 'Check in with yourself — every day you show up counts.',
-      sound: true,
-      ...(Platform.OS === 'android' ? { channelId: 'reminders' } : {}),
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DAILY,
-      hour: 9,
-      minute: 0,
-    },
-  });
+  try {
+    await Notifications.scheduleNotificationAsync({
+      identifier: DAILY_ID,
+      content: {
+        title: 'How are you holding up?',
+        body: 'Check in with yourself — every day you show up counts.',
+        sound: true,
+        ...(Platform.OS === 'android' ? { channelId: 'reminders' } : {}),
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: 9,
+        minute: 0,
+      },
+    });
+  } catch (e) {
+    console.warn('[notifications] scheduleReminder failed', e);
+    return false;
+  }
 
   return true;
 }
@@ -106,7 +111,7 @@ export async function scheduleMilestoneNotifications(quitDateMs: number): Promis
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: fireDate,
       },
-    }).catch(() => {});
+    }).catch(e => console.warn(`[notifications] milestone ${day}d scheduling failed`, e));
   }
 }
 

@@ -15,6 +15,7 @@
 
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { requireAuth } from "./lib/auth";
 import {
   createProfileArgs,
@@ -113,7 +114,8 @@ export const updateSpending = mutation({
 export const getProfile = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await requireAuth(ctx);
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
     return ctx.db
       .query("profiles")
       .withIndex("by_userId", (q) => q.eq("userId", userId))

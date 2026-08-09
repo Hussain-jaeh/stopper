@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, Component, type ReactNode } from 'react';
-import { View, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as ExpoSplash from 'expo-splash-screen';
@@ -39,6 +39,13 @@ try { initPurchases(); } catch {}
 
 const SUB_CACHE_KEY = 'rc_has_sub';
 
+function rcGetCustomerInfo() {
+  return Promise.race([
+    Purchases.getCustomerInfo(),
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error('rc_timeout')), 12000)),
+  ]);
+}
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -59,15 +66,22 @@ const secureStorage = {
   removeItem: SecureStore.deleteItemAsync,
 };
 
-class AppErrorBoundary extends Component<{ children: ReactNode }, { crashed: boolean }> {
-  state = { crashed: false };
-  static getDerivedStateFromError() { return { crashed: true }; }
-  componentDidCatch() {}
+class AppErrorBoundary extends Component<{ children: ReactNode }, { crashed: boolean; errorMsg: string }> {
+  state = { crashed: false, errorMsg: '' };
+  static getDerivedStateFromError(e: Error) { return { crashed: true, errorMsg: e?.message ?? String(e) }; }
+  componentDidCatch(e: Error) { console.error('[AppErrorBoundary]', e?.message, e?.stack); }
   render() {
     if (this.state.crashed) {
       return (
-        <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={colors.jade500} size="large" />
+        <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 32 }}>
+          <Text style={{ color: colors.fgMuted, fontFamily: 'PlusJakartaSans_400Regular', fontSize: 15, textAlign: 'center' }}>
+            Something went wrong. Please restart the app.
+          </Text>
+          {__DEV__ && (
+            <Text style={{ color: '#f87171', fontFamily: 'PlusJakartaSans_400Regular', fontSize: 12, textAlign: 'center' }}>
+              {this.state.errorMsg}
+            </Text>
+          )}
         </View>
       );
     }
@@ -176,12 +190,14 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
 
   // Re-schedule notifications once per session when the user is in the app.
   // Handles fresh installs, reinstalls, and returning users whose scheduled
-  // local notifications were wiped.
+  // local notifications were wiped. Runs in 'app' AND 'paywall' so that users
+  // who reinstall and land on the paywall still get their notifications back.
   useEffect(() => {
-    if (phase !== 'app' || notifScheduledRef.current || !recoveryProfile) return;
+    if (phase === 'loading' || phase === 'auth' || phase === 'onboarding') return;
+    if (notifScheduledRef.current || !recoveryProfile) return;
     notifScheduledRef.current = true;
-    scheduleMilestoneNotifications(recoveryProfile.quitDate).catch(() => {});
-    if (profile?.remindersOn) scheduleReminder().catch(() => {});
+    scheduleMilestoneNotifications(recoveryProfile.quitDate).catch(e => console.warn('[notifications] milestone scheduling failed', e));
+    if (profile?.remindersOn) scheduleReminder().catch(e => console.warn('[notifications] reminder scheduling failed', e));
   }, [phase, recoveryProfile, profile?.remindersOn]);
 
   useEffect(() => {
@@ -223,7 +239,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
         setPhase('app');
         markBoot();
         // Re-verify in background; correct only if sub has definitively lapsed.
-        Purchases.getCustomerInfo()
+        rcGetCustomerInfo()
           .then(info => {
             const hasSub = Object.keys(info.entitlements.active).length > 0;
             SecureStore.setItemAsync(SUB_CACHE_KEY, hasSub ? 'true' : 'false').catch(() => {});
@@ -234,7 +250,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
       }
 
       // No cache or cached false — wait for RC before showing anything.
-      Purchases.getCustomerInfo()
+      rcGetCustomerInfo()
         .then(info => {
           const hasSub = Object.keys(info.entitlements.active).length > 0;
           SecureStore.setItemAsync(SUB_CACHE_KEY, hasSub ? 'true' : 'false').catch(() => {});
@@ -248,7 +264,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
         .finally(markBoot);
     }).catch(() => {
       // SecureStore failed — fall through to live RC check.
-      Purchases.getCustomerInfo()
+      rcGetCustomerInfo()
         .then(info => {
           const hasSub = Object.keys(info.entitlements.active).length > 0;
           setPhase(hasSub ? 'app' : 'paywall');

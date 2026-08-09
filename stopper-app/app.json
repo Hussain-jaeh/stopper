@@ -39,7 +39,8 @@
       [
         "expo-notifications",
         {
-          "color": "#14B888"
+          "color": "#14B888",
+          "mode": "production"
         }
       ],
       [
