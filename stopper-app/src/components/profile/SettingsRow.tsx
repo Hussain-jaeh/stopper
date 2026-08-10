@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, Pressable, Switch } from 'react-native';
 import { ChevronRight, ExternalLink, LucideIcon } from 'lucide-react-native';
 import { colors } from '../../constants/colors';
 
-function tintBg(hex: string, a = 0.15) {
+function tintBg(hex: string | undefined, a = 0.15) {
+  if (!hex) return 'transparent';
   const h = hex.replace('#', '');
   return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${a})`;
 }
