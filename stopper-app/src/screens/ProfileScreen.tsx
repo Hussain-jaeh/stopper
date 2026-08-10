@@ -18,7 +18,7 @@ import {
 
 import { api } from '../../convex/_generated/api';
 import { ProfileStackParamList } from '../navigation/TabNavigator';
-import { scheduleReminder, cancelReminder, sendTestNotification } from '../notifications/reminders';
+import { sendTestNotification } from '../notifications/reminders';
 import { ProfileIdentity } from '../components/profile/ProfileIdentity';
 import { SettingsRow, SettingsGroup } from '../components/profile/SettingsRow';
 import { DashboardSkeleton } from '../components/dashboard/states';
@@ -141,9 +141,9 @@ export function ProfileScreen() {
   const generateUploadUrl = useMutation(api.profile.generateAvatarUploadUrl);
   const saveAvatar = useMutation(api.profile.saveAvatar);
 
-  const [local, setLocal] = useState<{ remindersOn?: boolean; anonymous?: boolean; appLockEnabled?: boolean }>({});
+  const [local, setLocal] = useState<{ anonymous?: boolean; appLockEnabled?: boolean }>({});
   const [costSheetOpen, setCostSheetOpen] = useState(false);
-  const val = (k: 'remindersOn' | 'anonymous' | 'appLockEnabled'): boolean => local[k] ?? p?.[k] ?? false;
+  const val = (k: 'anonymous' | 'appLockEnabled'): boolean => local[k] ?? p?.[k] ?? false;
 
   const handleEditAvatar = async () => {
     const ImagePicker = require('expo-image-picker');
@@ -173,17 +173,6 @@ export function ProfileScreen() {
     } catch (err: unknown) {
       Alert.alert('Upload failed', err instanceof Error ? err.message : String(err));
     }
-  };
-
-  const handleRemindersToggle = async (v: boolean) => {
-    if (v) {
-      const granted = await scheduleReminder();
-      if (!granted) return;
-    } else {
-      await cancelReminder();
-    }
-    setLocal(s => ({ ...s, remindersOn: v }));
-    updateSetting({ key: 'remindersOn', value: v });
   };
 
   const handleAnonymousToggle = (v: boolean) => {
@@ -250,10 +239,9 @@ export function ProfileScreen() {
             <View style={{ gap: 26 }}>
               <SettingsGroup title="Recovery">
                 <SettingsRow Icon={Target} tint={colors.jade500} label="My plan & goals" chevron onPress={() => navigation.navigate('Plan')} />
-                <SettingsRow Icon={Bell} tint={colors.gold} label="Daily reminders" toggle on={val('remindersOn')} onToggle={handleRemindersToggle} />
                 <SettingsRow Icon={Bell} tint={colors.fgFaint} label="Test notification (5s)" chevron onPress={async () => {
                   const ok = await sendTestNotification();
-                  Alert.alert(ok ? 'Sent!' : 'Failed', ok ? 'Lock your phone — a notification will arrive in 5 seconds.' : 'Could not schedule. Check notification permissions in Settings.');
+                  Alert.alert(ok ? 'Sent!' : 'Failed', ok ? 'Lock your phone — a notification will arrive in 5 seconds.' : 'Could not schedule. Check notification permissions in Settings → Stopper → Notifications.');
                 }} />
                 <SettingsRow Icon={PiggyBank} tint={colors.jade400} label="Habit cost" value={habitCostLabel} chevron onPress={() => setCostSheetOpen(true)} last />
               </SettingsGroup>

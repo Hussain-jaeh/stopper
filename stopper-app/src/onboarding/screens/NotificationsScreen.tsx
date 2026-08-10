@@ -43,11 +43,10 @@ export function NotificationsScreen({ onBack, onNext, setState }: NotificationsS
       </View>
       <View style={[styles.cta, { zIndex: 1 }]}>
         <PrimaryButton onPress={async () => {
-          const granted = await scheduleReminder();
-          if (granted) setState?.({ remindersOn: true });
+          await scheduleReminder();
+          setState?.({ remindersOn: true });
           onNext();
         }}>Enable notifications</PrimaryButton>
-        <SkipLink onPress={onNext}>Not now</SkipLink>
       </View>
     </View>
   );

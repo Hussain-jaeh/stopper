@@ -197,7 +197,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
     if (notifScheduledRef.current || !recoveryProfile) return;
     notifScheduledRef.current = true;
     scheduleMilestoneNotifications(recoveryProfile.quitDate).catch(e => console.warn('[notifications] milestone scheduling failed', e));
-    if (profile?.remindersOn) scheduleReminder().catch(e => console.warn('[notifications] reminder scheduling failed', e));
+    scheduleReminder().catch(e => console.warn('[notifications] reminder scheduling failed', e));
   }, [phase, recoveryProfile, profile?.remindersOn]);
 
   useEffect(() => {
@@ -293,7 +293,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
         habitType: addictionType,
         displayName: state.name || undefined,
         age: state.age || undefined,
-        remindersOn: state.remindersOn || undefined,
+        remindersOn: true,
       }),
       upsertProfile({
         addictionType,
@@ -309,7 +309,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
     ]);
 
     scheduleMilestoneNotifications(quitDate).catch(() => {});
-    if (state.remindersOn) scheduleReminder().catch(() => {});
+    scheduleReminder().catch(() => {});
 
     setPhase(__DEV__ ? 'app' : 'paywall');
   }, [saveOnboarding, upsertProfile]);

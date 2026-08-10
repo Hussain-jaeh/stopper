@@ -17,8 +17,17 @@ const MILESTONE_MESSAGES: Record<number, { title: string; body: string }> = {
   365: { title: '1 year clean 🎊', body: "One full year. You are proof that recovery is real. Celebrate today." },
 };
 
+// Explicitly request alert + sound so iOS doesn't silently grant
+// "Deliver Quietly" (badges only) instead of full banner permissions.
 async function ensurePermissions(): Promise<boolean> {
-  const { status, canAskAgain } = await Notifications.requestPermissionsAsync();
+  const { status, canAskAgain } = await Notifications.requestPermissionsAsync({
+    ios: {
+      allowAlert: true,
+      allowSound: true,
+      allowBadge: false,
+      allowAnnouncements: false,
+    },
+  });
   if (status === 'granted') return true;
   if (!canAskAgain) {
     Alert.alert(
@@ -72,17 +81,11 @@ export async function scheduleReminder(): Promise<boolean> {
   return true;
 }
 
-export async function cancelReminder(): Promise<void> {
-  await Notifications.cancelScheduledNotificationAsync(DAILY_ID).catch(() => {});
-}
-
 /**
  * Schedule milestone notifications based on the user's quit date.
- * Call this after onboarding completes and after any relapse (with the new quit date).
  * Safe to call multiple times — cancels old milestone notifications first.
  */
 export async function scheduleMilestoneNotifications(quitDateMs: number): Promise<void> {
-  // Cancel any existing milestone notifications
   await cancelMilestoneNotifications();
 
   const granted = await ensurePermissions();
@@ -92,11 +95,10 @@ export async function scheduleMilestoneNotifications(quitDateMs: number): Promis
 
   for (const day of MILESTONES) {
     const fireMs = quitDateMs + day * 24 * 60 * 60 * 1000;
-    if (fireMs <= now) continue; // milestone already passed
+    if (fireMs <= now) continue;
 
     const msg = MILESTONE_MESSAGES[day];
     const fireDate = new Date(fireMs);
-    // Fire at 10 AM on the milestone day
     fireDate.setHours(10, 0, 0, 0);
     if (fireDate.getTime() <= now) continue;
 
