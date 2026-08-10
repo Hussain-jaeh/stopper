@@ -83,7 +83,7 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
     if (draft.type === 'video') {
       try {
         const VideoThumbnails = require('expo-video-thumbnails');
-        const { uri: thumbLocal } = await VideoThumbnails.getThumbnailAsync(draft.uri, { time: 500, quality: 0.6 });
+        const { uri: thumbLocal } = await VideoThumbnails.getThumbnailAsync(draft.uri, { time: 0, quality: 0.6 });
         const thumbUploadUrl = await generateUploadUrl();
         const tRes = await FileSystem.uploadAsync(thumbUploadUrl, thumbLocal, {
           httpMethod: 'POST',
@@ -91,7 +91,7 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
           uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
         });
         if (tRes.status === 200) thumbStorageId = JSON.parse(tRes.body).storageId;
-      } catch { /* non-fatal — post still works without thumbnail */ }
+      } catch (e) { console.warn('[community] thumbnail generation failed', e); }
     }
 
     return { storageId, mediaType: draft.type, thumbStorageId };
