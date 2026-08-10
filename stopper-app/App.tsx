@@ -77,11 +77,9 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, { crashed: boo
           <Text style={{ color: colors.fgMuted, fontFamily: 'PlusJakartaSans_400Regular', fontSize: 15, textAlign: 'center' }}>
             Something went wrong. Please restart the app.
           </Text>
-          {__DEV__ && (
-            <Text style={{ color: '#f87171', fontFamily: 'PlusJakartaSans_400Regular', fontSize: 12, textAlign: 'center' }}>
-              {this.state.errorMsg}
-            </Text>
-          )}
+          <Text style={{ color: '#f87171', fontFamily: 'PlusJakartaSans_400Regular', fontSize: 12, textAlign: 'center' }}>
+            {this.state.errorMsg}
+          </Text>
         </View>
       );
     }

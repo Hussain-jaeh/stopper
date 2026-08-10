@@ -11,7 +11,7 @@
  */
 
 import { query } from "./_generated/server";
-import { requireAuth } from "./lib/auth";
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { todayStart, todayEnd } from "./lib/dates";
 import {
   calculateCurrentStreak,
@@ -23,7 +23,8 @@ import {
 export const getDashboard = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await requireAuth(ctx);
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
 
     // ── Profile ──────────────────────────────────────────────────────────────
     const profile = await ctx.db

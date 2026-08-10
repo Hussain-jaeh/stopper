@@ -2,6 +2,7 @@ import { mutation, query, QueryCtx, MutationCtx } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
 import { requireAuth } from "./lib/auth";
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { calculateCurrentStreak } from "./services/streak";
 import {
   saveRecordingArgs,
@@ -115,7 +116,8 @@ export const listRecordings = query({
 export const latestRecording = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await requireAuth(ctx);
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
 
     const doc = await ctx.db
       .query("recordings")

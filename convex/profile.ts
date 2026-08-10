@@ -2,12 +2,14 @@ import { mutation, query } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { requireAuth } from "./lib/auth";
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { calculateCurrentStreak } from "./services/streak";
 
 export const getProfile = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await requireAuth(ctx);
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
 
     const [userProfile, recoveryProfile] = await Promise.all([
       ctx.db
