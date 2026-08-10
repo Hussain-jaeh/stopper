@@ -115,6 +115,29 @@ export async function scheduleMilestoneNotifications(quitDateMs: number): Promis
   }
 }
 
+export async function sendTestNotification(): Promise<boolean> {
+  const granted = await ensurePermissions();
+  if (!granted) return false;
+  try {
+    await Notifications.scheduleNotificationAsync({
+      identifier: 'stopper-test',
+      content: {
+        title: '🔔 Test notification',
+        body: 'Notifications are working!',
+        sound: true,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: 5,
+      },
+    });
+    return true;
+  } catch (e) {
+    console.warn('[notifications] test notification failed', e);
+    return false;
+  }
+}
+
 export async function cancelMilestoneNotifications(): Promise<void> {
   await Promise.all(
     MILESTONES.map(day =>

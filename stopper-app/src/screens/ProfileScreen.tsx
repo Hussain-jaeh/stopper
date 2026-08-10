@@ -18,7 +18,7 @@ import {
 
 import { api } from '../../convex/_generated/api';
 import { ProfileStackParamList } from '../navigation/TabNavigator';
-import { scheduleReminder, cancelReminder } from '../notifications/reminders';
+import { scheduleReminder, cancelReminder, sendTestNotification } from '../notifications/reminders';
 import { ProfileIdentity } from '../components/profile/ProfileIdentity';
 import { SettingsRow, SettingsGroup } from '../components/profile/SettingsRow';
 import { DashboardSkeleton } from '../components/dashboard/states';
@@ -251,6 +251,10 @@ export function ProfileScreen() {
               <SettingsGroup title="Recovery">
                 <SettingsRow Icon={Target} tint={colors.jade500} label="My plan & goals" chevron onPress={() => navigation.navigate('Plan')} />
                 <SettingsRow Icon={Bell} tint={colors.gold} label="Daily reminders" toggle on={val('remindersOn')} onToggle={handleRemindersToggle} />
+                <SettingsRow Icon={Bell} tint={colors.fgFaint} label="Test notification (5s)" chevron onPress={async () => {
+                  const ok = await sendTestNotification();
+                  Alert.alert(ok ? 'Sent!' : 'Failed', ok ? 'Lock your phone — a notification will arrive in 5 seconds.' : 'Could not schedule. Check notification permissions in Settings.');
+                }} />
                 <SettingsRow Icon={PiggyBank} tint={colors.jade400} label="Habit cost" value={habitCostLabel} chevron onPress={() => setCostSheetOpen(true)} last />
               </SettingsGroup>
 
