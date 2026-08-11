@@ -54,7 +54,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Stopper needs access to your photos to set a profile picture."
+          "photosPermission": "Stopper needs access to your photos to set a profile picture and share videos in the community."
         }
       ],
       "expo-font",

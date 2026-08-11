@@ -62,7 +62,7 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
         setMedia({
           uri: asset.uri,
           type: mediaType,
-          mimeType: mediaType === 'image' ? 'image/jpeg' : 'video/mp4',
+          mimeType: asset.mimeType ?? (mediaType === 'image' ? 'image/jpeg' : 'video/mp4'),
         });
       }
     } catch {
