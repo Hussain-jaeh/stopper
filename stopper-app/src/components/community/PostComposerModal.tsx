@@ -6,12 +6,16 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation } from 'convex/react';
 import { X, LucideIcon, Smartphone, Cigarette, Brain, Wine, Moon, ImageIcon, Video, XCircle } from 'lucide-react-native';
+import { requireOptionalNativeModule } from 'expo-modules-core';
 import { Avatar } from './Avatar';
 import { colors } from '../../constants/colors';
 import { radius, spacing } from '../../constants/spacing';
 import { type } from '../../constants/typography';
 import * as FileSystem from 'expo-file-system/legacy';
 import { api } from '../../../convex/_generated/api';
+
+// Returns null in Expo Go (native module not compiled in); non-null in production builds.
+const hasVideoThumbnails = requireOptionalNativeModule('ExpoVideoThumbnails') !== null;
 
 type Circle = { id: string; name: string; iconKey: string; tint: string };
 
@@ -80,9 +84,8 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
     if (!storageId) throw new Error(`No storageId in response: ${result.body}`);
 
     let thumbStorageId: string | undefined;
-    if (draft.type === 'video') {
+    if (draft.type === 'video' && hasVideoThumbnails) {
       try {
-        // Dynamic require so Expo Go (no native module) silently skips thumbnail
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const VT = require('expo-video-thumbnails');
         let thumbResult: { uri: string };
