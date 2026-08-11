@@ -6,16 +6,12 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation } from 'convex/react';
 import { X, LucideIcon, Smartphone, Cigarette, Brain, Wine, Moon, ImageIcon, Video, XCircle } from 'lucide-react-native';
-import { requireOptionalNativeModule } from 'expo-modules-core';
 import { Avatar } from './Avatar';
 import { colors } from '../../constants/colors';
 import { radius, spacing } from '../../constants/spacing';
 import { type } from '../../constants/typography';
 import * as FileSystem from 'expo-file-system/legacy';
 import { api } from '../../../convex/_generated/api';
-
-// Returns null in Expo Go (native module not compiled in); non-null in production builds.
-const hasVideoThumbnails = requireOptionalNativeModule('ExpoVideoThumbnails') !== null;
 
 type Circle = { id: string; name: string; iconKey: string; tint: string };
 
@@ -42,9 +38,15 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
   const [body, setBody] = useState('');
   const [selectedCircle, setSelectedCircle] = useState<string | undefined>(initialCircleId);
   const [media, setMedia] = useState<MediaDraft | null>(null);
+  const [thumbLocalUri, setThumbLocalUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const canPost = body.trim().length > 0 || !!media;
+
+  const clearMedia = () => {
+    setMedia(null);
+    setThumbLocalUri(null);
+  };
 
   const pickMedia = async (mediaType: 'image' | 'video') => {
     try {
@@ -64,6 +66,16 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
           type: mediaType,
           mimeType: asset.mimeType ?? (mediaType === 'image' ? 'image/jpeg' : 'video/mp4'),
         });
+        setThumbLocalUri(null);
+
+        // Generate thumbnail immediately while the URI is fresh — same require pattern as vault
+        if (mediaType === 'video') {
+          try {
+            const VT = require('expo-video-thumbnails');
+            const { uri: tUri } = await VT.getThumbnailAsync(asset.uri, { time: 500, quality: 0.7 });
+            setThumbLocalUri(tUri);
+          } catch { /* native module absent (Expo Go) or generation failed — no thumbnail */ }
+        }
       }
     } catch {
       Alert.alert('Could not open media library');
@@ -71,34 +83,29 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
   };
 
   const uploadMedia = async (draft: MediaDraft): Promise<{ storageId: string; mediaType: 'image' | 'video'; thumbStorageId?: string }> => {
-    const needsThumb = draft.type === 'video' && hasVideoThumbnails;
-
-    // Pre-fetch upload URLs (one for video, one for thumb if needed) — same pattern as VaultRecordScreen
+    // Pre-fetch upload URLs in parallel — thumb URL only if we already have a local thumbnail
     const [videoUploadUrl, thumbUploadUrl] = await Promise.all([
       generateUploadUrl(),
-      needsThumb ? generateUploadUrl() : Promise.resolve(''),
+      thumbLocalUri ? generateUploadUrl() : Promise.resolve(''),
     ]);
 
-    // Upload video and generate+upload thumbnail in parallel
+    // Upload video and thumbnail in parallel
     const [result, thumbStorageId] = await Promise.all([
       FileSystem.uploadAsync(videoUploadUrl, draft.uri, {
         httpMethod: 'POST',
         uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
         headers: { 'Content-Type': draft.mimeType },
       }),
-      needsThumb
+      thumbLocalUri
         ? (async (): Promise<string | undefined> => {
             try {
-              // eslint-disable-next-line @typescript-eslint/no-var-requires
-              const VideoThumbnails = require('expo-video-thumbnails');
-              const { uri: thumbLocal } = await VideoThumbnails.getThumbnailAsync(draft.uri, { time: 500, quality: 0.6 });
-              const tRes = await FileSystem.uploadAsync(thumbUploadUrl, thumbLocal, {
+              const tRes = await FileSystem.uploadAsync(thumbUploadUrl, thumbLocalUri, {
                 httpMethod: 'POST',
                 headers: { 'Content-Type': 'image/jpeg' },
                 uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
               });
               if (tRes.status === 200) return JSON.parse(tRes.body).storageId;
-            } catch { /* non-fatal — post succeeds without thumbnail */ }
+            } catch { /* non-fatal */ }
             return undefined;
           })()
         : Promise.resolve(undefined),
@@ -128,7 +135,7 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
       }
       await onSubmit(body.trim(), selectedCircle, storageId, mediaType, thumbStorageId);
       setBody('');
-      setMedia(null);
+      clearMedia();
       setSelectedCircle(initialCircleId);
       onClose();
     } catch {
@@ -180,13 +187,17 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
             {/* Media preview */}
             {media && (
               <View style={styles.mediaPreviewWrap}>
-                <Image source={{ uri: media.uri }} style={styles.mediaPreview} resizeMode="cover" />
+                <Image
+                  source={{ uri: media.type === 'video' && thumbLocalUri ? thumbLocalUri : media.uri }}
+                  style={styles.mediaPreview}
+                  resizeMode="cover"
+                />
                 {media.type === 'video' && (
                   <View style={styles.videoOverlay}>
                     <Video size={28} color="#fff" />
                   </View>
                 )}
-                <Pressable onPress={() => setMedia(null)} style={styles.removeMedia} accessibilityLabel="Remove media">
+                <Pressable onPress={clearMedia} style={styles.removeMedia} accessibilityLabel="Remove media">
                   <XCircle size={22} color="#fff" />
                 </Pressable>
               </View>
