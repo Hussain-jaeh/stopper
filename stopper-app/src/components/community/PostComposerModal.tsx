@@ -71,38 +71,44 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
   };
 
   const uploadMedia = async (draft: MediaDraft): Promise<{ storageId: string; mediaType: 'image' | 'video'; thumbStorageId?: string }> => {
-    const uploadUrl = await generateUploadUrl();
-    const result = await FileSystem.uploadAsync(uploadUrl, draft.uri, {
-      httpMethod: 'POST',
-      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-      headers: { 'Content-Type': draft.mimeType },
-    });
+    const needsThumb = draft.type === 'video' && hasVideoThumbnails;
+
+    // Pre-fetch upload URLs (one for video, one for thumb if needed) — same pattern as VaultRecordScreen
+    const [videoUploadUrl, thumbUploadUrl] = await Promise.all([
+      generateUploadUrl(),
+      needsThumb ? generateUploadUrl() : Promise.resolve(''),
+    ]);
+
+    // Upload video and generate+upload thumbnail in parallel
+    const [result, thumbStorageId] = await Promise.all([
+      FileSystem.uploadAsync(videoUploadUrl, draft.uri, {
+        httpMethod: 'POST',
+        uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+        headers: { 'Content-Type': draft.mimeType },
+      }),
+      needsThumb
+        ? (async (): Promise<string | undefined> => {
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-var-requires
+              const VideoThumbnails = require('expo-video-thumbnails');
+              const { uri: thumbLocal } = await VideoThumbnails.getThumbnailAsync(draft.uri, { time: 500, quality: 0.6 });
+              const tRes = await FileSystem.uploadAsync(thumbUploadUrl, thumbLocal, {
+                httpMethod: 'POST',
+                headers: { 'Content-Type': 'image/jpeg' },
+                uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+              });
+              if (tRes.status === 200) return JSON.parse(tRes.body).storageId;
+            } catch { /* non-fatal — post succeeds without thumbnail */ }
+            return undefined;
+          })()
+        : Promise.resolve(undefined),
+    ]);
+
     if (result.status < 200 || result.status >= 300) {
       throw new Error(`Upload failed with status ${result.status}: ${result.body}`);
     }
     const { storageId } = result.body ? JSON.parse(result.body) : {};
     if (!storageId) throw new Error(`No storageId in response: ${result.body}`);
-
-    let thumbStorageId: string | undefined;
-    if (draft.type === 'video' && hasVideoThumbnails) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const VT = require('expo-video-thumbnails');
-        let thumbResult: { uri: string };
-        try {
-          thumbResult = await VT.getThumbnailAsync(draft.uri, { time: 0, quality: 0.6 });
-        } catch {
-          thumbResult = await VT.getThumbnailAsync(draft.uri, { time: 1000, quality: 0.6 });
-        }
-        const thumbUploadUrl = await generateUploadUrl();
-        const tRes = await FileSystem.uploadAsync(thumbUploadUrl, thumbResult.uri, {
-          httpMethod: 'POST',
-          headers: { 'Content-Type': 'image/jpeg' },
-          uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-        });
-        if (tRes.status >= 200 && tRes.status < 300) thumbStorageId = JSON.parse(tRes.body).storageId;
-      } catch (e) { console.warn('[community] thumbnail generation failed', e); }
-    }
 
     return { storageId, mediaType: draft.type, thumbStorageId };
   };
