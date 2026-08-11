@@ -6,7 +6,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation } from 'convex/react';
 import { X, LucideIcon, Smartphone, Cigarette, Brain, Wine, Moon, ImageIcon, Video, XCircle } from 'lucide-react-native';
-import * as VideoThumbnails from 'expo-video-thumbnails';
 import { Avatar } from './Avatar';
 import { colors } from '../../constants/colors';
 import { radius, spacing } from '../../constants/spacing';
@@ -83,11 +82,14 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
     let thumbStorageId: string | undefined;
     if (draft.type === 'video') {
       try {
-        let thumbResult;
+        // Dynamic require so Expo Go (no native module) silently skips thumbnail
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const VT = require('expo-video-thumbnails');
+        let thumbResult: { uri: string };
         try {
-          thumbResult = await VideoThumbnails.getThumbnailAsync(draft.uri, { time: 0, quality: 0.6 });
+          thumbResult = await VT.getThumbnailAsync(draft.uri, { time: 0, quality: 0.6 });
         } catch {
-          thumbResult = await VideoThumbnails.getThumbnailAsync(draft.uri, { time: 1000, quality: 0.6 });
+          thumbResult = await VT.getThumbnailAsync(draft.uri, { time: 1000, quality: 0.6 });
         }
         const thumbUploadUrl = await generateUploadUrl();
         const tRes = await FileSystem.uploadAsync(thumbUploadUrl, thumbResult.uri, {
@@ -95,7 +97,7 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
           headers: { 'Content-Type': 'image/jpeg' },
           uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
         });
-        if (tRes.status === 200) thumbStorageId = JSON.parse(tRes.body).storageId;
+        if (tRes.status >= 200 && tRes.status < 300) thumbStorageId = JSON.parse(tRes.body).storageId;
       } catch (e) { console.warn('[community] thumbnail generation failed', e); }
     }
 
