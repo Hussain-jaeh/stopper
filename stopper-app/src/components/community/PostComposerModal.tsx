@@ -6,6 +6,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation } from 'convex/react';
 import { X, LucideIcon, Smartphone, Cigarette, Brain, Wine, Moon, ImageIcon, Video, XCircle } from 'lucide-react-native';
+import * as VideoThumbnails from 'expo-video-thumbnails';
 import { Avatar } from './Avatar';
 import { colors } from '../../constants/colors';
 import { radius, spacing } from '../../constants/spacing';
@@ -82,10 +83,14 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
     let thumbStorageId: string | undefined;
     if (draft.type === 'video') {
       try {
-        const VideoThumbnails = require('expo-video-thumbnails');
-        const { uri: thumbLocal } = await VideoThumbnails.getThumbnailAsync(draft.uri, { time: 0, quality: 0.6 });
+        let thumbResult;
+        try {
+          thumbResult = await VideoThumbnails.getThumbnailAsync(draft.uri, { time: 0, quality: 0.6 });
+        } catch {
+          thumbResult = await VideoThumbnails.getThumbnailAsync(draft.uri, { time: 1000, quality: 0.6 });
+        }
         const thumbUploadUrl = await generateUploadUrl();
-        const tRes = await FileSystem.uploadAsync(thumbUploadUrl, thumbLocal, {
+        const tRes = await FileSystem.uploadAsync(thumbUploadUrl, thumbResult.uri, {
           httpMethod: 'POST',
           headers: { 'Content-Type': 'image/jpeg' },
           uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
