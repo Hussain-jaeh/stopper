@@ -12,13 +12,12 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import * as StoreReview from 'expo-store-review';
 import * as FileSystem from 'expo-file-system/legacy';
 import {
-  Target, Bell, VenetianMask, Lock, Smartphone, Star, Share2, ShieldCheck,
+  Target, VenetianMask, Lock, Smartphone, Star, Share2, ShieldCheck,
   FileText, LogOut, Trash2, PiggyBank, X,
 } from 'lucide-react-native';
 
 import { api } from '../../convex/_generated/api';
 import { ProfileStackParamList } from '../navigation/TabNavigator';
-import { sendTestNotification } from '../notifications/reminders';
 import { ProfileIdentity } from '../components/profile/ProfileIdentity';
 import { SettingsRow, SettingsGroup } from '../components/profile/SettingsRow';
 import { DashboardSkeleton } from '../components/dashboard/states';
@@ -239,10 +238,6 @@ export function ProfileScreen() {
             <View style={{ gap: 26 }}>
               <SettingsGroup title="Recovery">
                 <SettingsRow Icon={Target} tint={colors.jade500} label="My plan & goals" chevron onPress={() => navigation.navigate('Plan')} />
-                <SettingsRow Icon={Bell} tint={colors.textMuted} label="Test notification (5s)" chevron onPress={async () => {
-                  const ok = await sendTestNotification();
-                  Alert.alert(ok ? 'Sent!' : 'Failed', ok ? 'Lock your phone — a notification will arrive in 5 seconds.' : 'Could not schedule. Check notification permissions in Settings → Stopper → Notifications.');
-                }} />
                 <SettingsRow Icon={PiggyBank} tint={colors.jade400} label="Habit cost" value={habitCostLabel} chevron onPress={() => setCostSheetOpen(true)} last />
               </SettingsGroup>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, Component, type ReactNode } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as ExpoSplash from 'expo-splash-screen';
@@ -149,32 +149,44 @@ export default function App() {
 type Phase = 'loading' | 'auth' | 'onboarding' | 'paywall' | 'app';
 
 function useAppLock() {
+  const [locked, setLocked] = useState(false);
   const appState = useRef<AppStateStatus>(AppState.currentState);
   const profile = useQuery(api.users.getMyProfile);
 
+  const authenticate = useCallback(async () => {
+    try {
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Unlock Stopper',
+        cancelLabel: 'Cancel',
+        disableDeviceFallback: false,
+      });
+      if (result.success) setLocked(false);
+    } catch {}
+  }, []);
+
   useEffect(() => {
-    const sub = AppState.addEventListener('change', async (next) => {
+    const sub = AppState.addEventListener('change', (next) => {
       const wasBackground = appState.current === 'background' || appState.current === 'inactive';
       appState.current = next;
-      if (next === 'active' && wasBackground) {
-        const lockEnabled = (profile as any)?.appLockEnabled;
-        if (!lockEnabled) return;
-        await LocalAuthentication.authenticateAsync({
-          promptMessage: 'Unlock Stopper',
-          cancelLabel: 'Cancel',
-          disableDeviceFallback: false,
-        });
+      if (next === 'active' && wasBackground && (profile as any)?.appLockEnabled) {
+        setLocked(true);
       }
     });
     return () => sub.remove();
   }, [profile]);
+
+  useEffect(() => {
+    if (locked) authenticate();
+  }, [locked, authenticate]);
+
+  return { locked, authenticate };
 }
 
 function AppContent({ onBootDone }: { onBootDone: () => void }) {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const profile = useQuery(api.users.getMyProfile);
   const recoveryProfile = useQuery(api.profiles.getProfile);
-  useAppLock();
+  const { locked, authenticate } = useAppLock();
   const saveOnboarding = useMutation(api.users.completeOnboarding);
   const upsertProfile = useMutation(api.profiles.upsertProfile);
   const [phase, setPhase] = useState<Phase>('loading');
@@ -317,40 +329,35 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
     setPhase('app');
   }, []);
 
+  let content: React.ReactNode;
   if (phase === 'loading') {
-    return (
+    content = (
       <View style={styles.loading}>
         <ActivityIndicator color={colors.jade500} size="large" />
       </View>
     );
+  } else if (phase === 'onboarding') {
+    content = <OnboardingFlow startStep={2} onComplete={handleOnboardingComplete} />;
+  } else if (phase === 'paywall') {
+    content = <PaywallScreen onPurchase={handlePurchase} />;
+  } else if (phase === 'app') {
+    content = <TabNavigator onStartOnboarding={() => setPhase('onboarding')} />;
+  } else {
+    content = <AuthFlow onAuthenticated={handleAuthenticated} />;
   }
 
-  if (phase === 'onboarding') {
-    return (
-      <OnboardingFlow
-        startStep={2}
-        onComplete={handleOnboardingComplete}
-      />
-    );
-  }
-
-  if (phase === 'paywall') {
-    return (
-      <PaywallScreen
-        onPurchase={handlePurchase}
-      />
-    );
-  }
-
-  if (phase === 'app') {
-    return (
-      <TabNavigator
-        onStartOnboarding={() => setPhase('onboarding')}
-      />
-    );
-  }
-
-  return <AuthFlow onAuthenticated={handleAuthenticated} />;
+  return (
+    <>
+      {content}
+      {locked && (
+        <Pressable onPress={authenticate} style={styles.lockScreen}>
+          <Text style={styles.lockIcon}>🔒</Text>
+          <Text style={styles.lockTitle}>Stopper is locked</Text>
+          <Text style={styles.lockSub}>Tap to authenticate</Text>
+        </Pressable>
+      )}
+    </>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -364,4 +371,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  lockScreen: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: colors.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    zIndex: 999,
+  },
+  lockIcon: { fontSize: 44 },
+  lockTitle: { color: colors.fg, fontSize: 20, fontWeight: '700' },
+  lockSub: { color: colors.fgMuted, fontSize: 14 },
 });

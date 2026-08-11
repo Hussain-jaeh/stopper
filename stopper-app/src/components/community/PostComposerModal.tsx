@@ -53,7 +53,7 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
       if (status !== 'granted') { Alert.alert('Allow photo access to add media.'); return; }
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: mediaType === 'image' ? ['images'] : ['videos'],
-        allowsEditing: true,
+        allowsEditing: mediaType === 'image',
         quality: 0.85,
         videoMaxDuration: 60,
       });
