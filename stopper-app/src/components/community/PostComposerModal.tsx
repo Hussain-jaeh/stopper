@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation } from 'convex/react';
-import { X, LucideIcon, Smartphone, Cigarette, Brain, Wine, Moon, ImageIcon, Video, XCircle } from 'lucide-react-native';
+import { X, LucideIcon, Smartphone, Cigarette, Brain, Wine, Moon, Camera, Video, XCircle } from 'lucide-react-native';
 import { Avatar } from './Avatar';
 import { colors } from '../../constants/colors';
 import { radius, spacing } from '../../constants/spacing';
@@ -49,9 +49,9 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
   const pickMedia = async (mediaType: 'image' | 'video') => {
     try {
       const ImagePicker = require('expo-image-picker');
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') { Alert.alert('Allow photo access to add media.'); return; }
-      const result = await ImagePicker.launchImageLibraryAsync({
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') { Alert.alert('Allow camera access to share your progress.'); return; }
+      const result = await ImagePicker.launchCameraAsync({
         mediaTypes: mediaType === 'image' ? ['images'] : ['videos'],
         allowsEditing: mediaType === 'image',
         quality: 0.85,
@@ -66,7 +66,7 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
         });
       }
     } catch {
-      Alert.alert('Could not open media library');
+      Alert.alert('Could not open camera');
     }
   };
 
@@ -203,11 +203,11 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
           {/* Media toolbar */}
           {!media && (
             <View style={styles.toolbar}>
-              <Pressable onPress={() => pickMedia('image')} style={styles.toolBtn} accessibilityLabel="Add photo">
-                <ImageIcon size={20} color={colors.jade400} />
+              <Pressable onPress={() => pickMedia('image')} style={styles.toolBtn} accessibilityLabel="Take photo">
+                <Camera size={20} color={colors.jade400} />
                 <Text style={styles.toolTxt}>Photo</Text>
               </Pressable>
-              <Pressable onPress={() => pickMedia('video')} style={styles.toolBtn} accessibilityLabel="Add video">
+              <Pressable onPress={() => pickMedia('video')} style={styles.toolBtn} accessibilityLabel="Record video">
                 <Video size={20} color={colors.jade400} />
                 <Text style={styles.toolTxt}>Video</Text>
               </Pressable>

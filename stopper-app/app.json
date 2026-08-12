@@ -70,7 +70,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Stopper uses your camera so you can record a private message to your future self.",
+          "cameraPermission": "Stopper uses your camera to record a private message to your future self and to share progress moments in the community.",
           "microphonePermission": "Stopper uses your microphone to record the audio of your private message."
         }
       ],
