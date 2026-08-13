@@ -8,7 +8,6 @@ import { X, RotateCcw, Check, Video } from 'lucide-react-native';
 import { useMutation } from 'convex/react';
 import { useNavigation } from '@react-navigation/native';
 import * as FileSystem from 'expo-file-system/legacy';
-import { requireOptionalNativeModule } from 'expo-modules-core';
 import { api } from '../../convex/_generated/api';
 import { colors, gradients } from '../constants/colors';
 import { spacing, shadow } from '../constants/spacing';
@@ -26,9 +25,9 @@ export function VaultRecordScreen() {
   const [count, setCount] = useState(3);
   const [sec, setSec] = useState(0);
   const [videoUri, setVideoUri] = useState<string | null>(null);
-  // Pre-fetched upload URLs so Save starts immediately
   const prefetchedVideoUrl = useRef<string | null>(null);
   const prefetchedThumbUrl = useRef<string | null>(null);
+  const localThumbUri = useRef<string | null>(null);
 
   const generateUploadUrl = useMutation(api.vault.generateUploadUrl);
   const saveRecordingMutation = useMutation(api.vault.saveRecording);
@@ -53,12 +52,18 @@ export function VaultRecordScreen() {
     setPhase('rec'); setSec(0);
     prefetchedVideoUrl.current = null;
     prefetchedThumbUrl.current = null;
+    localThumbUri.current = null;
     try {
       const video = await cam.current?.recordAsync({ maxDuration: LIMIT_S });
       if (video?.uri) {
         setVideoUri(video.uri);
+        // Camera is back to preview — snap a still frame for the thumbnail
+        try {
+          const snap = await cam.current?.takePictureAsync({ quality: 0.5, skipProcessing: true });
+          localThumbUri.current = snap?.uri ?? null;
+        } catch {}
         setPhase('review');
-        // Pre-fetch upload URLs in background while user decides to keep/re-record
+        // Pre-fetch upload URLs in background
         Promise.all([generateUploadUrl(), generateUploadUrl()]).then(([vid, thumb]) => {
           prefetchedVideoUrl.current = vid;
           prefetchedThumbUrl.current = thumb;
@@ -84,20 +89,19 @@ export function VaultRecordScreen() {
           headers: { 'Content-Type': mime },
           uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
         }),
-        (async (): Promise<string | undefined> => {
-          try {
-            const VT = requireOptionalNativeModule('ExpoVideoThumbnails');
-            if (!VT) return undefined;
-            const { uri: thumbLocal } = await (VT as any).getThumbnailAsync(videoUri, { time: 500, quality: 0.6 });
-            const tRes = await FileSystem.uploadAsync(thumbUrl, thumbLocal, {
-              httpMethod: 'POST',
-              headers: { 'Content-Type': 'image/jpeg' },
-              uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-            });
-            if (tRes.status === 200) return JSON.parse(tRes.body).storageId;
-          } catch {}
-          return undefined;
-        })(),
+        localThumbUri.current
+          ? (async (): Promise<string | undefined> => {
+              try {
+                const tRes = await FileSystem.uploadAsync(thumbUrl, localThumbUri.current!, {
+                  httpMethod: 'POST',
+                  headers: { 'Content-Type': 'image/jpeg' },
+                  uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+                });
+                if (tRes.status === 200) return JSON.parse(tRes.body).storageId;
+              } catch {}
+              return undefined;
+            })()
+          : Promise.resolve(undefined),
       ]);
 
       if (vRes.status !== 200) throw new Error(`Upload HTTP ${vRes.status}`);
@@ -132,7 +136,7 @@ export function VaultRecordScreen() {
 
   return (
     <View style={styles.root}>
-      <CameraView ref={cam} style={StyleSheet.absoluteFill} facing="front" mode="video" videoQuality="720p" />
+      <CameraView ref={cam} style={StyleSheet.absoluteFill} facing="front" videoQuality="720p" />
 
       <View style={[styles.top, { paddingTop: insets.top + 10 }]}>
         <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Close" style={styles.close}><X size={18} color={colors.white} /></Pressable>

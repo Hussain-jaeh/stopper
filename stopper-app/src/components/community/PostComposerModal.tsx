@@ -6,7 +6,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation } from 'convex/react';
 import { X, LucideIcon, Smartphone, Cigarette, Brain, Wine, Moon, Camera, Video, XCircle } from 'lucide-react-native';
-import { requireOptionalNativeModule } from 'expo-modules-core';
 import { Avatar } from './Avatar';
 import { colors } from '../../constants/colors';
 import { radius, spacing } from '../../constants/spacing';
@@ -68,15 +67,6 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
           mimeType: asset.mimeType ?? (mediaType === 'image' ? 'image/jpeg' : 'video/mp4'),
         });
         setThumbLocalUri(null);
-        if (mediaType === 'video') {
-          try {
-            const VT = requireOptionalNativeModule('ExpoVideoThumbnails');
-            if (VT) {
-              const { uri: tUri } = await (VT as any).getThumbnailAsync(asset.uri, { time: 500, quality: 0.7 });
-              setThumbLocalUri(tUri);
-            }
-          } catch {}
-        }
       }
     } catch {
       Alert.alert('Could not open camera');
