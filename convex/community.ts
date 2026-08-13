@@ -104,7 +104,7 @@ async function enrichPosts(
   const mediaMap = new Map(mediaUrls);
   const thumbMap = new Map(thumbUrls);
 
-  const [userStreaks, circleNames, cheerData] = await Promise.all([
+  const [userStreaks, circleNames, cheerData, commentCounts] = await Promise.all([
     Promise.all(
       uniqueUserIds.map(async (uid) => {
         const profile = await ctx.db
@@ -149,6 +149,15 @@ async function enrichPosts(
         return [post._id as string, cheers.length, myCheer !== null] as const;
       }),
     ),
+    Promise.all(
+      posts.map(async (post) => {
+        const comments = await ctx.db
+          .query("postComments")
+          .withIndex("by_postId_createdAt", (q: any) => q.eq("postId", post._id))
+          .take(1000);
+        return [post._id as string, comments.length] as const;
+      }),
+    ),
   ]);
 
   const streakMap = new Map(userStreaks);
@@ -156,6 +165,7 @@ async function enrichPosts(
   const cheerMap = new Map(
     cheerData.map(([id, count, cheered]) => [id, { count, cheered }]),
   );
+  const commentCountMap = new Map(commentCounts);
 
   return posts.map((post) => ({
     id: post._id as string,
@@ -173,7 +183,7 @@ async function enrichPosts(
     mediaType: (post.mediaType as "image" | "video" | undefined) ?? undefined,
     thumbUri: thumbMap.get(post._id as string) ?? undefined,
     cheers: cheerMap.get(post._id as string)?.count ?? 0,
-    replies: 0,
+    replies: commentCountMap.get(post._id as string) ?? 0,
     cheered: cheerMap.get(post._id as string)?.cheered ?? false,
   }));
 }
@@ -442,5 +452,35 @@ export const getCircle = query({
       members: memberDocs.length,
       joined: membership !== null,
     };
+  },
+});
+
+export const getPostComments = query({
+  args: { postId: v.id("posts") },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx);
+    const comments = await ctx.db
+      .query("postComments")
+      .withIndex("by_postId_createdAt", (q) => q.eq("postId", args.postId))
+      .order("asc")
+      .take(200);
+
+    return comments.map((c) => ({
+      id: c._id as string,
+      handle: makeHandle(c.userId),
+      body: c.body,
+      time: relTime(c.createdAt),
+    }));
+  },
+});
+
+export const addComment = mutation({
+  args: { postId: v.id("posts"), body: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+    const body = args.body.trim();
+    if (!body) throw new ConvexError("Comment cannot be empty");
+    if (body.length > 300) throw new ConvexError("Comment must be 300 characters or fewer");
+    await ctx.db.insert("postComments", { postId: args.postId, userId, body, createdAt: Date.now() });
   },
 });

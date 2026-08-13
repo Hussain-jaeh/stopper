@@ -128,4 +128,12 @@ export default defineSchema({
     .index("by_postId", ["postId"])
     .index("by_postId_userId", ["postId", "userId"])
     .index("by_userId", ["userId"]),
+
+  // Comments on community posts.
+  postComments: defineTable({
+    postId: v.id("posts"),
+    userId: v.id("users"),
+    body: v.string(),
+    createdAt: v.number(),
+  }).index("by_postId_createdAt", ["postId", "createdAt"]),
 });

@@ -13,6 +13,7 @@ import { CirclesList, Circle } from '../components/community/CirclesList';
 import { Leaderboard, Leader } from '../components/community/Leaderboard';
 import { PostComposerModal } from '../components/community/PostComposerModal';
 import { CreateCircleModal } from '../components/community/CreateCircleModal';
+import { CommentSheet } from '../components/community/CommentSheet';
 import { DashboardSkeleton } from '../components/dashboard/states';
 import { colors } from '../constants/colors';
 import { spacing, radius } from '../constants/spacing';
@@ -34,6 +35,7 @@ export function CommunityScreen() {
   const [feedMode, setFeedMode] = useState<FeedMode>('all');
   const [composerOpen, setComposerOpen] = useState(false);
   const [createCircleOpen, setCreateCircleOpen] = useState(false);
+  const [commentPostId, setCommentPostId] = useState<string | null>(null);
 
   const me         = useQuery(api.community.getMe);
   const feed       = useQuery(api.community.getFeed, { mode: feedMode }) as Post[] | undefined;
@@ -117,7 +119,7 @@ export function CommunityScreen() {
                     post={p}
                     index={i + 2}
                     onCheer={(id) => cheer({ postId: id as any })}
-                    onOpen={() => {}}
+                    onOpen={(id) => setCommentPostId(id)}
                     onPlayVideo={(url) => navigation.navigate('VaultPlay', { uri: url, title: 'Win' })}
                   />
                 ))
@@ -166,6 +168,7 @@ export function CommunityScreen() {
         onClose={() => setCreateCircleOpen(false)}
         onSubmit={handleCreateCircle}
       />
+      <CommentSheet postId={commentPostId} onClose={() => setCommentPostId(null)} />
     </>
   );
 }

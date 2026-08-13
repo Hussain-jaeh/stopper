@@ -11,6 +11,7 @@ import {
 import { api } from '../../convex/_generated/api';
 import { PostCard, Post } from '../components/community/PostCard';
 import { PostComposerModal } from '../components/community/PostComposerModal';
+import { CommentSheet } from '../components/community/CommentSheet';
 import { colors } from '../constants/colors';
 import { radius, spacing } from '../constants/spacing';
 import { type } from '../constants/typography';
@@ -36,6 +37,7 @@ export function CircleDetailScreen() {
   const { circleId, name, tint, iconKey } = params;
 
   const [composerOpen, setComposerOpen] = useState(false);
+  const [commentPostId, setCommentPostId] = useState<string | null>(null);
 
   const circle = useQuery(api.community.getCircle, { circleId: circleId as any });
   const posts = useQuery(api.community.getCirclePosts, { circleId: circleId as any }) as Post[] | undefined;
@@ -120,6 +122,7 @@ export function CircleDetailScreen() {
                 post={p}
                 index={i}
                 onCheer={(id) => cheer({ postId: id as any })}
+                onOpen={(id) => setCommentPostId(id)}
                 onPlayVideo={(url) => navigation.navigate('VaultPlay', { uri: url, title: 'Win' })}
               />
             ))
@@ -136,6 +139,7 @@ export function CircleDetailScreen() {
         initialCircleId={circleId}
         initialCircleName={name}
       />
+      <CommentSheet postId={commentPostId} onClose={() => setCommentPostId(null)} />
     </>
   );
 }
