@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation } from 'convex/react';
 import { X, LucideIcon, Smartphone, Cigarette, Brain, Wine, Moon, Camera, Video, XCircle } from 'lucide-react-native';
 import { Avatar } from './Avatar';
+import { CameraRecordModal } from './CameraRecordModal';
 import { colors } from '../../constants/colors';
 import { radius, spacing } from '../../constants/spacing';
 import { type } from '../../constants/typography';
@@ -40,6 +41,7 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
   const [media, setMedia] = useState<MediaDraft | null>(null);
   const [thumbLocalUri, setThumbLocalUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [cameraRecorderOpen, setCameraRecorderOpen] = useState(false);
 
   const canPost = body.trim().length > 0 || !!media;
 
@@ -49,28 +51,38 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
   };
 
   const pickMedia = async (mediaType: 'image' | 'video') => {
+    if (mediaType === 'video') {
+      // Use CameraRecordModal so we can capture a thumbnail snapshot before recording
+      setCameraRecorderOpen(true);
+      return;
+    }
     try {
       const ImagePicker = require('expo-image-picker');
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') { Alert.alert('Allow camera access to share your progress.'); return; }
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: mediaType === 'image' ? ['images'] : ['videos'],
-        allowsEditing: mediaType === 'image',
+        mediaTypes: ['images'],
+        allowsEditing: true,
         quality: 0.85,
-        videoMaxDuration: 60,
       });
       if (!result.canceled) {
         const asset = result.assets[0];
         setMedia({
           uri: asset.uri,
-          type: mediaType,
-          mimeType: asset.mimeType ?? (mediaType === 'image' ? 'image/jpeg' : 'video/mp4'),
+          type: 'image',
+          mimeType: asset.mimeType ?? 'image/jpeg',
         });
         setThumbLocalUri(null);
       }
     } catch {
       Alert.alert('Could not open camera');
     }
+  };
+
+  const handleVideoRecorded = ({ videoUri, thumbUri }: { videoUri: string; thumbUri: string | null }) => {
+    setCameraRecorderOpen(false);
+    setMedia({ uri: videoUri, type: 'video', mimeType: videoUri.endsWith('.mov') ? 'video/quicktime' : 'video/mp4' });
+    setThumbLocalUri(thumbUri);
   };
 
   const uploadMedia = async (draft: MediaDraft): Promise<{ storageId: string; mediaType: 'image' | 'video'; thumbStorageId?: string }> => {
@@ -138,6 +150,11 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}>
+          <CameraRecordModal
+            visible={cameraRecorderOpen}
+            onClose={() => setCameraRecorderOpen(false)}
+            onDone={handleVideoRecorded}
+          />
           {/* Header */}
           <View style={styles.header}>
             <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" style={styles.closeBtn}>
@@ -176,11 +193,15 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
             {/* Media preview */}
             {media && (
               <View style={styles.mediaPreviewWrap}>
-                <Image
-                  source={{ uri: media.type === 'video' && thumbLocalUri ? thumbLocalUri : media.uri }}
-                  style={styles.mediaPreview}
-                  resizeMode="cover"
-                />
+                {media.type === 'image' ? (
+                  <Image source={{ uri: media.uri }} style={styles.mediaPreview} resizeMode="cover" />
+                ) : thumbLocalUri ? (
+                  <Image source={{ uri: thumbLocalUri }} style={styles.mediaPreview} resizeMode="cover" />
+                ) : (
+                  <View style={[styles.mediaPreview, { backgroundColor: '#111', alignItems: 'center', justifyContent: 'center' }]}>
+                    <Video size={36} color="rgba(255,255,255,0.4)" />
+                  </View>
+                )}
                 {media.type === 'video' && (
                   <View style={styles.videoOverlay}>
                     <Video size={28} color="#fff" />

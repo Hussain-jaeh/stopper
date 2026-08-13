@@ -37,7 +37,11 @@ export function VaultRecordScreen() {
 
   useEffect(() => {
     if (phase !== 'count') return;
-    if (count === 0) { startRecording(); return; }
+    if (count === 0) {
+      // 600ms buffer so the camera finishes switching to video mode before recordAsync
+      const t = setTimeout(() => startRecording(), 600);
+      return () => clearTimeout(t);
+    }
     const t = setTimeout(() => setCount(c => c - 1), 800);
     return () => clearTimeout(t);
   }, [phase, count]);
