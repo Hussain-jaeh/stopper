@@ -6,6 +6,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation } from 'convex/react';
 import { X, LucideIcon, Smartphone, Cigarette, Brain, Wine, Moon, Camera, Video, XCircle } from 'lucide-react-native';
+import { requireOptionalNativeModule } from 'expo-modules-core';
 import { Avatar } from './Avatar';
 import { colors } from '../../constants/colors';
 import { radius, spacing } from '../../constants/spacing';
@@ -38,12 +39,14 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
   const [body, setBody] = useState('');
   const [selectedCircle, setSelectedCircle] = useState<string | undefined>(initialCircleId);
   const [media, setMedia] = useState<MediaDraft | null>(null);
+  const [thumbLocalUri, setThumbLocalUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const canPost = body.trim().length > 0 || !!media;
 
   const clearMedia = () => {
     setMedia(null);
+    setThumbLocalUri(null);
   };
 
   const pickMedia = async (mediaType: 'image' | 'video') => {
@@ -64,19 +67,48 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
           type: mediaType,
           mimeType: asset.mimeType ?? (mediaType === 'image' ? 'image/jpeg' : 'video/mp4'),
         });
+        setThumbLocalUri(null);
+        if (mediaType === 'video') {
+          try {
+            const VT = requireOptionalNativeModule('ExpoVideoThumbnails');
+            if (VT) {
+              const { uri: tUri } = await (VT as any).getThumbnailAsync(asset.uri, { time: 500, quality: 0.7 });
+              setThumbLocalUri(tUri);
+            }
+          } catch {}
+        }
       }
     } catch {
       Alert.alert('Could not open camera');
     }
   };
 
-  const uploadMedia = async (draft: MediaDraft): Promise<{ storageId: string; mediaType: 'image' | 'video' }> => {
-    const uploadUrl = await generateUploadUrl();
-    const result = await FileSystem.uploadAsync(uploadUrl, draft.uri, {
-      httpMethod: 'POST',
-      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-      headers: { 'Content-Type': draft.mimeType },
-    });
+  const uploadMedia = async (draft: MediaDraft): Promise<{ storageId: string; mediaType: 'image' | 'video'; thumbStorageId?: string }> => {
+    const [uploadUrl, thumbUploadUrl] = await Promise.all([
+      generateUploadUrl(),
+      thumbLocalUri ? generateUploadUrl() : Promise.resolve(''),
+    ]);
+
+    const [result, thumbStorageId] = await Promise.all([
+      FileSystem.uploadAsync(uploadUrl, draft.uri, {
+        httpMethod: 'POST',
+        uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+        headers: { 'Content-Type': draft.mimeType },
+      }),
+      thumbLocalUri
+        ? (async (): Promise<string | undefined> => {
+            try {
+              const tRes = await FileSystem.uploadAsync(thumbUploadUrl, thumbLocalUri, {
+                httpMethod: 'POST',
+                headers: { 'Content-Type': 'image/jpeg' },
+                uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+              });
+              if (tRes.status === 200) return JSON.parse(tRes.body).storageId;
+            } catch {}
+            return undefined;
+          })()
+        : Promise.resolve(undefined),
+    ]);
 
     if (result.status < 200 || result.status >= 300) {
       throw new Error(`Upload failed with status ${result.status}: ${result.body}`);
@@ -84,7 +116,7 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
     const { storageId } = result.body ? JSON.parse(result.body) : {};
     if (!storageId) throw new Error(`No storageId in response: ${result.body}`);
 
-    return { storageId, mediaType: draft.type };
+    return { storageId, mediaType: draft.type, thumbStorageId };
   };
 
   const handlePost = async () => {
@@ -98,8 +130,9 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
         const result = await uploadMedia(media);
         storageId = result.storageId;
         mediaType = result.mediaType;
+        thumbStorageId = result.thumbStorageId;
       }
-      await onSubmit(body.trim(), selectedCircle, storageId, mediaType, undefined);
+      await onSubmit(body.trim(), selectedCircle, storageId, mediaType, thumbStorageId);
       setBody('');
       clearMedia();
       setSelectedCircle(initialCircleId);
@@ -154,7 +187,7 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
             {media && (
               <View style={styles.mediaPreviewWrap}>
                 <Image
-                  source={{ uri: media.uri }}
+                  source={{ uri: media.type === 'video' && thumbLocalUri ? thumbLocalUri : media.uri }}
                   style={styles.mediaPreview}
                   resizeMode="cover"
                 />
