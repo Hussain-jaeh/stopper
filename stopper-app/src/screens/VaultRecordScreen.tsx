@@ -56,7 +56,7 @@ export function VaultRecordScreen() {
     prefetchedThumbUrl.current = null;
     // Camera is in picture mode — take the thumbnail snapshot right now
     try {
-      const snap = await cam.current?.takePictureAsync({ quality: 0.6, skipProcessing: true });
+      const snap = await cam.current?.takePictureAsync({ quality: 0.6 });
       localThumbUri.current = snap?.uri ?? null;
     } catch {}
     // Switch camera to video mode, then start 3-second countdown
