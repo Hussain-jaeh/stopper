@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
+import { View, Text, Image, StyleSheet, Pressable, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,6 +26,7 @@ export function VaultRecordScreen() {
   const [count, setCount] = useState(3);
   const [sec, setSec] = useState(0);
   const [videoUri, setVideoUri] = useState<string | null>(null);
+  const [thumbPreview, setThumbPreview] = useState<string | null>(null);
   const prefetchedVideoUrl = useRef<string | null>(null);
   const prefetchedThumbUrl = useRef<string | null>(null);
   const localThumbUri = useRef<string | null>(null);
@@ -60,12 +61,14 @@ export function VaultRecordScreen() {
     localThumbUri.current = null;
     prefetchedVideoUrl.current = null;
     prefetchedThumbUrl.current = null;
+    setThumbPreview(null);
     // Camera is in picture mode — take the thumbnail snapshot right now
     // Only if camera is confirmed ready (onCameraReady has fired)
     if (camReady.current) {
       try {
         const snap = await cam.current?.takePictureAsync({ quality: 0.6 });
         localThumbUri.current = snap?.uri ?? null;
+        setThumbPreview(snap?.uri ?? null);
       } catch {}
     }
     // Reset ready flag — camera will re-initialize for video mode
@@ -184,6 +187,9 @@ export function VaultRecordScreen() {
         )}
         {phase === 'review' && (
           <Animated.View entering={FadeIn.duration(300)} style={{ alignItems: 'center' }}>
+            {thumbPreview ? (
+              <Image source={{ uri: thumbPreview }} style={styles.thumbPreview} />
+            ) : null}
             <Text style={styles.h}>Keep this one?</Text>
             <Text style={styles.p}>{mmss(Math.min(sec, LIMIT_S))} · saved privately to your vault</Text>
           </Animated.View>
@@ -216,7 +222,7 @@ export function VaultRecordScreen() {
         )}
         {phase === 'review' && (
           <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
-            <Pressable onPress={() => { setCamMode('picture'); setVideoUri(null); setSec(0); setPhase('prep'); }} style={styles.ghost}>
+            <Pressable onPress={() => { setCamMode('picture'); setVideoUri(null); setSec(0); setThumbPreview(null); setPhase('prep'); }} style={styles.ghost}>
               <RotateCcw size={17} color={colors.white} /><Text style={styles.ghostTxt}>Re-record</Text>
             </Pressable>
             <Pressable onPress={onSave} style={[{ flex: 1 }, shadow.cta]}>
@@ -245,6 +251,7 @@ const styles = StyleSheet.create({
   h: { fontFamily: 'BricolageGrotesque_800ExtraBold', fontSize: 24, lineHeight: 30, color: colors.white, textAlign: 'center' },
   p: { fontSize: 14.5, color: 'rgba(255,255,255,0.65)', marginTop: 14, lineHeight: 21, textAlign: 'center' },
   count: { fontFamily: 'BricolageGrotesque_800ExtraBold', fontSize: 110, color: colors.white },
+  thumbPreview: { width: 90, height: 90, borderRadius: 16, marginBottom: 16, borderWidth: 2, borderColor: colors.jade500 },
   savedBadge: { width: 74, height: 74, borderRadius: 37, alignItems: 'center', justifyContent: 'center' },
   bottom: { paddingHorizontal: 24, alignItems: 'center', gap: 14 },
   progressTrack: { width: '100%', height: 5, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.14)', overflow: 'hidden' },
