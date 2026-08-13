@@ -22,6 +22,7 @@ export function VaultRecordScreen() {
   const [camPerm, requestCam] = useCameraPermissions();
   const [micPerm, requestMic] = useMicrophonePermissions();
   const [phase, setPhase] = useState<Phase>('prep');
+  const [camMode, setCamMode] = useState<'picture' | 'video'>('picture');
   const [count, setCount] = useState(3);
   const [sec, setSec] = useState(0);
   const [videoUri, setVideoUri] = useState<string | null>(null);
@@ -48,26 +49,35 @@ export function VaultRecordScreen() {
     return () => clearTimeout(t);
   }, [phase, sec]);
 
-  const startRecording = async () => {
-    setPhase('rec'); setSec(0);
+  // Tap handler: snapshot now (picture mode) → switch to video → countdown → record
+  const handleRecordTap = async () => {
+    localThumbUri.current = null;
     prefetchedVideoUrl.current = null;
     prefetchedThumbUrl.current = null;
-    localThumbUri.current = null;
+    // Camera is in picture mode — take the thumbnail snapshot right now
+    try {
+      const snap = await cam.current?.takePictureAsync({ quality: 0.6, skipProcessing: true });
+      localThumbUri.current = snap?.uri ?? null;
+    } catch {}
+    // Switch camera to video mode, then start 3-second countdown
+    setCamMode('video');
+    setCount(3);
+    setPhase('count');
+  };
+
+  const startRecording = async () => {
+    setPhase('rec'); setSec(0);
     try {
       const video = await cam.current?.recordAsync({ maxDuration: LIMIT_S });
       if (video?.uri) {
         setVideoUri(video.uri);
-        // Camera is back to preview — snap a still frame for the thumbnail
-        try {
-          const snap = await cam.current?.takePictureAsync({ quality: 0.5, skipProcessing: true });
-          localThumbUri.current = snap?.uri ?? null;
-        } catch {}
         setPhase('review');
-        // Pre-fetch upload URLs in background
-        Promise.all([generateUploadUrl(), generateUploadUrl()]).then(([vid, thumb]) => {
-          prefetchedVideoUrl.current = vid;
-          prefetchedThumbUrl.current = thumb;
-        }).catch(() => {});
+        // Pre-fetch upload URLs in background while user decides
+        Promise.all([generateUploadUrl(), localThumbUri.current ? generateUploadUrl() : Promise.resolve('')])
+          .then(([vid, thumb]) => {
+            prefetchedVideoUrl.current = vid;
+            if (localThumbUri.current) prefetchedThumbUrl.current = thumb;
+          }).catch(() => {});
       }
     } catch { setPhase('prep'); }
   };
@@ -77,9 +87,11 @@ export function VaultRecordScreen() {
     if (!videoUri) return;
     setPhase('saving');
     try {
-      const [videoUrl, thumbUrl] = prefetchedVideoUrl.current && prefetchedThumbUrl.current
-        ? [prefetchedVideoUrl.current, prefetchedThumbUrl.current]
-        : await Promise.all([generateUploadUrl(), generateUploadUrl()]);
+      const needThumb = !!localThumbUri.current;
+      const videoUrl = prefetchedVideoUrl.current ?? await generateUploadUrl();
+      const thumbUrl = needThumb
+        ? (prefetchedThumbUrl.current ?? await generateUploadUrl())
+        : '';
 
       const mime = videoUri.endsWith('.mov') ? 'video/quicktime' : 'video/mp4';
 
@@ -136,7 +148,7 @@ export function VaultRecordScreen() {
 
   return (
     <View style={styles.root}>
-      <CameraView ref={cam} style={StyleSheet.absoluteFill} facing="front" videoQuality="720p" />
+      <CameraView ref={cam} mode={camMode} style={StyleSheet.absoluteFill} facing="front" videoQuality="720p" />
 
       <View style={[styles.top, { paddingTop: insets.top + 10 }]}>
         <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Close" style={styles.close}><X size={18} color={colors.white} /></Pressable>
@@ -184,7 +196,7 @@ export function VaultRecordScreen() {
           <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${(sec / LIMIT_S) * 100}%` }]} /></View>
         )}
         {phase === 'prep' && (
-          <Pressable onPress={() => { setCount(3); setPhase('count'); }} accessibilityLabel="Start recording" style={styles.recBtn} />
+          <Pressable onPress={handleRecordTap} accessibilityLabel="Start recording" style={styles.recBtn} />
         )}
         {phase === 'rec' && (
           <Pressable onPress={stopRecording} accessibilityLabel="Stop recording" style={[styles.recBtn, styles.stopBtn]}>
@@ -193,7 +205,7 @@ export function VaultRecordScreen() {
         )}
         {phase === 'review' && (
           <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
-            <Pressable onPress={() => { setVideoUri(null); setSec(0); setPhase('prep'); }} style={styles.ghost}>
+            <Pressable onPress={() => { setCamMode('picture'); setVideoUri(null); setSec(0); setPhase('prep'); }} style={styles.ghost}>
               <RotateCcw size={17} color={colors.white} /><Text style={styles.ghostTxt}>Re-record</Text>
             </Pressable>
             <Pressable onPress={onSave} style={[{ flex: 1 }, shadow.cta]}>
