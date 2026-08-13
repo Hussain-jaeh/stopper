@@ -248,14 +248,14 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
       if (cached === 'true') {
         setPhase('app');
         markBoot();
-        // Re-verify in background; correct only if sub has definitively lapsed.
+        // Re-verify in background — only update the cache, never interrupt an active session.
+        // Paywall enforcement happens on the next cold start if the subscription has lapsed.
         rcGetCustomerInfo()
           .then(info => {
             const hasSub = Object.keys(info.entitlements.active).length > 0;
             SecureStore.setItemAsync(SUB_CACHE_KEY, hasSub ? 'true' : 'false').catch(() => {});
-            if (!hasSub) setPhase('paywall');
           })
-          .catch(() => {}); // RC error: keep showing app, don't disrupt user
+          .catch(() => {});
         return;
       }
 
