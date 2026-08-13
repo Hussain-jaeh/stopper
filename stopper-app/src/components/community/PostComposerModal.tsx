@@ -148,13 +148,13 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <CameraRecordModal
+        visible={cameraRecorderOpen}
+        onClose={() => setCameraRecorderOpen(false)}
+        onDone={handleVideoRecorded}
+      />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}>
-          <CameraRecordModal
-            visible={cameraRecorderOpen}
-            onClose={() => setCameraRecorderOpen(false)}
-            onDone={handleVideoRecorded}
-          />
           {/* Header */}
           <View style={styles.header}>
             <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" style={styles.closeBtn}>

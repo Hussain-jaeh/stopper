@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import { X, Check, RotateCcw } from 'lucide-react-native';
@@ -110,19 +110,17 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
 
   if (!visible) return null;
 
-  if (!camPerm?.granted || !micPerm?.granted) {
-    return (
-      <View style={[styles.root, styles.center, { padding: 32 }]}>
-        <Text style={styles.h}>Camera & mic needed</Text>
-        <Pressable onPress={() => { requestCam(); requestMic(); }} style={styles.allowBtn}>
-          <Text style={styles.allowTxt}>Allow access</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.root}>
+    <Modal visible animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
+      {(!camPerm?.granted || !micPerm?.granted) ? (
+        <View style={[styles.root, styles.center, { padding: 32 }]}>
+          <Text style={styles.h}>Camera & mic needed</Text>
+          <Pressable onPress={() => { requestCam(); requestMic(); }} style={styles.allowBtn}>
+            <Text style={styles.allowTxt}>Allow access</Text>
+          </Pressable>
+        </View>
+      ) : (
+      <View style={styles.root}>
         <CameraView ref={cam} mode={camMode} style={StyleSheet.absoluteFill} facing="front" videoQuality="720p" />
 
         {/* Top bar */}
@@ -185,11 +183,13 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
           )}
         </View>
       </View>
+      )}
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { ...StyleSheet.absoluteFillObject, backgroundColor: '#000', zIndex: 100 },
+  root: { flex: 1, backgroundColor: '#000' },
   center: { alignItems: 'center', justifyContent: 'center' },
   top: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
