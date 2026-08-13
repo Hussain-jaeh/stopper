@@ -71,7 +71,9 @@ export function CommentSheet({ postId, onClose }: Props) {
             <FlatList
               data={comments}
               keyExtractor={(c) => c.id}
+              style={{ flex: 1 }}
               contentContainerStyle={styles.list}
+              keyboardShouldPersistTaps="handled"
               renderItem={({ item }) => (
                 <View style={styles.comment}>
                   <Avatar handle={item.handle} size={34} tint={colors.jade500} />
