@@ -32,6 +32,7 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
 
   const thumbUri = useRef<string | null>(null);
   const videoUri = useRef<string | null>(null);
+  const camReady = useRef(false);
 
   useEffect(() => {
     if (visible) { requestCam(); requestMic(); }
@@ -52,7 +53,7 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
   useEffect(() => {
     if (phase !== 'count') return;
     if (count === 0) {
-      const t = setTimeout(() => startRecording(), 600);
+      const t = setTimeout(() => startRecording(), 800);
       return () => clearTimeout(t);
     }
     const t = setTimeout(() => setCount(c => c - 1), 800);
@@ -68,10 +69,13 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
 
   const handleTap = async () => {
     thumbUri.current = null;
-    try {
-      const snap = await cam.current?.takePictureAsync({ quality: 0.6 });
-      thumbUri.current = snap?.uri ?? null;
-    } catch {}
+    if (camReady.current) {
+      try {
+        const snap = await cam.current?.takePictureAsync({ quality: 0.6 });
+        thumbUri.current = snap?.uri ?? null;
+      } catch {}
+    }
+    camReady.current = false;
     setCamMode('video');
     setCount(3);
     setPhase('count');
@@ -95,6 +99,7 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
   const reset = () => {
     thumbUri.current = null;
     videoUri.current = null;
+    camReady.current = false;
     setCamMode('picture');
     setSec(0);
     setCount(3);
@@ -121,7 +126,7 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
         </View>
       ) : (
       <View style={styles.root}>
-        <CameraView ref={cam} mode={camMode} style={StyleSheet.absoluteFill} facing="front" videoQuality="720p" />
+        <CameraView ref={cam} mode={camMode} style={StyleSheet.absoluteFill} facing="front" videoQuality="720p" onCameraReady={() => { camReady.current = true; }} />
 
         {/* Top bar */}
         <View style={[styles.top, { paddingTop: insets.top + 10 }]}>

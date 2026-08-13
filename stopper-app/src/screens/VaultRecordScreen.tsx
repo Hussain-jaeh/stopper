@@ -30,6 +30,8 @@ export function VaultRecordScreen() {
   const prefetchedThumbUrl = useRef<string | null>(null);
   const localThumbUri = useRef<string | null>(null);
 
+  const camReady = useRef(false);
+
   const generateUploadUrl = useMutation(api.vault.generateUploadUrl);
   const saveRecordingMutation = useMutation(api.vault.saveRecording);
 
@@ -38,8 +40,8 @@ export function VaultRecordScreen() {
   useEffect(() => {
     if (phase !== 'count') return;
     if (count === 0) {
-      // 600ms buffer so the camera finishes switching to video mode before recordAsync
-      const t = setTimeout(() => startRecording(), 600);
+      // 800ms buffer so the camera finishes switching to video mode before recordAsync
+      const t = setTimeout(() => startRecording(), 800);
       return () => clearTimeout(t);
     }
     const t = setTimeout(() => setCount(c => c - 1), 800);
@@ -59,10 +61,15 @@ export function VaultRecordScreen() {
     prefetchedVideoUrl.current = null;
     prefetchedThumbUrl.current = null;
     // Camera is in picture mode — take the thumbnail snapshot right now
-    try {
-      const snap = await cam.current?.takePictureAsync({ quality: 0.6 });
-      localThumbUri.current = snap?.uri ?? null;
-    } catch {}
+    // Only if camera is confirmed ready (onCameraReady has fired)
+    if (camReady.current) {
+      try {
+        const snap = await cam.current?.takePictureAsync({ quality: 0.6 });
+        localThumbUri.current = snap?.uri ?? null;
+      } catch {}
+    }
+    // Reset ready flag — camera will re-initialize for video mode
+    camReady.current = false;
     // Switch camera to video mode, then start 3-second countdown
     setCamMode('video');
     setCount(3);
@@ -152,7 +159,7 @@ export function VaultRecordScreen() {
 
   return (
     <View style={styles.root}>
-      <CameraView ref={cam} mode={camMode} style={StyleSheet.absoluteFill} facing="front" videoQuality="720p" />
+      <CameraView ref={cam} mode={camMode} style={StyleSheet.absoluteFill} facing="front" videoQuality="720p" onCameraReady={() => { camReady.current = true; }} />
 
       <View style={[styles.top, { paddingTop: insets.top + 10 }]}>
         <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Close" style={styles.close}><X size={18} color={colors.white} /></Pressable>
