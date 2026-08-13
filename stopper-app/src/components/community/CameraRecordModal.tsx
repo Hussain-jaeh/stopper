@@ -185,7 +185,6 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
           )}
         </View>
       </View>
-    </View>
   );
 }
 
