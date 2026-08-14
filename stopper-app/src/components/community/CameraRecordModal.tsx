@@ -70,16 +70,16 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
 
   const handleTap = async () => {
     thumbUri.current = null;
-    if (camReady.current) {
-      try {
-        const snap = await cam.current?.takePictureAsync({ quality: 0.6 });
-        if (snap?.uri) {
-          const permUri = (FileSystem.documentDirectory ?? '') + 'comm_thumb_' + Date.now() + '.jpg';
-          await FileSystem.copyAsync({ from: snap.uri, to: permUri });
-          thumbUri.current = permUri;
-        }
-      } catch {}
-    }
+    // Attempt snapshot without camReady guard — file exists right after takePictureAsync returns
+    try {
+      const snap = await cam.current?.takePictureAsync({ quality: 0.6 });
+      if (snap?.uri) {
+        // Copy to permanent location before mode switch so PostComposerModal can upload it later
+        const permUri = (FileSystem.documentDirectory ?? '') + 'comm_thumb_' + Date.now() + '.jpg';
+        await FileSystem.copyAsync({ from: snap.uri, to: permUri });
+        thumbUri.current = permUri;
+      }
+    } catch {}
     camReady.current = false;
     setCamMode('video');
     setCount(3);

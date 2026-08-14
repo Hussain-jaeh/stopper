@@ -28,8 +28,8 @@ export function VaultRecordScreen() {
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [thumbPreview, setThumbPreview] = useState<string | null>(null);
   const prefetchedVideoUrl = useRef<string | null>(null);
-  const prefetchedThumbUrl = useRef<string | null>(null);
-  const localThumbUri = useRef<string | null>(null);
+  // Thumbnail is uploaded immediately on capture — this promise resolves to the storageId
+  const thumbStorageIdPromise = useRef<Promise<string | null>>(Promise.resolve(null));
 
   const camReady = useRef(false);
 
@@ -56,28 +56,45 @@ export function VaultRecordScreen() {
     return () => clearTimeout(t);
   }, [phase, sec]);
 
-  // Tap handler: snapshot now (picture mode) → switch to video → countdown → record
-  const handleRecordTap = async () => {
-    localThumbUri.current = null;
-    prefetchedVideoUrl.current = null;
-    prefetchedThumbUrl.current = null;
+  const resetThumb = () => {
+    thumbStorageIdPromise.current = Promise.resolve(null);
     setThumbPreview(null);
-    // Camera is in picture mode — take the thumbnail snapshot right now
-    // Only if camera is confirmed ready (onCameraReady has fired)
-    if (camReady.current) {
-      try {
-        const snap = await cam.current?.takePictureAsync({ quality: 0.6 });
-        if (snap?.uri) {
-          const permUri = (FileSystem.documentDirectory ?? '') + 'vault_thumb_' + Date.now() + '.jpg';
-          await FileSystem.copyAsync({ from: snap.uri, to: permUri });
-          localThumbUri.current = permUri;
-          setThumbPreview(permUri);
-        }
-      } catch {}
-    }
-    // Reset ready flag — camera will re-initialize for video mode
+  };
+
+  // Tap handler: snapshot now (picture mode) → upload immediately → switch to video → countdown → record
+  const handleRecordTap = async () => {
+    resetThumb();
+    prefetchedVideoUrl.current = null;
+
+    // Attempt snapshot — no camReady guard, file is guaranteed to exist right after this call
+    try {
+      const snap = await cam.current?.takePictureAsync({ quality: 0.6 });
+      if (snap?.uri) {
+        const snapUri = snap.uri;
+        setThumbPreview(snapUri); // preview immediately (file exists right now)
+
+        // Upload the snapshot NOW while the file is alive — before any recording starts
+        thumbStorageIdPromise.current = generateUploadUrl()
+          .then(url => FileSystem.uploadAsync(url, snapUri, {
+            httpMethod: 'POST',
+            headers: { 'Content-Type': 'image/jpeg' },
+            uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+          }))
+          .then(res => {
+            if (res.status === 200) return JSON.parse(res.body).storageId as string;
+            return null;
+          })
+          .catch(() => null);
+
+        // Also copy to permanent location so the preview survives camera mode switch
+        const permUri = (FileSystem.documentDirectory ?? '') + 'vault_thumb_' + Date.now() + '.jpg';
+        FileSystem.copyAsync({ from: snapUri, to: permUri })
+          .then(() => setThumbPreview(permUri))
+          .catch(() => {});
+      }
+    } catch {}
+
     camReady.current = false;
-    // Switch camera to video mode, then start 3-second countdown
     setCamMode('video');
     setCount(3);
     setPhase('count');
@@ -90,49 +107,31 @@ export function VaultRecordScreen() {
       if (video?.uri) {
         setVideoUri(video.uri);
         setPhase('review');
-        // Pre-fetch upload URLs in background while user decides
-        Promise.all([generateUploadUrl(), localThumbUri.current ? generateUploadUrl() : Promise.resolve('')])
-          .then(([vid, thumb]) => {
-            prefetchedVideoUrl.current = vid;
-            if (localThumbUri.current) prefetchedThumbUrl.current = thumb;
-          }).catch(() => {});
+        // Pre-fetch video upload URL while user decides
+        generateUploadUrl()
+          .then(url => { prefetchedVideoUrl.current = url; })
+          .catch(() => {});
       }
     } catch { setPhase('prep'); }
   };
+
   const stopRecording = () => cam.current?.stopRecording();
 
   const onSave = async () => {
     if (!videoUri) return;
     setPhase('saving');
     try {
-      const needThumb = !!localThumbUri.current;
-      const videoUrl = prefetchedVideoUrl.current ?? await generateUploadUrl();
-      const thumbUrl = needThumb
-        ? (prefetchedThumbUrl.current ?? await generateUploadUrl())
-        : '';
+      // Thumbnail was uploaded immediately on capture — await the result
+      const thumbStorageId = (await thumbStorageIdPromise.current) ?? undefined;
 
+      const videoUrl = prefetchedVideoUrl.current ?? await generateUploadUrl();
       const mime = videoUri.endsWith('.mov') ? 'video/quicktime' : 'video/mp4';
 
-      const [vRes, thumbStorageId] = await Promise.all([
-        FileSystem.uploadAsync(videoUrl, videoUri, {
-          httpMethod: 'POST',
-          headers: { 'Content-Type': mime },
-          uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-        }),
-        localThumbUri.current
-          ? (async (): Promise<string | undefined> => {
-              try {
-                const tRes = await FileSystem.uploadAsync(thumbUrl, localThumbUri.current!, {
-                  httpMethod: 'POST',
-                  headers: { 'Content-Type': 'image/jpeg' },
-                  uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-                });
-                if (tRes.status === 200) return JSON.parse(tRes.body).storageId;
-              } catch {}
-              return undefined;
-            })()
-          : Promise.resolve(undefined),
-      ]);
+      const vRes = await FileSystem.uploadAsync(videoUrl, videoUri, {
+        httpMethod: 'POST',
+        headers: { 'Content-Type': mime },
+        uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+      });
 
       if (vRes.status !== 200) throw new Error(`Upload HTTP ${vRes.status}`);
       const { storageId } = JSON.parse(vRes.body);
@@ -226,7 +225,7 @@ export function VaultRecordScreen() {
         )}
         {phase === 'review' && (
           <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
-            <Pressable onPress={() => { setCamMode('picture'); setVideoUri(null); setSec(0); setThumbPreview(null); setPhase('prep'); }} style={styles.ghost}>
+            <Pressable onPress={() => { resetThumb(); setCamMode('picture'); setVideoUri(null); setSec(0); setPhase('prep'); }} style={styles.ghost}>
               <RotateCcw size={17} color={colors.white} /><Text style={styles.ghostTxt}>Re-record</Text>
             </Pressable>
             <Pressable onPress={onSave} style={[{ flex: 1 }, shadow.cta]}>
