@@ -71,26 +71,23 @@ export function VaultRecordScreen() {
       const snap = await cam.current?.takePictureAsync({ quality: 0.6 });
       if (snap?.uri) {
         const snapUri = snap.uri;
-        setThumbPreview(snapUri); // preview immediately (file exists right now)
+        setThumbPreview(snapUri); // show preview immediately — file exists right now
 
-        // Upload the snapshot NOW while the file is alive — before any recording starts
-        thumbStorageIdPromise.current = generateUploadUrl()
-          .then(url => FileSystem.uploadAsync(url, snapUri, {
+        // Copy to permanent location first (fast local op, file still exists), then upload.
+        // Uploading from permUri means the upload is immune to iOS temp-file cleanup.
+        const permUri = (FileSystem.documentDirectory ?? '') + 'vault_thumb_' + Date.now() + '.jpg';
+        thumbStorageIdPromise.current = FileSystem.copyAsync({ from: snapUri, to: permUri })
+          .then(() => {
+            setThumbPreview(permUri); // update preview to permanent path
+            return generateUploadUrl();
+          })
+          .then(url => FileSystem.uploadAsync(url, permUri, {
             httpMethod: 'POST',
             headers: { 'Content-Type': 'image/jpeg' },
             uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
           }))
-          .then(res => {
-            if (res.status === 200) return JSON.parse(res.body).storageId as string;
-            return null;
-          })
+          .then(res => res.status === 200 ? JSON.parse(res.body).storageId as string : null)
           .catch(() => null);
-
-        // Also copy to permanent location so the preview survives camera mode switch
-        const permUri = (FileSystem.documentDirectory ?? '') + 'vault_thumb_' + Date.now() + '.jpg';
-        FileSystem.copyAsync({ from: snapUri, to: permUri })
-          .then(() => setThumbPreview(permUri))
-          .catch(() => {});
       }
     } catch {}
 
