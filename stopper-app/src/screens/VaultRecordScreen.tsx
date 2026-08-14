@@ -67,8 +67,12 @@ export function VaultRecordScreen() {
     if (camReady.current) {
       try {
         const snap = await cam.current?.takePictureAsync({ quality: 0.6 });
-        localThumbUri.current = snap?.uri ?? null;
-        setThumbPreview(snap?.uri ?? null);
+        if (snap?.uri) {
+          const permUri = (FileSystem.documentDirectory ?? '') + 'vault_thumb_' + Date.now() + '.jpg';
+          await FileSystem.copyAsync({ from: snap.uri, to: permUri });
+          localThumbUri.current = permUri;
+          setThumbPreview(permUri);
+        }
       } catch {}
     }
     // Reset ready flag — camera will re-initialize for video mode

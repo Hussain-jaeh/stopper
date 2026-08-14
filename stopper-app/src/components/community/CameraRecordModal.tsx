@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import { X, Check, RotateCcw } from 'lucide-react-native';
 import Animated, { ZoomIn, FadeIn } from 'react-native-reanimated';
+import * as FileSystem from 'expo-file-system/legacy';
 import { colors } from '../../constants/colors';
 
 const LIMIT_S = 60;
@@ -72,7 +73,11 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
     if (camReady.current) {
       try {
         const snap = await cam.current?.takePictureAsync({ quality: 0.6 });
-        thumbUri.current = snap?.uri ?? null;
+        if (snap?.uri) {
+          const permUri = (FileSystem.documentDirectory ?? '') + 'comm_thumb_' + Date.now() + '.jpg';
+          await FileSystem.copyAsync({ from: snap.uri, to: permUri });
+          thumbUri.current = permUri;
+        }
       } catch {}
     }
     camReady.current = false;
