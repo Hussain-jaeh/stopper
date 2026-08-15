@@ -66,28 +66,46 @@ export function VaultRecordScreen() {
     resetThumb();
     prefetchedVideoUrl.current = null;
 
-    // Attempt snapshot — no camReady guard, file is guaranteed to exist right after this call
+    // Attempt snapshot with base64 so image data lives in JS memory — immune to iOS file cleanup
     try {
-      const snap = await cam.current?.takePictureAsync({ quality: 0.6 });
+      const snap = await cam.current?.takePictureAsync({ quality: 0.5, base64: true });
       if (snap?.uri) {
-        const snapUri = snap.uri;
-        setThumbPreview(snapUri); // show preview immediately — file exists right now
-
-        // Copy to permanent location first (fast local op, file still exists), then upload.
-        // Uploading from permUri means the upload is immune to iOS temp-file cleanup.
+        setThumbPreview(snap.uri); // show preview immediately
         const permUri = (FileSystem.documentDirectory ?? '') + 'vault_thumb_' + Date.now() + '.jpg';
-        thumbStorageIdPromise.current = FileSystem.copyAsync({ from: snapUri, to: permUri })
-          .then(() => {
-            setThumbPreview(permUri); // update preview to permanent path
-            return generateUploadUrl();
-          })
-          .then(url => FileSystem.uploadAsync(url, permUri, {
-            httpMethod: 'POST',
-            headers: { 'Content-Type': 'image/jpeg' },
-            uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-          }))
-          .then(res => res.status === 200 ? JSON.parse(res.body).storageId as string : null)
-          .catch(() => null);
+        const base64 = snap.base64;
+
+        if (base64) {
+          // Write from in-memory base64 → permanent file → upload. No temp-file dependency.
+          thumbStorageIdPromise.current = FileSystem.writeAsStringAsync(permUri, base64, {
+              encoding: FileSystem.EncodingType.Base64,
+            })
+            .then(() => {
+              setThumbPreview(permUri);
+              return generateUploadUrl();
+            })
+            .then(url => FileSystem.uploadAsync(url, permUri, {
+              httpMethod: 'POST',
+              headers: { 'Content-Type': 'image/jpeg' },
+              uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+            }))
+            .then(res => res.status === 200 ? JSON.parse(res.body).storageId as string : null)
+            .catch(() => null);
+        } else {
+          // Fallback if base64 not available: copy temp file to permanent location then upload
+          const snapUri = snap.uri;
+          thumbStorageIdPromise.current = FileSystem.copyAsync({ from: snapUri, to: permUri })
+            .then(() => {
+              setThumbPreview(permUri);
+              return generateUploadUrl();
+            })
+            .then(url => FileSystem.uploadAsync(url, permUri, {
+              httpMethod: 'POST',
+              headers: { 'Content-Type': 'image/jpeg' },
+              uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+            }))
+            .then(res => res.status === 200 ? JSON.parse(res.body).storageId as string : null)
+            .catch(() => null);
+        }
       }
     } catch {}
 

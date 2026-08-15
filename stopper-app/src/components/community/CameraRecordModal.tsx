@@ -70,14 +70,21 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
 
   const handleTap = async () => {
     thumbUri.current = null;
-    // Attempt snapshot without camReady guard — file exists right after takePictureAsync returns
+    // Snapshot with base64 so image data is in JS memory — immune to iOS file cleanup
     try {
-      const snap = await cam.current?.takePictureAsync({ quality: 0.6 });
+      const snap = await cam.current?.takePictureAsync({ quality: 0.5, base64: true });
       if (snap?.uri) {
-        // Copy to permanent location before mode switch so PostComposerModal can upload it later
         const permUri = (FileSystem.documentDirectory ?? '') + 'comm_thumb_' + Date.now() + '.jpg';
-        await FileSystem.copyAsync({ from: snap.uri, to: permUri });
-        thumbUri.current = permUri;
+        if (snap.base64) {
+          // Write from in-memory base64 → permanent file (no temp-file race)
+          await FileSystem.writeAsStringAsync(permUri, snap.base64, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          thumbUri.current = permUri;
+        } else {
+          await FileSystem.copyAsync({ from: snap.uri, to: permUri });
+          thumbUri.current = permUri;
+        }
       }
     } catch {}
     camReady.current = false;
