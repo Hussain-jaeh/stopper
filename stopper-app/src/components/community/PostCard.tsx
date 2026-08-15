@@ -73,7 +73,7 @@ export function PostCard({ post, index, onCheer, onOpen, onPlayVideo }: {
             style={styles.videoThumb}
           >
             {thumbUri && (
-              <Image source={{ uri: thumbUri }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+              <Image source={{ uri: thumbUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
             )}
             <View style={[styles.playBtn, thumbUri ? styles.playBtnOnThumb : undefined]}>
               <Play size={28} color="#fff" fill="#fff" />
