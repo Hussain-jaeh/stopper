@@ -28,8 +28,9 @@ export function VaultRecordScreen() {
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [thumbPreview, setThumbPreview] = useState<string | null>(null);
   const prefetchedVideoUrl = useRef<string | null>(null);
-  // base64 captured in memory during handleRecordTap; uploaded to Convex in onSave
+  // Thumbnail data — base64 wins (immune to iOS cleanup), permanent URI is fallback
   const thumbBase64 = useRef<string | null>(null);
+  const thumbPermUri = useRef<string | null>(null);
 
   const camReady = useRef(false);
 
@@ -58,21 +59,28 @@ export function VaultRecordScreen() {
 
   const resetThumb = () => {
     thumbBase64.current = null;
+    thumbPermUri.current = null;
     setThumbPreview(null);
   };
 
-  // Tap handler: snapshot now (picture mode) → store base64 in memory → switch to video → countdown → record
+  // Tap handler: snapshot → store data → switch to video → countdown → record
   const handleRecordTap = async () => {
     resetThumb();
     prefetchedVideoUrl.current = null;
 
-    // Capture base64 so image data lives in JS memory — immune to iOS file cleanup during recording
     try {
       const snap = await cam.current?.takePictureAsync({ quality: 0.5, base64: true });
       if (snap?.uri) {
         setThumbPreview(snap.uri);
         if (snap.base64) {
+          // Primary path: base64 in JS memory, immune to iOS file cleanup
           thumbBase64.current = snap.base64;
+        } else {
+          // Fallback: copy temp file to permanent location before iOS deletes it
+          const permUri = (FileSystem.documentDirectory ?? '') + 'vault_thumb_' + Date.now() + '.jpg';
+          await FileSystem.copyAsync({ from: snap.uri, to: permUri });
+          thumbPermUri.current = permUri;
+          setThumbPreview(permUri);
         }
       }
     } catch {}
@@ -104,16 +112,22 @@ export function VaultRecordScreen() {
     if (!videoUri) return;
     setPhase('saving');
     try {
-      // Upload thumbnail from in-memory base64 — no temp file race possible
+      // Upload thumbnail — base64 path or permanent-file fallback
       let thumbStorageId: string | undefined;
-      if (thumbBase64.current) {
+      const hasThumb = !!(thumbBase64.current || thumbPermUri.current);
+      if (hasThumb) {
         try {
-          const permUri = (FileSystem.documentDirectory ?? '') + 'vault_thumb_' + Date.now() + '.jpg';
-          await FileSystem.writeAsStringAsync(permUri, thumbBase64.current, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
+          let uploadUri: string;
+          if (thumbBase64.current) {
+            uploadUri = (FileSystem.documentDirectory ?? '') + 'vault_thumb_' + Date.now() + '.jpg';
+            await FileSystem.writeAsStringAsync(uploadUri, thumbBase64.current, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+          } else {
+            uploadUri = thumbPermUri.current!;
+          }
           const thumbUrl = await generateUploadUrl();
-          const tRes = await FileSystem.uploadAsync(thumbUrl, permUri, {
+          const tRes = await FileSystem.uploadAsync(thumbUrl, uploadUri, {
             httpMethod: 'POST',
             headers: { 'Content-Type': 'image/jpeg' },
             uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
