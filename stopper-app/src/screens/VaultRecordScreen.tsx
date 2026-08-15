@@ -28,8 +28,8 @@ export function VaultRecordScreen() {
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [thumbPreview, setThumbPreview] = useState<string | null>(null);
   const prefetchedVideoUrl = useRef<string | null>(null);
-  // Thumbnail is uploaded immediately on capture — this promise resolves to the storageId
-  const thumbStorageIdPromise = useRef<Promise<string | null>>(Promise.resolve(null));
+  // base64 captured in memory during handleRecordTap; uploaded to Convex in onSave
+  const thumbBase64 = useRef<string | null>(null);
 
   const camReady = useRef(false);
 
@@ -57,54 +57,22 @@ export function VaultRecordScreen() {
   }, [phase, sec]);
 
   const resetThumb = () => {
-    thumbStorageIdPromise.current = Promise.resolve(null);
+    thumbBase64.current = null;
     setThumbPreview(null);
   };
 
-  // Tap handler: snapshot now (picture mode) → upload immediately → switch to video → countdown → record
+  // Tap handler: snapshot now (picture mode) → store base64 in memory → switch to video → countdown → record
   const handleRecordTap = async () => {
     resetThumb();
     prefetchedVideoUrl.current = null;
 
-    // Attempt snapshot with base64 so image data lives in JS memory — immune to iOS file cleanup
+    // Capture base64 so image data lives in JS memory — immune to iOS file cleanup during recording
     try {
       const snap = await cam.current?.takePictureAsync({ quality: 0.5, base64: true });
       if (snap?.uri) {
-        setThumbPreview(snap.uri); // show preview immediately
-        const permUri = (FileSystem.documentDirectory ?? '') + 'vault_thumb_' + Date.now() + '.jpg';
-        const base64 = snap.base64;
-
-        if (base64) {
-          // Write from in-memory base64 → permanent file → upload. No temp-file dependency.
-          thumbStorageIdPromise.current = FileSystem.writeAsStringAsync(permUri, base64, {
-              encoding: FileSystem.EncodingType.Base64,
-            })
-            .then(() => {
-              setThumbPreview(permUri);
-              return generateUploadUrl();
-            })
-            .then(url => FileSystem.uploadAsync(url, permUri, {
-              httpMethod: 'POST',
-              headers: { 'Content-Type': 'image/jpeg' },
-              uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-            }))
-            .then(res => res.status === 200 ? JSON.parse(res.body).storageId as string : null)
-            .catch(() => null);
-        } else {
-          // Fallback if base64 not available: copy temp file to permanent location then upload
-          const snapUri = snap.uri;
-          thumbStorageIdPromise.current = FileSystem.copyAsync({ from: snapUri, to: permUri })
-            .then(() => {
-              setThumbPreview(permUri);
-              return generateUploadUrl();
-            })
-            .then(url => FileSystem.uploadAsync(url, permUri, {
-              httpMethod: 'POST',
-              headers: { 'Content-Type': 'image/jpeg' },
-              uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-            }))
-            .then(res => res.status === 200 ? JSON.parse(res.body).storageId as string : null)
-            .catch(() => null);
+        setThumbPreview(snap.uri);
+        if (snap.base64) {
+          thumbBase64.current = snap.base64;
         }
       }
     } catch {}
@@ -136,8 +104,23 @@ export function VaultRecordScreen() {
     if (!videoUri) return;
     setPhase('saving');
     try {
-      // Thumbnail was uploaded immediately on capture — await the result
-      const thumbStorageId = (await thumbStorageIdPromise.current) ?? undefined;
+      // Upload thumbnail from in-memory base64 — no temp file race possible
+      let thumbStorageId: string | undefined;
+      if (thumbBase64.current) {
+        try {
+          const permUri = (FileSystem.documentDirectory ?? '') + 'vault_thumb_' + Date.now() + '.jpg';
+          await FileSystem.writeAsStringAsync(permUri, thumbBase64.current, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          const thumbUrl = await generateUploadUrl();
+          const tRes = await FileSystem.uploadAsync(thumbUrl, permUri, {
+            httpMethod: 'POST',
+            headers: { 'Content-Type': 'image/jpeg' },
+            uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+          });
+          if (tRes.status === 200) thumbStorageId = JSON.parse(tRes.body).storageId;
+        } catch { /* proceed without thumbnail */ }
+      }
 
       const videoUrl = prefetchedVideoUrl.current ?? await generateUploadUrl();
       const mime = videoUri.endsWith('.mov') ? 'video/quicktime' : 'video/mp4';
