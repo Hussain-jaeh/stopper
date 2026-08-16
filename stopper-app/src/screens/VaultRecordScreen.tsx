@@ -117,22 +117,28 @@ export function VaultRecordScreen() {
       const hasThumb = !!(thumbBase64.current || thumbPermUri.current);
       if (hasThumb) {
         try {
-          let uploadUri: string;
+          // Convert to blob and POST directly — avoids FileSystem.uploadAsync edge cases
+          let blob: Blob;
           if (thumbBase64.current) {
-            uploadUri = (FileSystem.documentDirectory ?? '') + 'vault_thumb_' + Date.now() + '.jpg';
-            await FileSystem.writeAsStringAsync(uploadUri, thumbBase64.current, {
+            const dataResponse = await fetch(`data:image/jpeg;base64,${thumbBase64.current}`);
+            blob = await dataResponse.blob();
+          } else {
+            const b64 = await FileSystem.readAsStringAsync(thumbPermUri.current!, {
               encoding: FileSystem.EncodingType.Base64,
             });
-          } else {
-            uploadUri = thumbPermUri.current!;
+            const dataResponse = await fetch(`data:image/jpeg;base64,${b64}`);
+            blob = await dataResponse.blob();
           }
           const thumbUrl = await generateUploadUrl();
-          const tRes = await FileSystem.uploadAsync(thumbUrl, uploadUri, {
-            httpMethod: 'POST',
+          const tRes = await fetch(thumbUrl, {
+            method: 'POST',
             headers: { 'Content-Type': 'image/jpeg' },
-            uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+            body: blob,
           });
-          if (tRes.status === 200) thumbStorageId = JSON.parse(tRes.body).storageId;
+          if (tRes.ok) {
+            const json = await tRes.json();
+            thumbStorageId = json.storageId as string;
+          }
         } catch { /* proceed without thumbnail */ }
       }
 

@@ -100,16 +100,22 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
       thumbLocalUri
         ? (async (): Promise<string | undefined> => {
             try {
-              const tRes = await FileSystem.uploadAsync(thumbUploadUrl, thumbLocalUri, {
-                httpMethod: 'POST',
-                headers: { 'Content-Type': 'image/jpeg' },
-                uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+              // Read file as base64 → convert to blob → POST directly (avoids FileSystem.uploadAsync quirks)
+              const base64 = await FileSystem.readAsStringAsync(thumbLocalUri, {
+                encoding: FileSystem.EncodingType.Base64,
               });
-              Alert.alert('Thumb upload', `status=${tRes.status} body=${tRes.body?.slice(0, 80)}`);
-              if (tRes.status === 200) return JSON.parse(tRes.body).storageId;
-            } catch (e) {
-              Alert.alert('Thumb upload error', String(e));
-            }
+              const dataResponse = await fetch(`data:image/jpeg;base64,${base64}`);
+              const blob = await dataResponse.blob();
+              const tRes = await fetch(thumbUploadUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'image/jpeg' },
+                body: blob,
+              });
+              if (tRes.ok) {
+                const json = await tRes.json();
+                return json.storageId as string;
+              }
+            } catch {}
             return undefined;
           })()
         : Promise.resolve(undefined),
