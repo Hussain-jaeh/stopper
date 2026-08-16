@@ -100,20 +100,14 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
       thumbLocalUri
         ? (async (): Promise<string | undefined> => {
             try {
-              // Read file as base64 → convert to blob → POST directly (avoids FileSystem.uploadAsync quirks)
-              const base64 = await FileSystem.readAsStringAsync(thumbLocalUri, {
-                encoding: FileSystem.EncodingType.Base64,
-              });
-              const dataResponse = await fetch(`data:image/jpeg;base64,${base64}`);
-              const blob = await dataResponse.blob();
-              const tRes = await fetch(thumbUploadUrl, {
-                method: 'POST',
+              // thumbLocalUri is already in documentDirectory — upload directly, same path as video.
+              const tRes = await FileSystem.uploadAsync(thumbUploadUrl, thumbLocalUri, {
+                httpMethod: 'POST',
                 headers: { 'Content-Type': 'image/jpeg' },
-                body: blob,
+                uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
               });
-              if (tRes.ok) {
-                const json = await tRes.json();
-                return json.storageId as string;
+              if (tRes.status >= 200 && tRes.status < 300) {
+                return (JSON.parse(tRes.body) as { storageId: string }).storageId;
               }
             } catch {}
             return undefined;

@@ -112,32 +112,32 @@ export function VaultRecordScreen() {
     if (!videoUri) return;
     setPhase('saving');
     try {
-      // Upload thumbnail — base64 path or permanent-file fallback
       let thumbStorageId: string | undefined;
       const hasThumb = !!(thumbBase64.current || thumbPermUri.current);
       if (hasThumb) {
         try {
-          // Convert to blob and POST directly — avoids FileSystem.uploadAsync edge cases
-          let blob: Blob;
+          // Write base64 to a stable documentDirectory file, then upload with uploadAsync.
+          // This is the same proven path used for video — avoids data-URI fetch issues in Hermes.
+          let fileUri: string;
           if (thumbBase64.current) {
-            const dataResponse = await fetch(`data:image/jpeg;base64,${thumbBase64.current}`);
-            blob = await dataResponse.blob();
-          } else {
-            const b64 = await FileSystem.readAsStringAsync(thumbPermUri.current!, {
+            fileUri = `${FileSystem.documentDirectory ?? ''}vault_thumb_upload.jpg`;
+            await FileSystem.writeAsStringAsync(fileUri, thumbBase64.current, {
               encoding: FileSystem.EncodingType.Base64,
             });
-            const dataResponse = await fetch(`data:image/jpeg;base64,${b64}`);
-            blob = await dataResponse.blob();
+          } else {
+            fileUri = thumbPermUri.current!;
           }
           const thumbUrl = await generateUploadUrl();
-          const tRes = await fetch(thumbUrl, {
-            method: 'POST',
+          const tRes = await FileSystem.uploadAsync(thumbUrl, fileUri, {
+            httpMethod: 'POST',
             headers: { 'Content-Type': 'image/jpeg' },
-            body: blob,
+            uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
           });
-          if (tRes.ok) {
-            const json = await tRes.json();
-            thumbStorageId = json.storageId as string;
+          if (tRes.status >= 200 && tRes.status < 300) {
+            thumbStorageId = (JSON.parse(tRes.body) as { storageId: string }).storageId;
+          }
+          if (thumbBase64.current) {
+            FileSystem.deleteAsync(fileUri, { idempotent: true }).catch(() => {});
           }
         } catch { /* proceed without thumbnail */ }
       }
