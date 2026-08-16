@@ -105,8 +105,11 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
                 headers: { 'Content-Type': 'image/jpeg' },
                 uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
               });
+              Alert.alert('Thumb upload', `status=${tRes.status} body=${tRes.body?.slice(0, 80)}`);
               if (tRes.status === 200) return JSON.parse(tRes.body).storageId;
-            } catch {}
+            } catch (e) {
+              Alert.alert('Thumb upload error', String(e));
+            }
             return undefined;
           })()
         : Promise.resolve(undefined),
