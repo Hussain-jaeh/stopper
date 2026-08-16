@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
-import { X, Check, RotateCcw } from 'lucide-react-native';
+import { X, Check, RotateCcw, FlipHorizontal2 } from 'lucide-react-native';
 import Animated, { ZoomIn, FadeIn } from 'react-native-reanimated';
 import * as FileSystem from 'expo-file-system/legacy';
 import { colors } from '../../constants/colors';
@@ -27,6 +27,7 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
   const [camPerm, requestCam] = useCameraPermissions();
   const [micPerm, requestMic] = useMicrophonePermissions();
   const [camMode, setCamMode] = useState<'picture' | 'video'>('picture');
+  const [facing, setFacing] = useState<'front' | 'back'>('front');
   const [phase, setPhase] = useState<Phase>('prep');
   const [count, setCount] = useState(3);
   const [sec, setSec] = useState(0);
@@ -39,10 +40,10 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
     if (visible) { requestCam(); requestMic(); }
   }, [visible]);
 
-  // Reset state when modal opens
   useEffect(() => {
     if (visible) {
       setCamMode('picture');
+      setFacing('front');
       setPhase('prep');
       setCount(3);
       setSec(0);
@@ -138,7 +139,7 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
         </View>
       ) : (
       <View style={styles.root}>
-        <CameraView ref={cam} mode={camMode} style={StyleSheet.absoluteFill} facing="front" videoQuality="720p" onCameraReady={() => { camReady.current = true; }} />
+        <CameraView ref={cam} mode={camMode} style={StyleSheet.absoluteFill} facing={facing} videoQuality="720p" onCameraReady={() => { camReady.current = true; }} />
 
         {/* Top bar */}
         <View style={[styles.top, { paddingTop: insets.top + 10 }]}>
@@ -149,7 +150,13 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
               <Text style={styles.timerTxt}>{mmss(sec)} / 1:00</Text>
             </View>
           )}
-          <View style={{ width: 38 }} />
+          {phase === 'prep' ? (
+            <Pressable onPress={() => { camReady.current = false; setFacing(f => f === 'front' ? 'back' : 'front'); }} style={styles.iconBtn} accessibilityLabel="Flip camera">
+              <FlipHorizontal2 size={18} color="#fff" />
+            </Pressable>
+          ) : (
+            <View style={{ width: 38 }} />
+          )}
         </View>
 
         {/* Center overlay */}

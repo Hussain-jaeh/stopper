@@ -100,7 +100,6 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
       thumbLocalUri
         ? (async (): Promise<string | undefined> => {
             try {
-              // thumbLocalUri is already in documentDirectory — upload directly, same path as video.
               const tRes = await FileSystem.uploadAsync(thumbUploadUrl, thumbLocalUri, {
                 httpMethod: 'POST',
                 headers: { 'Content-Type': 'image/jpeg' },

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
-import { X, RotateCcw, Check, Video } from 'lucide-react-native';
+import { X, RotateCcw, Check, Video, FlipHorizontal2 } from 'lucide-react-native';
 import { useMutation } from 'convex/react';
 import { useNavigation } from '@react-navigation/native';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -23,12 +23,12 @@ export function VaultRecordScreen() {
   const [micPerm, requestMic] = useMicrophonePermissions();
   const [phase, setPhase] = useState<Phase>('prep');
   const [camMode, setCamMode] = useState<'picture' | 'video'>('picture');
+  const [facing, setFacing] = useState<'front' | 'back'>('front');
   const [count, setCount] = useState(3);
   const [sec, setSec] = useState(0);
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [thumbPreview, setThumbPreview] = useState<string | null>(null);
   const prefetchedVideoUrl = useRef<string | null>(null);
-  // Thumbnail data — base64 wins (immune to iOS cleanup), permanent URI is fallback
   const thumbBase64 = useRef<string | null>(null);
   const thumbPermUri = useRef<string | null>(null);
 
@@ -42,7 +42,6 @@ export function VaultRecordScreen() {
   useEffect(() => {
     if (phase !== 'count') return;
     if (count === 0) {
-      // 800ms buffer so the camera finishes switching to video mode before recordAsync
       const t = setTimeout(() => startRecording(), 800);
       return () => clearTimeout(t);
     }
@@ -63,7 +62,11 @@ export function VaultRecordScreen() {
     setThumbPreview(null);
   };
 
-  // Tap handler: snapshot → store data → switch to video → countdown → record
+  const flipCamera = () => {
+    camReady.current = false;
+    setFacing(f => f === 'front' ? 'back' : 'front');
+  };
+
   const handleRecordTap = async () => {
     resetThumb();
     prefetchedVideoUrl.current = null;
@@ -73,10 +76,8 @@ export function VaultRecordScreen() {
       if (snap?.uri) {
         setThumbPreview(snap.uri);
         if (snap.base64) {
-          // Primary path: base64 in JS memory, immune to iOS file cleanup
           thumbBase64.current = snap.base64;
         } else {
-          // Fallback: copy temp file to permanent location before iOS deletes it
           const permUri = (FileSystem.documentDirectory ?? '') + 'vault_thumb_' + Date.now() + '.jpg';
           await FileSystem.copyAsync({ from: snap.uri, to: permUri });
           thumbPermUri.current = permUri;
@@ -98,7 +99,6 @@ export function VaultRecordScreen() {
       if (video?.uri) {
         setVideoUri(video.uri);
         setPhase('review');
-        // Pre-fetch video upload URL while user decides
         generateUploadUrl()
           .then(url => { prefetchedVideoUrl.current = url; })
           .catch(() => {});
@@ -116,8 +116,6 @@ export function VaultRecordScreen() {
       const hasThumb = !!(thumbBase64.current || thumbPermUri.current);
       if (hasThumb) {
         try {
-          // Write base64 to a stable documentDirectory file, then upload with uploadAsync.
-          // This is the same proven path used for video — avoids data-URI fetch issues in Hermes.
           let fileUri: string;
           if (thumbBase64.current) {
             fileUri = `${FileSystem.documentDirectory ?? ''}vault_thumb_upload.jpg`;
@@ -183,7 +181,7 @@ export function VaultRecordScreen() {
 
   return (
     <View style={styles.root}>
-      <CameraView ref={cam} mode={camMode} style={StyleSheet.absoluteFill} facing="front" videoQuality="720p" onCameraReady={() => { camReady.current = true; }} />
+      <CameraView ref={cam} mode={camMode} style={StyleSheet.absoluteFill} facing={facing} videoQuality="720p" onCameraReady={() => { camReady.current = true; }} />
 
       <View style={[styles.top, { paddingTop: insets.top + 10 }]}>
         <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Close" style={styles.close}><X size={18} color={colors.white} /></Pressable>
@@ -193,7 +191,13 @@ export function VaultRecordScreen() {
             <Text style={styles.timerTxt}>{mmss(sec)} / 1:00</Text>
           </View>
         )}
-        <View style={{ width: 38 }} />
+        {phase === 'prep' ? (
+          <Pressable onPress={flipCamera} accessibilityLabel="Flip camera" style={styles.close}>
+            <FlipHorizontal2 size={18} color={colors.white} />
+          </Pressable>
+        ) : (
+          <View style={{ width: 38 }} />
+        )}
       </View>
 
       <View style={[styles.center, { flex: 1, paddingHorizontal: 32 }]}>
