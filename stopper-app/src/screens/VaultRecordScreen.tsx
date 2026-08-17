@@ -181,7 +181,7 @@ export function VaultRecordScreen() {
 
   return (
     <View style={styles.root}>
-      <CameraView ref={cam} mode={camMode} style={StyleSheet.absoluteFill} facing={facing} videoQuality="720p" onCameraReady={() => { camReady.current = true; }} />
+      <CameraView key={facing} ref={cam} mode={camMode} style={StyleSheet.absoluteFill} facing={facing} videoQuality="720p" onCameraReady={() => { camReady.current = true; }} />
 
       <View style={[styles.top, { paddingTop: insets.top + 10 }]}>
         <Pressable onPress={() => navigation.goBack()} accessibilityLabel="Close" style={styles.close}><X size={18} color={colors.white} /></Pressable>

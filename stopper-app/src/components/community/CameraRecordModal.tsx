@@ -139,7 +139,7 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
         </View>
       ) : (
       <View style={styles.root}>
-        <CameraView ref={cam} mode={camMode} style={StyleSheet.absoluteFill} facing={facing} videoQuality="720p" onCameraReady={() => { camReady.current = true; }} />
+        <CameraView key={facing} ref={cam} mode={camMode} style={StyleSheet.absoluteFill} facing={facing} videoQuality="720p" onCameraReady={() => { camReady.current = true; }} />
 
         {/* Top bar */}
         <View style={[styles.top, { paddingTop: insets.top + 10 }]}>
