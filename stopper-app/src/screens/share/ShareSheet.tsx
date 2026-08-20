@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet, Share, Alert, Image } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, Share, Alert } from 'react-native';
 import { requireOptionalNativeModule } from 'expo-modules-core';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Share2, Download, Copy, Eye, EyeOff, Flame, PiggyBank, ChartLine, Trophy, ImagePlus } from 'lucide-react-native';
