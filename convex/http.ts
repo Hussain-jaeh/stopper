@@ -5,7 +5,7 @@ import { auth } from "./auth";
 const http = httpRouter();
 auth.addHttpRoutes(http);
 
-const VOICE_ID = "EXAVITQu4vr4xnSDxMaL"; // Sarah — mature, reassuring
+const VOICE_ID = "EXAVITQu4vr4xnSDxMaL";
 
 function validateSecret(params: URLSearchParams): Response | null {
   const expected = process.env.APP_API_SECRET;

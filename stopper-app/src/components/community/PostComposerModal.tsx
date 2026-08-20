@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Modal, View, Text, TextInput, Pressable, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView, Image, Alert, ActivityIndicator,
@@ -52,7 +52,6 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
 
   const pickMedia = async (mediaType: 'image' | 'video') => {
     if (mediaType === 'video') {
-      // Use CameraRecordModal so we can capture a thumbnail snapshot before recording
       setCameraRecorderOpen(true);
       return;
     }
@@ -157,7 +156,6 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
       />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}>
-          {/* Header */}
           <View style={styles.header}>
             <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" style={styles.closeBtn}>
               <X size={20} color={colors.textMuted} />
@@ -177,7 +175,6 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
           </View>
 
           <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
-            {/* Compose area */}
             <View style={styles.compose}>
               <Avatar handle={myHandle} tint={colors.jade500} size={42} />
               <TextInput
@@ -192,7 +189,6 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
               />
             </View>
 
-            {/* Media preview */}
             {media && (
               <View style={styles.mediaPreviewWrap}>
                 {media.type === 'image' ? (
@@ -215,7 +211,6 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
               </View>
             )}
 
-            {/* Circle context */}
             {initialCircleId && initialCircleName ? (
               <View style={styles.section}>
                 <Text style={styles.sectionLabel}>Posting to</Text>
@@ -246,7 +241,6 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
             ) : null}
           </ScrollView>
 
-          {/* Media toolbar */}
           {!media && (
             <View style={styles.toolbar}>
               <Pressable onPress={() => pickMedia('image')} style={styles.toolBtn} accessibilityLabel="Take photo">

@@ -4,7 +4,7 @@
 // 8-per-row or overflow with touching squares. Fix: measure the grid's pixel
 // width once via onLayout → cell = Math.floor((width - GAP*6) / 7) → integer,
 // exact 7 columns on every device. Do NOT convert back to percentage widths.
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Text, StyleSheet, LayoutChangeEvent } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { colors } from '../../constants/colors';

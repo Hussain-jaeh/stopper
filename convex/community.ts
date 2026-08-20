@@ -1,18 +1,3 @@
-/**
- * community.ts — Feed, Circles, and Leaderboard.
- *
- * Frontend usage:
- *   const me       = useQuery(api.community.getMe);
- *   const feed     = useQuery(api.community.getFeed);
- *   const circles  = useQuery(api.community.getCircles);
- *   const leaders  = useQuery(api.community.getLeaders);
- *   const cheer    = useMutation(api.community.cheer);
- *   const join     = useMutation(api.community.toggleJoin);
- *
- *   await cheer({ postId });
- *   await join({ circleId });
- */
-
 import { query, mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { requireAuth } from "./lib/auth";
@@ -28,7 +13,6 @@ function relTime(ts: number): string {
   return `${Math.floor(h / 24)}d`;
 }
 
-// ── Circle seeding ────────────────────────────────────────────────────────────
 const DEFAULT_CIRCLES = [
   { name: 'Quitting Alcohol', iconKey: 'alcohol', tint: '#2E7DD1' },
   { name: 'Vaping Free',      iconKey: 'vaping',  tint: '#9B6FE4' },
@@ -50,8 +34,6 @@ export const seedCircles = mutation({
   },
 });
 
-// ── Queries ───────────────────────────────────────────────────────────────────
-
 export const getMe = query({
   args: {},
   handler: async (ctx) => {
@@ -68,7 +50,6 @@ export const generateUploadUrl = mutation({
   },
 });
 
-// Shared helper: enrich raw post docs with author streak, circle name, and cheer data.
 async function enrichPosts(
   ctx: any,
   userId: string,
@@ -197,8 +178,6 @@ export const getFeed = query({
     let posts: any[];
 
     if (mode === "mine") {
-      // Show posts from the user's joined circles only.
-      // Fall back to all posts if user hasn't joined any circles.
       const memberships = await ctx.db
         .query("circleMemberships")
         .withIndex("by_userId", (q) => q.eq("userId", userId))
@@ -303,8 +282,6 @@ export const getLeaders = query({
   },
 });
 
-// ── Mutations ─────────────────────────────────────────────────────────────────
-
 export const cheer = mutation({
   args: { postId: v.id("posts") },
   handler: async (ctx, args) => {
@@ -394,7 +371,6 @@ export const createCircle = mutation({
       createdAt: Date.now(),
     });
 
-    // Auto-join the creator
     await ctx.db.insert("circleMemberships", {
       userId,
       circleId,

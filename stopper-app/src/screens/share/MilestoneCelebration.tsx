@@ -1,6 +1,6 @@
 // Auto-prompt shown when isShareMilestone(days) becomes true.
 // Confetti + flame, "Share my progress" → opens ShareSheet. Never blocks; "Maybe later" dismisses.
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, useWindowDimensions, AccessibilityInfo } from 'react-native';
 import Animated, {
   FadeIn, useSharedValue, useAnimatedStyle,

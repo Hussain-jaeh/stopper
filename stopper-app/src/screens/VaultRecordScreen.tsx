@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, StyleSheet, Pressable, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
@@ -137,7 +137,7 @@ export function VaultRecordScreen() {
           if (thumbBase64.current) {
             FileSystem.deleteAsync(fileUri, { idempotent: true }).catch(() => {});
           }
-        } catch { /* proceed without thumbnail */ }
+        } catch {}
       }
 
       const videoUrl = prefetchedVideoUrl.current ?? await generateUploadUrl();

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   ScrollView, View, Text, StyleSheet, Linking, Share, Alert,
   Modal, TextInput, Pressable, KeyboardAvoidingView, Platform,

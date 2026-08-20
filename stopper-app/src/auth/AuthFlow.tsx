@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { View, StyleSheet, Alert, Platform } from 'react-native';
 import { useAuthActions } from '@convex-dev/auth/react';
 import * as WebBrowser from 'expo-web-browser';

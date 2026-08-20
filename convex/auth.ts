@@ -42,10 +42,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
 
           // Return existing account if found, otherwise create it.
           try {
-            const { user } = await retrieveAccount(ctx, {
-              provider: "apple",
-              account: { id: sub },
-            });
+            const { user } = await retrieveAccount(ctx, { provider: "apple", account: { id: sub } });
             return { userId: user._id };
           } catch {
             const { user } = await createAccount(ctx, {

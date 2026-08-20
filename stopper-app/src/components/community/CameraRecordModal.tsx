@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
@@ -141,7 +141,6 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
       <View style={styles.root}>
         <CameraView key={facing} ref={cam} mode={camMode} style={StyleSheet.absoluteFill} facing={facing} videoQuality="720p" onCameraReady={() => { camReady.current = true; }} />
 
-        {/* Top bar */}
         <View style={[styles.top, { paddingTop: insets.top + 10 }]}>
           <Pressable onPress={onClose} style={styles.iconBtn}><X size={18} color="#fff" /></Pressable>
           {phase === 'rec' && (
@@ -159,7 +158,6 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
           )}
         </View>
 
-        {/* Center overlay */}
         <View style={[styles.center, { flex: 1 }]}>
           {phase === 'prep' && (
             <Animated.View entering={FadeIn.duration(400)} style={{ alignItems: 'center', paddingHorizontal: 32 }}>
@@ -178,7 +176,6 @@ export function CameraRecordModal({ visible, onClose, onDone }: Props) {
           )}
         </View>
 
-        {/* Bottom controls */}
         <View style={[styles.bottom, { paddingBottom: insets.bottom + 26 }]}>
           {phase === 'rec' && (
             <View style={styles.progressTrack}>

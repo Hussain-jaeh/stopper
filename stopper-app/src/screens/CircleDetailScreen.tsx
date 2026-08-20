@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation } from 'convex/react';
@@ -60,7 +60,6 @@ export function CircleDetailScreen() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 80 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
         <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
           <Pressable onPress={() => navigation.goBack()} style={styles.backBtn}>
             <ChevronLeft size={22} color={colors.white} />
@@ -91,7 +90,6 @@ export function CircleDetailScreen() {
           </Pressable>
         </View>
 
-        {/* Action buttons */}
         <View style={styles.actions}>
           <Pressable onPress={() => setComposerOpen(true)} style={[styles.actionBtn, { borderColor: tint + '55', flex: 1 }]}>
             <MessageSquarePlus size={18} color={tint} />
@@ -106,7 +104,6 @@ export function CircleDetailScreen() {
           </Pressable>
         </View>
 
-        {/* Posts */}
         <View style={[styles.feed, { paddingHorizontal: spacing.screenPad }]}>
           {posts === undefined ? (
             <ActivityIndicator color={colors.jade400} style={{ marginTop: 40 }} />

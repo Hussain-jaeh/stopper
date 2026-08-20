@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { DotTexture, RingProgress } from '../../components/primitives';
 import { OnboardingState, habitLabel, firstName } from '../state';

@@ -1,6 +1,6 @@
 // Referral card — copy link + native invite. Drop into dashboard, profile, or
 // the share sheet's footer.
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Share } from 'react-native';
 import { requireOptionalNativeModule } from 'expo-modules-core';
 import { LinearGradient } from 'expo-linear-gradient';

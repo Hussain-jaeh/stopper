@@ -73,8 +73,7 @@ export async function scheduleReminder(): Promise<boolean> {
         minute: 0,
       },
     });
-  } catch (e) {
-    console.warn('[notifications] scheduleReminder failed', e);
+  } catch {
     return false;
   }
 
@@ -113,7 +112,7 @@ export async function scheduleMilestoneNotifications(quitDateMs: number): Promis
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: fireDate,
       },
-    }).catch(e => console.warn(`[notifications] milestone ${day}d scheduling failed`, e));
+    }).catch(() => {});
   }
 }
 
@@ -134,8 +133,7 @@ export async function sendTestNotification(): Promise<boolean> {
       },
     });
     return true;
-  } catch (e) {
-    console.warn('[notifications] test notification failed', e);
+  } catch {
     return false;
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ScrollView, View, Text, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation } from 'convex/react';
@@ -86,7 +86,6 @@ export function CommunityScreen() {
             <DashboardSkeleton />
           ) : tab === 'Feed' ? (
             <>
-              {/* Feed filter: All / My Circles */}
               {hasJoinedCircles && (
                 <View style={styles.filterRow}>
                   {(['all', 'mine'] as FeedMode[]).map((m) => {

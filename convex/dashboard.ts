@@ -1,15 +1,3 @@
-/**
- * dashboard.ts — Single query that powers the home screen.
- *
- * The frontend calls exactly one query to get everything it needs to render
- * the dashboard. Aggregation happens server-side so the client stays simple.
- *
- * Frontend usage:
- *   const data = useQuery(api.dashboard.getDashboard);
- *   if (!data) return <LoadingScreen />;
- *   const { currentStreak, profile, todayCheckedIn, ... } = data;
- */
-
 import { query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { todayStart, todayEnd } from "./lib/dates";
@@ -26,13 +14,11 @@ export const getDashboard = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) return null;
 
-    // ── Profile ──────────────────────────────────────────────────────────────
     const profile = await ctx.db
       .query("profiles")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .unique();
 
-    // ── Relapses (all, for streak maths) ─────────────────────────────────────
     const relapses = await ctx.db
       .query("relapses")
       .withIndex("by_userId_createdAt", (q) => q.eq("userId", userId))
@@ -42,7 +28,6 @@ export const getDashboard = query({
     const relapseTimestamps = relapses.map((r) => r.createdAt);
     const totalRelapses = relapses.length;
 
-    // ── Streak calculations ───────────────────────────────────────────────────
     let currentStreak = 0;
     let longestStreak = 0;
     let daysSinceQuit = 0;
@@ -56,7 +41,6 @@ export const getDashboard = query({
       nextMilestone = calculateNextMilestone(currentStreak);
     }
 
-    // ── Check-ins ─────────────────────────────────────────────────────────────
     const allCheckIns = await ctx.db
       .query("checkIns")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
@@ -71,7 +55,6 @@ export const getDashboard = query({
       .filter((q) => q.lte(q.field("createdAt"), todayEnd()))
       .first();
 
-    // Craving average over the last 30 check-ins
     const recentCheckIns = await ctx.db
       .query("checkIns")
       .withIndex("by_userId_createdAt", (q) => q.eq("userId", userId))
@@ -87,7 +70,6 @@ export const getDashboard = query({
           ) / 10
         : 0;
 
-    // Fetch display name from userProfiles table
     const userProfile = await ctx.db
       .query("userProfiles")
       .withIndex("by_userId", (q) => q.eq("userId", userId))

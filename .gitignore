@@ -32,6 +32,7 @@ stopper-app/.agents/
 stopper-app/.claude/
 stopper-app/skills-lock.json
 .agents/
+.claude/
 skills-lock.json
 
 # macOS

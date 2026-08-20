@@ -1,6 +1,4 @@
-// Card-type picker (streak/money/stats/win) · live preview · format toggle (story/square)
-// · per-share privacy toggle · Share / Save image / Copy link.
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet, Share, Alert, Image } from 'react-native';
 import { requireOptionalNativeModule } from 'expo-modules-core';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,7 +23,6 @@ const TYPES: { id: ShareCardType; label: string; Icon: any }[] = [
   { id: 'win',    label: 'My win', Icon: Trophy },
 ];
 
-// Preview dimensions (scaled-down, matches scale props below)
 const PREVIEW_W = { story: 173, square: 302 };
 const PREVIEW_H = { story: 307, square: 302 };
 
@@ -124,7 +121,6 @@ export function ShareSheet() {
         <Text style={styles.title}>Share your progress</Text>
       </View>
 
-      {/* card type — 4 tabs in 2×2 grid */}
       <View style={styles.typeGrid}>
         {TYPES.map(({ id, label, Icon }) => {
           const on = type === id;
@@ -139,7 +135,6 @@ export function ShareSheet() {
         })}
       </View>
 
-      {/* live preview */}
       <View style={{ alignItems: 'center', marginVertical: 22 }}>
         {type === 'win' && !winPhotoUri ? (
           /* Photo placeholder — tappable, not captured */
@@ -162,7 +157,6 @@ export function ShareSheet() {
           </View>
         )}
 
-        {/* change photo button shown below a selected photo */}
         {type === 'win' && winPhotoUri && (
           <Pressable onPress={pickWinPhoto} style={styles.changePhoto}>
             <ImagePlus size={14} color={colors.jade300} />
@@ -171,7 +165,6 @@ export function ShareSheet() {
         )}
       </View>
 
-      {/* format */}
       <View style={styles.segment}>
         {(['story', 'square'] as ShareFormat[]).map(k => {
           const on = format === k;
@@ -187,7 +180,6 @@ export function ShareSheet() {
         })}
       </View>
 
-      {/* privacy — hidden for win cards (photo speaks for itself) */}
       {type !== 'win' && (
         <View style={styles.privacy}>
           <View style={styles.pIcon}>
@@ -206,7 +198,6 @@ export function ShareSheet() {
         </View>
       )}
 
-      {/* actions */}
       <Pressable onPress={onShare} accessibilityLabel="Share"
         style={{ marginTop: 18, opacity: canCapture ? 1 : 0.45 }}>
         <LinearGradient colors={['#14B888', '#2DD4A0']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cta}>
@@ -232,11 +223,9 @@ const styles = StyleSheet.create({
   back: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   title: { ...T.h1, fontSize: 22, color: colors.white },
 
-  // 4-tab grid: two rows of two
   typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
   typeBtn: { flexBasis: '48%', flexGrow: 1, height: 44, borderRadius: 14, borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
 
-  // photo placeholder
   photoPicker: { borderRadius: 20, backgroundColor: colors.surface1, borderWidth: 1.5, borderColor: 'rgba(20,184,136,0.35)', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 10 },
   photoIconWrap: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(20,184,136,0.15)', alignItems: 'center', justifyContent: 'center' },
   photoTitle: { fontSize: 16, fontWeight: '800', color: colors.white },

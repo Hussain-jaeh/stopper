@@ -33,7 +33,6 @@ async function currentRecoveryDay(
   });
 }
 
-/** Maps a recordings doc to the client's Recording shape. */
 async function toRecording(ctx: QueryCtx | MutationCtx, doc: Doc<"recordings">) {
   const videoUrl = await ctx.storage.getUrl(doc.storageId);
   const thumbUrl = doc.thumbStorageId
@@ -56,7 +55,6 @@ async function toRecording(ctx: QueryCtx | MutationCtx, doc: Doc<"recordings">) 
   };
 }
 
-/** Loads a recording and asserts the caller owns it. */
 async function requireOwnedRecording(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"users">,
