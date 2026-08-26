@@ -47,6 +47,8 @@ export function CommunityScreen() {
   const seedCircles   = useMutation(api.community.seedCircles);
   const createPost    = useMutation(api.community.createPost);
   const createCircle  = useMutation(api.community.createCircle);
+  const reportPost    = useMutation(api.community.reportPost);
+  const blockUser     = useMutation(api.community.blockUser);
 
   useEffect(() => { seedCircles({}); }, []);
 
@@ -120,6 +122,8 @@ export function CommunityScreen() {
                     onCheer={(id) => cheer({ postId: id as any })}
                     onOpen={(id) => setCommentPostId(id)}
                     onPlayVideo={(url) => navigation.navigate('VaultPlay', { uri: url, title: 'Win' })}
+                    onReport={(id) => reportPost({ postId: id as any })}
+                    onBlock={(authorId) => blockUser({ userId: authorId as any })}
                   />
                 ))
               )}

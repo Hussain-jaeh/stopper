@@ -136,4 +136,23 @@ export default defineSchema({
     body: v.string(),
     createdAt: v.number(),
   }).index("by_postId_createdAt", ["postId", "createdAt"]),
+
+  // Reported posts — one report per user per post.
+  postReports: defineTable({
+    postId: v.id("posts"),
+    reportedBy: v.id("users"),
+    reason: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_postId", ["postId"])
+    .index("by_postId_reportedBy", ["postId", "reportedBy"]),
+
+  // Blocked users — posts from blockedUserId are hidden from blockerId's feed.
+  userBlocks: defineTable({
+    blockerId: v.id("users"),
+    blockedUserId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_blockerId", ["blockerId"])
+    .index("by_blockerId_blockedUserId", ["blockerId", "blockedUserId"]),
 });

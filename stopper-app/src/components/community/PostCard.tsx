@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Image, Alert } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { HeartHandshake, MessageCircle, Play } from 'lucide-react-native';
+import { HeartHandshake, MessageCircle, Play, MoreHorizontal } from 'lucide-react-native';
 import { Avatar } from './Avatar';
 import { colors } from '../../constants/colors';
 import { radius } from '../../constants/spacing';
@@ -10,6 +10,8 @@ import { type } from '../../constants/typography';
 export type Post = {
   id: string;
   type: 'post' | 'milestone';
+  authorId: string;
+  isMe: boolean;
   handle: string;
   streak: number;
   circle?: string;
@@ -25,33 +27,77 @@ export type Post = {
   cheered: boolean;
 };
 
-export function PostCard({ post, index, onCheer, onOpen, onPlayVideo }: {
+export function PostCard({ post, index, onCheer, onOpen, onPlayVideo, onReport, onBlock }: {
   post: Post;
   index: number;
   onCheer: (id: string) => void;
   onOpen?: (id: string) => void;
   onPlayVideo?: (url: string) => void;
+  onReport?: (postId: string) => void;
+  onBlock?: (authorId: string) => void;
 }) {
   const milestone = post.type === 'milestone';
   const hasMedia = !!post.mediaUrl;
   const thumbUri = post.thumbUri ?? null;
 
+  const handleMore = () => {
+    if (post.isMe) return;
+    Alert.alert(
+      post.handle,
+      undefined,
+      [
+        {
+          text: 'Report post',
+          onPress: () => {
+            onReport?.(post.id);
+            Alert.alert('Reported', 'Thanks for flagging this. We\'ll review it shortly.');
+          },
+        },
+        {
+          text: 'Block user',
+          style: 'destructive',
+          onPress: () =>
+            Alert.alert(
+              'Block this user?',
+              'Their posts will be removed from your feed immediately.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Block',
+                  style: 'destructive',
+                  onPress: () => onBlock?.(post.authorId),
+                },
+              ],
+            ),
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+    );
+  };
+
   return (
     <Animated.View entering={FadeInDown.delay(index * 70).duration(500)}>
       <View style={[styles.card, milestone && styles.milestoneCard]}>
-        <Pressable style={styles.head} onPress={() => onOpen?.(post.id)}>
-          <Avatar handle={post.handle} />
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <View style={styles.handleRow}>
-              <Text style={styles.handle}>{post.handle}</Text>
-              <View style={styles.streakChip}>
-                <Text style={styles.streakTxt}>🔥 {post.streak}d</Text>
+        <View style={styles.head}>
+          <Pressable style={styles.headContent} onPress={() => onOpen?.(post.id)}>
+            <Avatar handle={post.handle} />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <View style={styles.handleRow}>
+                <Text style={styles.handle}>{post.handle}</Text>
+                <View style={styles.streakChip}>
+                  <Text style={styles.streakTxt}>🔥 {post.streak}d</Text>
+                </View>
               </View>
+              <Text style={styles.meta}>{post.circle ? `${post.circle} · ` : ''}{post.time}</Text>
             </View>
-            <Text style={styles.meta}>{post.circle ? `${post.circle} · ` : ''}{post.time}</Text>
-          </View>
-          {milestone && <Text style={{ fontSize: 22 }}>🎉</Text>}
-        </Pressable>
+            {milestone && <Text style={{ fontSize: 22 }}>🎉</Text>}
+          </Pressable>
+          {!post.isMe && (
+            <Pressable onPress={handleMore} hitSlop={8} accessibilityLabel="More options">
+              <MoreHorizontal size={18} color={colors.textFaint} />
+            </Pressable>
+          )}
+        </View>
 
         {milestone && post.milestone && <Text style={styles.milestoneTitle}>{post.milestone}</Text>}
         {!!post.body && (
@@ -106,7 +152,8 @@ export function PostCard({ post, index, onCheer, onOpen, onPlayVideo }: {
 const styles = StyleSheet.create({
   card: { backgroundColor: colors.surface1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.card, padding: 18 },
   milestoneCard: { borderColor: 'rgba(20,184,136,0.28)', backgroundColor: 'rgba(20,184,136,0.06)' },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  head: { flexDirection: 'row', alignItems: 'center' },
+  headContent: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   handleRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   handle: { fontWeight: '700', fontSize: 15, color: colors.white },
   streakChip: { backgroundColor: 'rgba(255,107,74,0.14)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 },

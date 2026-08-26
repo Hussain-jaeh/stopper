@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton, DotTexture, CircleBack } from '../../components/primitives';
 import { AuthField } from '../components/AuthField';
@@ -24,37 +24,47 @@ export function SignInScreen({ state, setState, onBack, onSignedIn, onForgot, on
   const valid = isValidEmail(state.email) && (state.password || '').length >= 1;
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top + 10 }]}>
-      <DotTexture />
-      <View style={styles.header}><CircleBack onBack={onBack} /></View>
-      <View style={styles.intro}>
-        <Text style={styles.h1}>Welcome back</Text>
-        <Text style={styles.sub}>Pick up right where you left off.</Text>
-      </View>
-      <View style={styles.form}>
-        <AuthField label="Email" value={state.email} onChangeText={v => setState({ email: v })}
-          placeholder="you@email.com" keyboardType="email-address" autoFocus />
-        <AuthField label="Password" value={state.password} onChangeText={v => setState({ password: v })}
-          placeholder="Your password" secure />
-        <Pressable onPress={onForgot} style={styles.forgot}>
-          <Text style={styles.link}>Forgot password?</Text>
-        </Pressable>
-      </View>
-      <View style={{ flex: 1 }} />
-      <View style={styles.footer}>
-        <PrimaryButton icon={null} onPress={onSignedIn} disabled={!valid}>Sign in</PrimaryButton>
-        <OrDivider />
-        <View style={styles.socialRow}>
-          {onApple && <SocialButton provider="apple" label="Continue with Apple" onPress={onApple} loading={loading} />}
-          {onGoogle && <SocialButton provider="google" label="Continue with Google" onPress={onGoogle} loading={loading} />}
+    <KeyboardAvoidingView
+      style={styles.fill}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        contentContainerStyle={[styles.screen, { paddingTop: insets.top + 10 }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <DotTexture />
+        <View style={styles.header}><CircleBack onBack={onBack} /></View>
+        <View style={styles.intro}>
+          <Text style={styles.h1}>Welcome back</Text>
+          <Text style={styles.sub}>Pick up right where you left off.</Text>
         </View>
-      </View>
-    </View>
+        <View style={styles.form}>
+          <AuthField label="Email" value={state.email} onChangeText={v => setState({ email: v })}
+            placeholder="you@email.com" keyboardType="email-address" autoFocus />
+          <AuthField label="Password" value={state.password} onChangeText={v => setState({ password: v })}
+            placeholder="Your password" secure />
+          <Pressable onPress={onForgot} style={styles.forgot}>
+            <Text style={styles.link}>Forgot password?</Text>
+          </Pressable>
+        </View>
+        <View style={{ flex: 1, minHeight: 32 }} />
+        <View style={styles.footer}>
+          <PrimaryButton icon={null} onPress={onSignedIn} disabled={!valid} loading={loading}>Sign in</PrimaryButton>
+          <OrDivider />
+          <View style={styles.socialRow}>
+            {onApple && <SocialButton provider="apple" label="Continue with Apple" onPress={onApple} loading={loading} />}
+            {onGoogle && <SocialButton provider="google" label="Continue with Google" onPress={onGoogle} loading={loading} />}
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 24, paddingBottom: 26 },
+  fill: { flex: 1, backgroundColor: colors.bg },
+  screen: { flexGrow: 1, backgroundColor: colors.bg, paddingHorizontal: 24, paddingBottom: 26 },
   header: { paddingVertical: 4 },
   intro: { paddingTop: 10 },
   h1: { fontFamily: fonts.display, fontWeight: '800', fontSize: 30, color: colors.white, letterSpacing: -0.3 },

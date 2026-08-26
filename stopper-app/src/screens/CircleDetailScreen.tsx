@@ -46,6 +46,8 @@ export function CircleDetailScreen() {
   const toggleJoin = useMutation(api.community.toggleJoin);
   const cheer = useMutation(api.community.cheer);
   const createPost = useMutation(api.community.createPost);
+  const reportPost = useMutation(api.community.reportPost);
+  const blockUser = useMutation(api.community.blockUser);
 
   const Icon = CIRCLE_ICONS[iconKey] ?? Smartphone;
 
@@ -121,6 +123,8 @@ export function CircleDetailScreen() {
                 onCheer={(id) => cheer({ postId: id as any })}
                 onOpen={(id) => setCommentPostId(id)}
                 onPlayVideo={(url) => navigation.navigate('VaultPlay', { uri: url, title: 'Win' })}
+                onReport={(id) => reportPost({ postId: id as any })}
+                onBlock={(authorId) => blockUser({ userId: authorId as any })}
               />
             ))
           )}

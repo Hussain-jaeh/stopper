@@ -151,6 +151,8 @@ async function enrichPosts(
   return posts.map((post) => ({
     id: post._id as string,
     type: post.type,
+    authorId: post.userId as string,
+    isMe: post.userId === userId,
     handle: makeHandle(post.userId),
     streak: streakMap.get(post.userId as string) ?? 0,
     circle: post.circleId
@@ -174,6 +176,12 @@ export const getFeed = query({
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
     const mode = args.mode ?? "all";
+
+    const blocks = await ctx.db
+      .query("userBlocks")
+      .withIndex("by_blockerId", (q) => q.eq("blockerId", userId))
+      .take(1000);
+    const blockedIds = new Set(blocks.map((b) => b.blockedUserId as string));
 
     let posts: any[];
 
@@ -214,6 +222,8 @@ export const getFeed = query({
         .order("desc")
         .take(50);
     }
+
+    posts = posts.filter((p) => !blockedIds.has(p.userId as string));
 
     return enrichPosts(ctx, userId as string, posts);
   },
@@ -386,13 +396,22 @@ export const getCirclePosts = query({
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
 
-    const posts = await ctx.db
-      .query("posts")
-      .withIndex("by_circleId_createdAt", (q) =>
-        q.eq("circleId", args.circleId),
-      )
-      .order("desc")
-      .take(50);
+    const [blocks, rawPosts] = await Promise.all([
+      ctx.db
+        .query("userBlocks")
+        .withIndex("by_blockerId", (q) => q.eq("blockerId", userId))
+        .take(1000),
+      ctx.db
+        .query("posts")
+        .withIndex("by_circleId_createdAt", (q) =>
+          q.eq("circleId", args.circleId),
+        )
+        .order("desc")
+        .take(50),
+    ]);
+
+    const blockedIds = new Set(blocks.map((b) => b.blockedUserId as string));
+    const posts = rawPosts.filter((p: any) => !blockedIds.has(p.userId as string));
 
     return enrichPosts(ctx, userId as string, posts);
   },
@@ -458,5 +477,45 @@ export const addComment = mutation({
     if (!body) throw new ConvexError("Comment cannot be empty");
     if (body.length > 300) throw new ConvexError("Comment must be 300 characters or fewer");
     await ctx.db.insert("postComments", { postId: args.postId, userId, body, createdAt: Date.now() });
+  },
+});
+
+export const reportPost = mutation({
+  args: { postId: v.id("posts"), reason: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+    const existing = await ctx.db
+      .query("postReports")
+      .withIndex("by_postId_reportedBy", (q) =>
+        q.eq("postId", args.postId).eq("reportedBy", userId),
+      )
+      .unique();
+    if (existing) return;
+    await ctx.db.insert("postReports", {
+      postId: args.postId,
+      reportedBy: userId,
+      reason: args.reason,
+      createdAt: Date.now(),
+    });
+  },
+});
+
+export const blockUser = mutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const blockerId = await requireAuth(ctx);
+    if (blockerId === args.userId) return;
+    const existing = await ctx.db
+      .query("userBlocks")
+      .withIndex("by_blockerId_blockedUserId", (q) =>
+        q.eq("blockerId", blockerId).eq("blockedUserId", args.userId),
+      )
+      .unique();
+    if (existing) return;
+    await ctx.db.insert("userBlocks", {
+      blockerId,
+      blockedUserId: args.userId,
+      createdAt: Date.now(),
+    });
   },
 });
