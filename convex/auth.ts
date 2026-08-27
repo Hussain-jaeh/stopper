@@ -55,8 +55,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
             });
             return { userId: user._id };
           }
-        } catch (err) {
-          console.error("Apple sign-in failed:", err);
+        } catch {
           return null;
         }
       },
