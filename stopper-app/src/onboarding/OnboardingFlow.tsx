@@ -42,11 +42,16 @@ interface OnboardingFlowProps {
   startStep?: number;
   onComplete?: (state: OnboardingState) => void;
   onSignIn?: () => void;
+  initialName?: string;
 }
 
-export function OnboardingFlow({ startStep, onComplete, onSignIn }: OnboardingFlowProps) {
+export function OnboardingFlow({ startStep, onComplete, onSignIn, initialName }: OnboardingFlowProps) {
   const [step, setStep] = useState(startStep ?? 0);
-  const [state, setStateRaw] = useState<OnboardingState>(freshState);
+  const [state, setStateRaw] = useState<OnboardingState>(() => {
+    const s = freshState();
+    if (initialName) s.name = initialName;
+    return s;
+  });
   const setState = useCallback((patch: Partial<OnboardingState>) => {
     setStateRaw(prev => ({ ...prev, ...patch }));
   }, []);

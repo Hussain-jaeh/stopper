@@ -115,6 +115,10 @@ export function AuthFlow({ initialRoute = 'landing', onAuthenticated }: AuthFlow
         ],
       });
       if (!credential.identityToken) throw new Error('No identity token from Apple');
+      const given = credential.fullName?.givenName ?? '';
+      const family = credential.fullName?.familyName ?? '';
+      const appleDisplayName = [given, family].filter(Boolean).join(' ');
+      if (appleDisplayName) setState({ displayName: appleDisplayName });
       await signIn('apple', { identityToken: credential.identityToken });
       go('success');
     } catch (e: any) {
@@ -184,6 +188,7 @@ export function AuthFlow({ initialRoute = 'landing', onAuthenticated }: AuthFlow
             onApple={Platform.OS === 'ios' ? handleApple : undefined}
             onGoogle={handleGoogle}
             loading={loading}
+            error={signInError}
           />
         </View>
       );

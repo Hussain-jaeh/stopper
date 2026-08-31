@@ -28,6 +28,7 @@ import { AuthFlow } from './src/auth/AuthFlow';
 import { OnboardingFlow } from './src/onboarding/OnboardingFlow';
 import { TabNavigator } from './src/navigation/TabNavigator';
 import { OnboardingState } from './src/onboarding/state';
+import { AuthState } from './src/auth/state';
 import { SplashScreen } from './src/components/splash/SplashScreen';
 import { PaywallScreen } from './src/screens/PaywallScreen';
 import { colors } from './src/theme/tokens';
@@ -193,6 +194,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
   const bootDoneRef = useRef(false);
   const rcCheckedRef = useRef(false);
   const notifScheduledRef = useRef(false);
+  const appleDisplayName = useRef<string | undefined>(undefined);
 
   const markBoot = useCallback(() => {
     if (!bootDoneRef.current) { bootDoneRef.current = true; onBootDone(); }
@@ -284,7 +286,8 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
     });
   }, [isLoading, isAuthenticated, profile]);
 
-  const handleAuthenticated = useCallback(() => {
+  const handleAuthenticated = useCallback((authState?: AuthState) => {
+    if (authState?.displayName) appleDisplayName.current = authState.displayName;
     if (profile === undefined) { setPhase('loading'); return; }
     setPhase(profile?.onboardingComplete ? 'loading' : 'onboarding');
   }, [profile]);
@@ -337,7 +340,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
       </View>
     );
   } else if (phase === 'onboarding') {
-    content = <OnboardingFlow startStep={2} onComplete={handleOnboardingComplete} />;
+    content = <OnboardingFlow startStep={2} onComplete={handleOnboardingComplete} initialName={appleDisplayName.current} />;
   } else if (phase === 'paywall') {
     content = <PaywallScreen onPurchase={handlePurchase} />;
   } else if (phase === 'app') {

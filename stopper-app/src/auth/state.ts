@@ -2,6 +2,7 @@ export interface AuthState {
   email: string;
   password: string;
   otp: string;
+  displayName?: string;
 }
 
 export function freshAuthState(): AuthState {

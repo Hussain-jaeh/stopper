@@ -17,11 +17,19 @@ interface Props {
   onApple?: () => void;
   onGoogle?: () => void;
   loading?: boolean;
+  error?: string;
 }
 
-export function SignInScreen({ state, setState, onBack, onSignedIn, onForgot, onApple, onGoogle, loading }: Props) {
+export function SignInScreen({ state, setState, onBack, onSignedIn, onForgot, onApple, onGoogle, loading, error }: Props) {
   const insets = useSafeAreaInsets();
-  const valid = isValidEmail(state.email) && (state.password || '').length >= 1;
+  const [touched, setTouched] = React.useState(false);
+  const emailOk = isValidEmail(state.email);
+  const passwordOk = (state.password || '').length >= 1;
+
+  const handlePress = () => {
+    setTouched(true);
+    if (emailOk && passwordOk) onSignedIn();
+  };
 
   return (
     <KeyboardAvoidingView
@@ -41,16 +49,19 @@ export function SignInScreen({ state, setState, onBack, onSignedIn, onForgot, on
         </View>
         <View style={styles.form}>
           <AuthField label="Email" value={state.email} onChangeText={v => setState({ email: v })}
-            placeholder="you@email.com" keyboardType="email-address" autoFocus />
+            placeholder="you@email.com" keyboardType="email-address" autoFocus
+            error={touched && !emailOk ? 'Enter a valid email address' : undefined} />
           <AuthField label="Password" value={state.password} onChangeText={v => setState({ password: v })}
-            placeholder="Your password" secure />
-          <Pressable onPress={onForgot} style={styles.forgot}>
+            placeholder="Your password" secure
+            error={touched && !passwordOk ? 'Enter your password' : undefined} />
+          <Pressable onPress={onForgot} style={styles.forgot} hitSlop={12}>
             <Text style={styles.link}>Forgot password?</Text>
           </Pressable>
         </View>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
         <View style={{ flex: 1, minHeight: 32 }} />
         <View style={styles.footer}>
-          <PrimaryButton icon={null} onPress={onSignedIn} disabled={!valid} loading={loading}>Sign in</PrimaryButton>
+          <PrimaryButton icon={null} onPress={handlePress} loading={loading}>Sign in</PrimaryButton>
           <OrDivider />
           <View style={styles.socialRow}>
             {onApple && <SocialButton provider="apple" label="Continue with Apple" onPress={onApple} loading={loading} />}
@@ -71,6 +82,7 @@ const styles = StyleSheet.create({
   sub: { fontFamily: fonts.ui, fontSize: 16, color: colors.fgMuted, lineHeight: 23, marginTop: 12 },
   form: { marginTop: 26, gap: 16 },
   forgot: { alignSelf: 'flex-end' },
+  error: { fontFamily: fonts.ui, fontSize: 14, color: '#f87171', marginTop: 4 },
   footer: { gap: 14 },
   socialRow: { flexDirection: 'column', gap: 12
     

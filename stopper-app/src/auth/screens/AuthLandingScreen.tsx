@@ -37,7 +37,7 @@ export function AuthLandingScreen({ onApple, onGoogle, onEmail, onSignIn, loadin
         </PrimaryButton>
         <View style={styles.signinRow}>
           <Text style={styles.muted}>Already have an account? </Text>
-          <Pressable onPress={onSignIn}><Text style={styles.link}>Sign in</Text></Pressable>
+          <Pressable onPress={onSignIn} hitSlop={12}><Text style={styles.link}>Sign in</Text></Pressable>
         </View>
         <Text style={styles.legal}>By continuing you agree to our Terms & Conditions and Privacy Policy.</Text>
       </View>
