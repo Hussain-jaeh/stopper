@@ -33,8 +33,13 @@ async function currentRecoveryDay(
   });
 }
 
+/**
+ * List shape. Deliberately carries no video URL: storage URLs are signed and
+ * expire, and minting one per row meant up to 200 signed-URL lookups per query
+ * for videos the user was not about to watch. Playback resolves its own URL
+ * through `getPlaybackUrl` at the moment it starts.
+ */
 async function toRecording(ctx: QueryCtx | MutationCtx, doc: Doc<"recordings">) {
-  const videoUrl = await ctx.storage.getUrl(doc.storageId);
   const thumbUrl = doc.thumbStorageId
     ? await ctx.storage.getUrl(doc.thumbStorageId)
     : null;
@@ -50,7 +55,6 @@ async function toRecording(ctx: QueryCtx | MutationCtx, doc: Doc<"recordings">) 
       year: "numeric",
     }),
     duration: `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`,
-    ...(videoUrl ? { videoUri: videoUrl } : {}),
     ...(thumbUrl ? { thumbUri: thumbUrl } : {}),
   };
 }
@@ -93,6 +97,16 @@ export const saveRecording = mutation({
       thumbStorageId: args.thumbStorageId,
       createdAt: Date.now(),
     });
+  },
+});
+
+/** Fresh signed playback URL for one recording the caller owns. */
+export const getPlaybackUrl = query({
+  args: { id: v.id("recordings") },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+    const doc = await requireOwnedRecording(ctx, userId, args.id);
+    return await ctx.storage.getUrl(doc.storageId);
   },
 });
 

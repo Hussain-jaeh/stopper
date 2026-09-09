@@ -7,12 +7,50 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation } from 'convex/react';
 import { X, LucideIcon, Smartphone, Cigarette, Brain, Wine, Moon, Camera, Video, XCircle } from 'lucide-react-native';
 import { Avatar } from './Avatar';
-import { CameraRecordModal } from './CameraRecordModal';
 import { colors } from '../../constants/colors';
 import { radius, spacing } from '../../constants/spacing';
 import { type } from '../../constants/typography';
 import * as FileSystem from 'expo-file-system/legacy';
 import { api } from '../../../convex/_generated/api';
+
+type RecordedClip = { videoUri: string; thumbUri: string | null; durationSeconds: number };
+
+interface RecorderProps {
+  visible: boolean;
+  onClose: () => void;
+  onDone: (clip: RecordedClip) => void;
+}
+
+/**
+ * expo-camera is a native module, so requiring it at module scope takes the
+ * whole app down at startup on any binary that lacks it — rather than degrading
+ * this one button. TabNavigator guards the vault screens the same way.
+ * Requiring it only once the recorder is opened keeps that failure local.
+ */
+function VideoRecorderLazy(props: RecorderProps) {
+  if (!props.visible) return null;
+  try {
+    const { CameraRecordModal } = require('./CameraRecordModal');
+    return <CameraRecordModal {...props} />;
+  } catch {
+    return (
+      <Modal visible animationType="fade" transparent onRequestClose={props.onClose}>
+        <View style={styles.unavailableBackdrop}>
+          <View style={styles.unavailableCard}>
+            <Text style={styles.unavailableTitle}>Recording unavailable</Text>
+            <Text style={styles.unavailableBody}>
+              Video recording needs a build of Stopper that includes the camera. You can still
+              post text and photos.
+            </Text>
+            <Pressable onPress={props.onClose} style={styles.unavailableBtn}>
+              <Text style={styles.unavailableBtnTxt}>OK</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
+}
 
 type Circle = { id: string; name: string; iconKey: string; tint: string };
 
@@ -149,7 +187,7 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <CameraRecordModal
+      <VideoRecorderLazy
         visible={cameraRecorderOpen}
         onClose={() => setCameraRecorderOpen(false)}
         onDone={handleVideoRecorded}
@@ -260,6 +298,12 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
 }
 
 const styles = StyleSheet.create({
+  unavailableBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 34 },
+  unavailableCard: { width: '100%', backgroundColor: colors.surface1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.card, padding: 22, alignItems: 'center' },
+  unavailableTitle: { fontSize: 17, fontWeight: '800', color: colors.white, textAlign: 'center' },
+  unavailableBody: { fontSize: 14, color: colors.textMuted, lineHeight: 20, textAlign: 'center', marginTop: 8 },
+  unavailableBtn: { marginTop: 18, paddingHorizontal: 26, paddingVertical: 11, borderRadius: 13, backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border },
+  unavailableBtnTxt: { fontSize: 15, fontWeight: '700', color: colors.white },
   sheet: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.screenPad, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border },
   closeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface2, alignItems: 'center', justifyContent: 'center' },

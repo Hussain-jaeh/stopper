@@ -3,6 +3,13 @@ import { Platform } from 'react-native';
 
 const RC_IOS_KEY = 'appl_CxdiKAfrMSKPunCqwXIwBXDsTgr';
 
+/**
+ * Cached entitlement flag, so a returning subscriber isn't held at a spinner
+ * while RevenueCat answers. Must be cleared on sign-out — otherwise the next
+ * account to sign in on this device inherits it and skips the paywall.
+ */
+export const SUB_CACHE_KEY = 'rc_has_sub';
+
 export function initPurchases() {
   if (Platform.OS !== 'ios') return;
   Purchases.configure({ apiKey: RC_IOS_KEY });

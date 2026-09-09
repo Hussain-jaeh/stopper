@@ -60,7 +60,9 @@ export type RootStackParamList = {
   Panic: undefined;
   Vault: undefined;
   VaultRecord: undefined;
-  VaultPlay: { uri: string; title?: string; day?: number };
+  // Exactly one of recordingId (vault, resolves its own signed URL) or uri
+  // (community media, already resolved) is supplied.
+  VaultPlay: { recordingId?: string; uri?: string; title?: string; day?: number };
   MoneyInsights: undefined;
   CircleDetail: { circleId: string; name: string; tint: string; iconKey: string };
   CircleChat: { circleId: string; name: string; tint: string };

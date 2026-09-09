@@ -22,9 +22,10 @@ import * as SecureStore from 'expo-secure-store';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import Purchases from 'react-native-purchases';
-import { initPurchases } from './src/lib/purchases';
+import { initPurchases, SUB_CACHE_KEY } from './src/lib/purchases';
 import { scheduleMilestoneNotifications, scheduleReminder } from './src/notifications/reminders';
 import { AuthFlow } from './src/auth/AuthFlow';
+import { GuestUpgradeProvider } from './src/auth/GuestUpgrade';
 import { OnboardingFlow } from './src/onboarding/OnboardingFlow';
 import { TabNavigator } from './src/navigation/TabNavigator';
 import { OnboardingState } from './src/onboarding/state';
@@ -38,7 +39,13 @@ ExpoSplash.preventAutoHideAsync().catch(() => {});
 try { initPurchases(); } catch {}
 
 
-const SUB_CACHE_KEY = 'rc_has_sub';
+/**
+ * Debug builds skip the paywall so the simulator doesn't need StoreKit. That
+ * also makes the guest → paywall → app flow impossible to test locally, so it
+ * can be switched back on: set EXPO_PUBLIC_SKIP_PAYWALL=false in .env.local and
+ * restart Metro with `npx expo start -c`. Release builds always enforce it.
+ */
+const SKIP_PAYWALL = __DEV__ && process.env.EXPO_PUBLIC_SKIP_PAYWALL !== 'false';
 
 function rcGetCustomerInfo() {
   return Promise.race([
@@ -147,7 +154,7 @@ export default function App() {
   );
 }
 
-type Phase = 'loading' | 'auth' | 'onboarding' | 'paywall' | 'app';
+type Phase = 'loading' | 'auth' | 'onboarding' | 'paywall' | 'upgrade' | 'app';
 
 function useAppLock() {
   const [locked, setLocked] = useState(false);
@@ -190,6 +197,10 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
   const { locked, authenticate } = useAppLock();
   const saveOnboarding = useMutation(api.users.completeOnboarding);
   const upsertProfile = useMutation(api.profiles.upsertProfile);
+  const issueMigrationTicket = useMutation(api.guest.issueMigrationTicket);
+  const redeemMigrationTicket = useMutation(api.guest.redeemMigrationTicket);
+  const migrationTicket = useRef<string | null>(null);
+  const upgradingRef = useRef(false);
   const [phase, setPhase] = useState<Phase>('loading');
   const bootDoneRef = useRef(false);
   const rcCheckedRef = useRef(false);
@@ -214,6 +225,9 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
 
   useEffect(() => {
     if (isLoading) return;
+    // A guest registering swaps one session for another; don't bounce them back
+    // to the landing screen mid-flow.
+    if (upgradingRef.current) return;
     if (!isAuthenticated) {
       setPhase('auth');
       markBoot();
@@ -233,8 +247,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
     }
     rcCheckedRef.current = true;
 
-    // Skip paywall entirely in local dev / simulator.
-    if (__DEV__) {
+    if (SKIP_PAYWALL) {
       setPhase('app');
       markBoot();
       return;
@@ -269,9 +282,12 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
           setPhase(hasSub ? 'app' : 'paywall');
         })
         .catch(() => {
-          // RC unavailable / not yet initialized — default to app so subscribers
-          // aren't wrongly blocked. Will re-check on next cold start.
-          setPhase('app');
+          // RC unavailable, or the 12s timeout fired. We only reach here when the
+          // cache is absent or 'false', so this user has never been confirmed as a
+          // subscriber — show the paywall rather than granting access. A real
+          // subscriber whose check failed still has Restore Purchase there.
+          // Granting instead made the paywall trivially bypassable offline.
+          setPhase('paywall');
         })
         .finally(markBoot);
     }).catch(() => {
@@ -281,7 +297,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
           const hasSub = Object.keys(info.entitlements.active).length > 0;
           setPhase(hasSub ? 'app' : 'paywall');
         })
-        .catch(() => setPhase('app')) // RC error: let them in, re-check next time
+        .catch(() => setPhase('paywall')) // Unverified: paywall, with Restore available
         .finally(markBoot);
     });
   }, [isLoading, isAuthenticated, profile]);
@@ -324,13 +340,42 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
     scheduleMilestoneNotifications(quitDate).catch(() => {});
     scheduleReminder().catch(() => {});
 
-    setPhase(__DEV__ ? 'app' : 'paywall');
+    if (SKIP_PAYWALL) { setPhase('app'); return; }
+
+    // A subscription bought as a guest carries over to the account they create.
+    const cached = await SecureStore.getItemAsync(SUB_CACHE_KEY).catch(() => null);
+    if (cached === 'true') { setPhase('app'); return; }
+
+    setPhase('paywall');
   }, [saveOnboarding, upsertProfile]);
 
   const handlePurchase = useCallback(() => {
     SecureStore.setItemAsync(SUB_CACHE_KEY, 'true').catch(() => {});
     setPhase('app');
   }, []);
+
+  // A guest chose to register. Mint the handoff ticket while still signed in as
+  // the guest, then show the sign-up screens with guest mode hidden.
+  const handleStartUpgrade = useCallback(async () => {
+    upgradingRef.current = true;
+    try {
+      migrationTicket.current = await issueMigrationTicket();
+    } catch {
+      migrationTicket.current = null;
+    }
+    setPhase('upgrade');
+  }, [issueMigrationTicket]);
+
+  // Registration finished — move the guest's data onto the new account.
+  const handleUpgraded = useCallback(async () => {
+    const token = migrationTicket.current;
+    migrationTicket.current = null;
+    if (token) {
+      try { await redeemMigrationTicket({ token }); } catch {}
+    }
+    upgradingRef.current = false;
+    setPhase('app');
+  }, [redeemMigrationTicket]);
 
   let content: React.ReactNode;
   if (phase === 'loading') {
@@ -343,6 +388,8 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
     content = <OnboardingFlow startStep={2} onComplete={handleOnboardingComplete} initialName={appleDisplayName.current} />;
   } else if (phase === 'paywall') {
     content = <PaywallScreen onPurchase={handlePurchase} />;
+  } else if (phase === 'upgrade') {
+    content = <AuthFlow allowGuest={false} onAuthenticated={handleUpgraded} />;
   } else if (phase === 'app') {
     content = <TabNavigator onStartOnboarding={() => setPhase('onboarding')} />;
   } else {
@@ -350,7 +397,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
   }
 
   return (
-    <>
+    <GuestUpgradeProvider onStartUpgrade={handleStartUpgrade}>
       {content}
       {locked && (
         <Pressable onPress={authenticate} style={styles.lockScreen}>
@@ -359,7 +406,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
           <Text style={styles.lockSub}>Tap to authenticate</Text>
         </Pressable>
       )}
-    </>
+    </GuestUpgradeProvider>
   );
 }
 

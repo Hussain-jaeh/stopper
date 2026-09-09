@@ -147,6 +147,18 @@ export default defineSchema({
     .index("by_postId", ["postId"])
     .index("by_postId_reportedBy", ["postId", "reportedBy"]),
 
+  // Short-lived handoff tickets used when a guest upgrades to a real account.
+  // Minted while still signed in as the guest, redeemed by the new account —
+  // so nobody can claim another user's data by guessing an id.
+  migrationTickets: defineTable({
+    token: v.string(),
+    fromUserId: v.id("users"),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_token", ["token"])
+    .index("by_fromUserId", ["fromUserId"]),
+
   // Blocked users — posts from blockedUserId are hidden from blockerId's feed.
   userBlocks: defineTable({
     blockerId: v.id("users"),

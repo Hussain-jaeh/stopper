@@ -25,7 +25,6 @@ async function ensurePermissions(): Promise<boolean> {
       allowAlert: true,
       allowSound: true,
       allowBadge: false,
-      allowAnnouncements: false,
     },
   });
   if (status === 'granted') return true;

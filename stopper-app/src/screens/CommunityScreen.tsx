@@ -15,6 +15,7 @@ import { PostComposerModal } from '../components/community/PostComposerModal';
 import { CreateCircleModal } from '../components/community/CreateCircleModal';
 import { CommentSheet } from '../components/community/CommentSheet';
 import { DashboardSkeleton } from '../components/dashboard/states';
+import { GuestGate, useGuestUpgrade } from '../auth/GuestUpgrade';
 import { colors } from '../constants/colors';
 import { spacing, radius } from '../constants/spacing';
 import { RootStackParamList } from '../navigation/TabNavigator';
@@ -36,6 +37,8 @@ export function CommunityScreen() {
   const [composerOpen, setComposerOpen] = useState(false);
   const [createCircleOpen, setCreateCircleOpen] = useState(false);
   const [commentPostId, setCommentPostId] = useState<string | null>(null);
+
+  const { isGuest } = useGuestUpgrade();
 
   const me         = useQuery(api.community.getMe);
   const feed       = useQuery(api.community.getFeed, { mode: feedMode }) as Post[] | undefined;
@@ -73,6 +76,18 @@ export function CommunityScreen() {
   };
 
   const hasJoinedCircles = circlesRaw?.some((c: any) => c.joined) ?? false;
+
+  // The community is the one account-specific part of Stopper: posts, circles
+  // and the leaderboard are tied to an identity other people can see. Everything
+  // else in the app works without registering.
+  if (isGuest) {
+    return (
+      <GuestGate
+        title="Community needs an account"
+        message="Posts, circles and the leaderboard are shared with other members, so they need an account. The rest of Stopper works without one."
+      />
+    );
+  }
 
   return (
     <>

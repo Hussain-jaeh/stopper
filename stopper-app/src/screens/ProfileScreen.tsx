@@ -11,15 +11,18 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as StoreReview from 'expo-store-review';
 import * as FileSystem from 'expo-file-system/legacy';
+import * as SecureStore from 'expo-secure-store';
+import { SUB_CACHE_KEY } from '../lib/purchases';
 import {
   Target, VenetianMask, Lock, Smartphone, Star, Share2, ShieldCheck,
-  FileText, LogOut, Trash2, PiggyBank, X,
+  FileText, LogOut, Trash2, PiggyBank, X, UserPlus, CloudOff,
 } from 'lucide-react-native';
 
 import { api } from '../../convex/_generated/api';
 import { ProfileStackParamList } from '../navigation/TabNavigator';
 import { ProfileIdentity } from '../components/profile/ProfileIdentity';
 import { SettingsRow, SettingsGroup } from '../components/profile/SettingsRow';
+import { useGuestUpgrade } from '../auth/GuestUpgrade';
 import { DashboardSkeleton } from '../components/dashboard/states';
 import { CURRENCIES, SpendingFrequency, fmtMoney, perDay } from '../lib/money';
 import { colors } from '../constants/colors';
@@ -131,6 +134,12 @@ export function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const { signOut } = useAuthActions();
+  const { isGuest, startUpgrade } = useGuestUpgrade();
+
+  const handleSignOut = async () => {
+    await SecureStore.deleteItemAsync(SUB_CACHE_KEY).catch(() => {});
+    signOut();
+  };
 
   const p = useQuery(api.profile.getProfile);
   const recoveryProfile = useQuery(api.profiles.getProfile);
@@ -204,7 +213,7 @@ export function ProfileScreen() {
       { text: 'Delete', style: 'destructive', onPress: () =>
         Alert.alert('Are you sure?', 'All your data will be gone forever.', [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Yes, delete everything', style: 'destructive', onPress: async () => { await deleteAccount(); signOut(); } },
+          { text: 'Yes, delete everything', style: 'destructive', onPress: async () => { await deleteAccount(); handleSignOut(); } },
         ]),
       },
     ]);
@@ -257,9 +266,30 @@ export function ProfileScreen() {
                 <SettingsRow Icon={FileText} tint="#9B6FE4" label="Terms of Service" external onPress={() => Linking.openURL('https://stopper.mintlify.io/legal/terms')} last />
               </SettingsGroup>
 
-              <SettingsGroup>
-                <SettingsRow Icon={LogOut} tint={colors.textMuted} label="Sign out" danger onPress={() => signOut()} />
-                <SettingsRow Icon={Trash2} tint={colors.textMuted} label="Delete account" danger external onPress={handleDeleteAccount} last />
+              <SettingsGroup title="Account">
+                {isGuest ? (
+                  <>
+                    <SettingsRow
+                      Icon={CloudOff}
+                      tint={colors.textMuted}
+                      label="Using Stopper without an account"
+                      value="On this device only"
+                    />
+                    <SettingsRow
+                      Icon={UserPlus}
+                      tint={colors.jade500}
+                      label="Create an account"
+                      chevron
+                      onPress={startUpgrade}
+                    />
+                    <SettingsRow Icon={Trash2} tint={colors.textMuted} label="Delete my data" danger external onPress={handleDeleteAccount} last />
+                  </>
+                ) : (
+                  <>
+                    <SettingsRow Icon={LogOut} tint={colors.textMuted} label="Sign out" danger onPress={handleSignOut} />
+                    <SettingsRow Icon={Trash2} tint={colors.textMuted} label="Delete account" danger external onPress={handleDeleteAccount} last />
+                  </>
+                )}
               </SettingsGroup>
             </View>
 

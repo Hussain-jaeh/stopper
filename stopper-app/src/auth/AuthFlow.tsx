@@ -19,9 +19,14 @@ type AuthRoute = 'landing' | 'signup' | 'verify' | 'signin' | 'forgot' | 'succes
 interface AuthFlowProps {
   initialRoute?: AuthRoute;
   onAuthenticated?: (state: AuthState) => void;
+  /**
+   * When false, the guest option is hidden — used when an existing guest is
+   * upgrading to a real account and only registration makes sense.
+   */
+  allowGuest?: boolean;
 }
 
-export function AuthFlow({ initialRoute = 'landing', onAuthenticated }: AuthFlowProps) {
+export function AuthFlow({ initialRoute = 'landing', onAuthenticated, allowGuest = true }: AuthFlowProps) {
   const { signIn } = useAuthActions();
   const [route, setRoute] = useState<AuthRoute>(initialRoute);
   const [state, setStateRaw] = useState<AuthState>(freshAuthState);
@@ -127,6 +132,18 @@ export function AuthFlow({ initialRoute = 'landing', onAuthenticated }: AuthFlow
     }
   });
 
+  // Guest mode: an anonymous session, no personal information collected.
+  // Everything except the community works; the user can register later from
+  // Profile > Create an account without losing anything.
+  const handleContinueAsGuest = () => withLoading(async () => {
+    try {
+      await signIn('anonymous');
+      onAuthenticated?.(state);
+    } catch (e: any) {
+      Alert.alert('Could not continue', e?.message ?? 'Please try again.');
+    }
+  });
+
   const handleReset = async () => {
     setResetError(undefined);
     await withLoading(async () => {
@@ -148,6 +165,7 @@ export function AuthFlow({ initialRoute = 'landing', onAuthenticated }: AuthFlow
             onGoogle={handleGoogle}
             onEmail={() => go('signup')}
             onSignIn={() => go('signin')}
+            onContinueAsGuest={allowGuest ? handleContinueAsGuest : undefined}
             loading={loading}
           />
         </View>

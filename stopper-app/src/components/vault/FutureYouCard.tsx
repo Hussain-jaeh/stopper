@@ -15,8 +15,7 @@ export type Recording = {
   day: number;          // recovery day when recorded
   date: string;         // display date, e.g. "Jul 10, 2026"
   duration: string;     // "0:48"
-  videoUri?: string;    // storage URL
-  thumbUri?: string;   
+  thumbUri?: string;    // storage URL for the cover frame
 };
 
 type Props = {

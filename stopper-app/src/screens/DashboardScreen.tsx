@@ -96,7 +96,7 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
         <FutureYouCard
           latest={latestRecording ?? undefined}
           onRecord={() => navigation.navigate('VaultRecord')}
-          onWatch={(r: Recording) => navigation.navigate('VaultPlay', { uri: r.videoUri ?? '', title: r.title, day: r.day })}
+          onWatch={(r: Recording) => navigation.navigate('VaultPlay', { recordingId: r.id, title: r.title, day: r.day })}
           onViewAll={() => navigation.navigate('Vault')}
           index={5}
         />

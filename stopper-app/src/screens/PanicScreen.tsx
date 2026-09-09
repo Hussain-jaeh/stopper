@@ -51,7 +51,7 @@ export function PanicScreen() {
           latest={latest as any}
           onWatch={() => {
             setStep('intro');
-            navigation.navigate('VaultPlay', { uri: latest.videoUri ?? '', title: latest.title, day: latest.day });
+            navigation.navigate('VaultPlay', { recordingId: latest.id, title: latest.title, day: latest.day });
           }}
           onSkip={() => setStep('intro')}
         />

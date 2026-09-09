@@ -35,7 +35,7 @@ export function VaultScreen() {
   const renderItem = ({ item, index }: { item: Recording; index: number }) => (
     <Animated.View entering={FadeInDown.delay(index * 70).duration(500)} style={styles.row}>
       <VaultThumb day={item.day} thumbUri={item.thumbUri} size={62} radius={12}
-        onPress={() => navigation.navigate('VaultPlay', { uri: item.videoUri ?? '', title: item.title, day: item.day })} />
+        onPress={() => navigation.navigate('VaultPlay', { recordingId: item.id, title: item.title, day: item.day })} />
       <View style={{ flex: 1, minWidth: 0 }}>
         {editingId === item.id ? (
           <TextInput

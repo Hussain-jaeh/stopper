@@ -1,5 +1,6 @@
 import { convexAuth, createAccount, retrieveAccount } from "@convex-dev/auth/server";
 import { Password } from "@convex-dev/auth/providers/Password";
+import { Anonymous } from "@convex-dev/auth/providers/Anonymous";
 import { ConvexCredentials } from "@convex-dev/auth/providers/ConvexCredentials";
 import Google from "@auth/core/providers/google";
 import * as jose from "jose";
@@ -25,6 +26,11 @@ async function verifyAppleIdentityToken(identityToken: string) {
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
     Password,
+
+    // Guest mode. Lets someone use Stopper and purchase a subscription without
+    // handing over any personal information — registration stays optional and
+    // can be completed later from Profile > Create an account.
+    Anonymous({ profile: () => ({ isAnonymous: true as const }) }),
 
     Google({
       clientId: process.env.AUTH_GOOGLE_ID ?? "",
