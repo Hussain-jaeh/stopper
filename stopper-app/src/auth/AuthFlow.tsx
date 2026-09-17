@@ -24,9 +24,15 @@ interface AuthFlowProps {
    * upgrading to a real account and only registration makes sense.
    */
   allowGuest?: boolean;
+  /**
+   * Back out without registering. Present only when this flow was entered
+   * from inside the app (the upgrade path) — a guest who changes their mind
+   * must be able to return to what they were doing.
+   */
+  onCancel?: () => void;
 }
 
-export function AuthFlow({ initialRoute = 'landing', onAuthenticated, allowGuest = true }: AuthFlowProps) {
+export function AuthFlow({ initialRoute = 'landing', onAuthenticated, allowGuest = true, onCancel }: AuthFlowProps) {
   const { signIn } = useAuthActions();
   const [route, setRoute] = useState<AuthRoute>(initialRoute);
   const [state, setStateRaw] = useState<AuthState>(freshAuthState);
@@ -166,6 +172,7 @@ export function AuthFlow({ initialRoute = 'landing', onAuthenticated, allowGuest
             onEmail={() => go('signup')}
             onSignIn={() => go('signin')}
             onContinueAsGuest={allowGuest ? handleContinueAsGuest : undefined}
+            onCancel={onCancel}
             loading={loading}
           />
         </View>

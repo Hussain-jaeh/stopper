@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ShieldCheck, Mail } from 'lucide-react-native';
+import { ShieldCheck, Mail, X } from 'lucide-react-native';
 import { PrimaryButton, Wordmark, DotTexture } from '../../components/primitives';
 import { SocialButton } from '../components/SocialButton';
 import { OrDivider } from '../components/OrDivider';
@@ -18,6 +18,8 @@ interface Props {
    * full-width button of equal weight to the sign-up options, not a hidden link.
    */
   onContinueAsGuest?: () => void;
+  /** Shown only when this screen was opened from inside the app. */
+  onCancel?: () => void;
   loading?: boolean;
 }
 
@@ -27,13 +29,27 @@ export function AuthLandingScreen({
   onEmail,
   onSignIn,
   onContinueAsGuest,
+  onCancel,
   loading,
 }: Props) {
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 10 }]}>
       <DotTexture />
-      <View style={styles.top}><Wordmark size={26} /></View>
+      <View style={styles.top}>
+        {onCancel && (
+          <Pressable
+            onPress={onCancel}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+            hitSlop={12}
+            style={styles.close}
+          >
+            <X size={18} color={colors.fgMuted} />
+          </Pressable>
+        )}
+        <Wordmark size={26} />
+      </View>
 
       <View style={styles.hero}>
         <ShieldCheck size={50} color={colors.jade400} strokeWidth={2} />
@@ -63,7 +79,7 @@ export function AuthLandingScreen({
             >
               <Text style={styles.guestLabel}>Continue without an account</Text>
             </Pressable>
-            <Text style={styles.guestNote}>Everything stays on this device until you sign up.</Text>
+            <Text style={styles.guestNote}>No email, no password, nothing personal asked.</Text>
           </>
         )}
 
@@ -79,7 +95,13 @@ export function AuthLandingScreen({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 24, paddingBottom: 26 },
-  top: { alignItems: 'center', paddingTop: 10 },
+  top: { alignItems: 'center', paddingTop: 10, justifyContent: 'center' },
+  close: {
+    position: 'absolute', left: 0, top: 4,
+    width: 36, height: 36, borderRadius: 18,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
   hero: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   h1: { fontFamily: fonts.display, fontWeight: '800', fontSize: 30, color: colors.white, letterSpacing: -0.3, marginTop: 20 },
   sub: { fontFamily: fonts.ui, fontSize: 16, color: colors.fgMuted, lineHeight: 23, textAlign: 'center', marginTop: 12, maxWidth: 300 },

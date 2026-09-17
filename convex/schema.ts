@@ -18,6 +18,10 @@ export default defineSchema({
     anonymous: v.optional(v.boolean()),
     appLockEnabled: v.optional(v.boolean()),
     avatarStorageId: v.optional(v.id("_storage")),
+    // Ids of the one-time "create an account" offers already shown. Lives on
+    // userProfiles so it follows the doc that redeemMigrationTicket moves —
+    // a guest who registers is never re-prompted.
+    accountPromptsSeen: v.optional(v.array(v.string())),
   }).index("by_userId", ["userId"]),
 
   // Recovery profile — quit date, addiction type, reasons.

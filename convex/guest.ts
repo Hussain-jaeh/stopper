@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { requireAuth } from "./lib/auth";
@@ -147,5 +147,110 @@ export const redeemMigrationTicket = mutation({
     await ctx.db.delete(fromUserId);
 
     return { migrated: true };
+  },
+});
+
+/**
+ * Retires anonymous accounts that were created and never used — the residue of
+ * people who opened Stopper once and deleted it. Every first launch now mints
+ * a user row, so without this the table grows with empties forever.
+ *
+ * Deliberately conservative. An anonymous user who has been tracking for
+ * months without registering is the most committed kind of user, not garbage,
+ * so a row survives if it has ANY trace of use: an onboarding profile, a
+ * recovery profile, a check-in, a relapse, or a vault recording.
+ *
+ * Ships with `dryRun` defaulted on: it reports what it would remove without
+ * removing anything. Flip the cron to { dryRun: false } once the logged counts
+ * look right.
+ */
+export const sweepAbandonedGuests = internalMutation({
+  args: { dryRun: v.optional(v.boolean()), olderThanDays: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const dryRun = args.dryRun ?? true;
+    const cutoff = Date.now() - (args.olderThanDays ?? 30) * 24 * 60 * 60 * 1000;
+
+    const candidates = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("isAnonymous"), true))
+      .take(500);
+
+    let swept = 0;
+    let kept = 0;
+
+    for (const user of candidates) {
+      if (user._creationTime > cutoff) { kept++; continue; }
+
+      const [userProfile, recovery, checkIn, relapse, recording] = await Promise.all([
+        ctx.db.query("userProfiles").withIndex("by_userId", (q) => q.eq("userId", user._id)).first(),
+        ctx.db.query("profiles").withIndex("by_userId", (q) => q.eq("userId", user._id)).first(),
+        ctx.db.query("checkIns").withIndex("by_userId", (q) => q.eq("userId", user._id)).first(),
+        ctx.db.query("relapses").withIndex("by_userId", (q) => q.eq("userId", user._id)).first(),
+        ctx.db.query("recordings").withIndex("by_userId_createdAt", (q) => q.eq("userId", user._id)).first(),
+      ]);
+
+      if (userProfile || recovery || checkIn || relapse || recording) { kept++; continue; }
+
+      swept++;
+      if (dryRun) continue;
+
+      const [accounts, sessions] = await Promise.all([
+        ctx.db.query("authAccounts").withIndex("userIdAndProvider", (q) => q.eq("userId", user._id)).collect(),
+        ctx.db.query("authSessions").withIndex("userId", (q) => q.eq("userId", user._id)).collect(),
+      ]);
+
+      for (const session of sessions) {
+        const tokens = await ctx.db
+          .query("authRefreshTokens")
+          .withIndex("sessionId", (q) => q.eq("sessionId", session._id))
+          .collect();
+        await Promise.all(tokens.map((t) => ctx.db.delete(t._id)));
+      }
+
+      await Promise.all([
+        ...accounts.map((a) => ctx.db.delete(a._id)),
+        ...sessions.map((s) => ctx.db.delete(s._id)),
+      ]);
+      await ctx.db.delete(user._id);
+    }
+
+    console.log(
+      `[sweepAbandonedGuests] dryRun=${dryRun} scanned=${candidates.length} ` +
+      `${dryRun ? "would remove" : "removed"}=${swept} kept=${kept}`,
+    );
+    return { dryRun, scanned: candidates.length, swept, kept };
+  },
+});
+
+/**
+ * Fire-once gate for the "create an account" offers.
+ *
+ * Returns true at most once per prompt id, and only for someone who has not
+ * registered — there is nothing to offer an account holder. Being a mutation
+ * makes the "once" guarantee transactional, the same way
+ * vault.claimMilestonePrompt does.
+ *
+ * Claim only at the moment you can actually show the prompt: claiming burns
+ * it whether or not anything is rendered.
+ */
+export const claimAccountPrompt = mutation({
+  args: { prompt: v.string() },
+  handler: async (ctx, { prompt }) => {
+    const userId = await requireAuth(ctx);
+
+    const user = await ctx.db.get(userId);
+    if (!user?.isAnonymous) return false;
+
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (!profile) return false;
+
+    const seen = profile.accountPromptsSeen ?? [];
+    if (seen.includes(prompt)) return false;
+
+    await ctx.db.patch(profile._id, { accountPromptsSeen: [...seen, prompt] });
+    return true;
   },
 });

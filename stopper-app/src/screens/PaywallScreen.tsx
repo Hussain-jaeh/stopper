@@ -11,6 +11,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { PlanOption } from '../components/paywall/PlanOption';
 import { RCPlan, mapPackages, SUB_CACHE_KEY } from '../lib/purchases';
+import { markManualSignOut } from '../lib/session';
 import { useGuestUpgrade } from '../auth/GuestUpgrade';
 import { colors, gradients, spacing, shadows } from '../theme/tokens';
 
@@ -87,6 +88,7 @@ export function PaywallScreen({ onPurchase }: Props) {
   // the paywall isn't a dead end the user can only escape by force-quitting.
   const handleExit = () => {
     const leave = async () => {
+      await markManualSignOut();
       await SecureStore.deleteItemAsync(SUB_CACHE_KEY).catch(() => {});
       signOut();
     };

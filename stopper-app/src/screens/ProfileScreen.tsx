@@ -13,6 +13,7 @@ import * as StoreReview from 'expo-store-review';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as SecureStore from 'expo-secure-store';
 import { SUB_CACHE_KEY } from '../lib/purchases';
+import { markManualSignOut } from '../lib/session';
 import {
   Target, VenetianMask, Lock, Smartphone, Star, Share2, ShieldCheck,
   FileText, LogOut, Trash2, PiggyBank, X, UserPlus, CloudOff,
@@ -137,6 +138,9 @@ export function ProfileScreen() {
   const { isGuest, startUpgrade } = useGuestUpgrade();
 
   const handleSignOut = async () => {
+    // Marks this as a deliberate exit so the next launch shows the auth screen
+    // instead of quietly minting a fresh guest account.
+    await markManualSignOut();
     await SecureStore.deleteItemAsync(SUB_CACHE_KEY).catch(() => {});
     signOut();
   };
@@ -272,8 +276,8 @@ export function ProfileScreen() {
                     <SettingsRow
                       Icon={CloudOff}
                       tint={colors.textMuted}
-                      label="Using Stopper without an account"
-                      value="On this device only"
+                      label="No account yet"
+                      value="Tied to this phone"
                     />
                     <SettingsRow
                       Icon={UserPlus}

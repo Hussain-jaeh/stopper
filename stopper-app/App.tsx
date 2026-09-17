@@ -16,13 +16,14 @@ import {
   PlusJakartaSans_700Bold,
   PlusJakartaSans_800ExtraBold,
 } from '@expo-google-fonts/plus-jakarta-sans';
-import { ConvexAuthProvider, useConvexAuth } from '@convex-dev/auth/react';
+import { ConvexAuthProvider, useConvexAuth, useAuthActions } from '@convex-dev/auth/react';
 import { ConvexReactClient, useQuery, useMutation } from 'convex/react';
 import * as SecureStore from 'expo-secure-store';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import Purchases from 'react-native-purchases';
 import { initPurchases, SUB_CACHE_KEY } from './src/lib/purchases';
+import { clearAuthIntent, isFirstEverLaunch } from './src/lib/session';
 import { scheduleMilestoneNotifications, scheduleReminder } from './src/notifications/reminders';
 import { AuthFlow } from './src/auth/AuthFlow';
 import { GuestUpgradeProvider } from './src/auth/GuestUpgrade';
@@ -64,9 +65,26 @@ Notifications.setNotificationHandler({
   }),
 });
 
-const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!, {
-  unsavedChangesWarning: false,
-});
+/*
+ * Anything that throws at module scope dies before React mounts, so the error
+ * boundary never sees it and the app simply freezes on the native launch
+ * screen with no message. Capture the failure instead and render it.
+ */
+let convex: ConvexReactClient | null = null;
+let bootError: string | null = null;
+try {
+  const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL;
+  if (!convexUrl) {
+    throw new Error(
+      'EXPO_PUBLIC_CONVEX_URL is not set. Metro did not pick up .env.local — ' +
+      'restart it with: npx expo start -c',
+    );
+  }
+  convex = new ConvexReactClient(convexUrl, { unsavedChangesWarning: false });
+} catch (e) {
+  bootError = e instanceof Error ? e.message : String(e);
+  console.error('[boot] Startup failed before React mounted.', e);
+}
 
 const secureStorage = {
   getItem: SecureStore.getItemAsync,
@@ -115,6 +133,15 @@ export default function App() {
     if (fontsLoaded) ExpoSplash.hideAsync().catch(() => {});
   }, [fontsLoaded]);
 
+  // Safety net: the native splash is hidden only once fonts resolve, so a font
+  // that never loads leaves the app frozen on the launch screen with no way
+  // out. Hide it regardless after a few seconds — a wrong typeface is a far
+  // better failure than an app that appears not to start.
+  useEffect(() => {
+    const t = setTimeout(() => { ExpoSplash.hideAsync().catch(() => {}); }, 3000);
+    return () => clearTimeout(t);
+  }, []);
+
   useEffect(() => {
     if (bootDone && minDone) setShowSplash(false);
   }, [bootDone, minDone]);
@@ -128,6 +155,18 @@ export default function App() {
   // ConvexAuthProvider + NavigationContainer wrap everything so auth and
   // profile queries start the moment fonts are ready, running in parallel
   // with the splash animation rather than after it.
+  if (bootError || !convex) {
+    ExpoSplash.hideAsync().catch(() => {});
+    return (
+      <SafeAreaProvider>
+        <View style={styles.bootError}>
+          <Text style={styles.bootErrorTitle}>Stopper could not start</Text>
+          <Text style={styles.bootErrorBody}>{bootError ?? 'Unknown startup error.'}</Text>
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <ConvexAuthProvider client={convex} storage={secureStorage}>
@@ -192,6 +231,7 @@ function useAppLock() {
 
 function AppContent({ onBootDone }: { onBootDone: () => void }) {
   const { isLoading, isAuthenticated } = useConvexAuth();
+  const { signIn } = useAuthActions();
   const profile = useQuery(api.users.getMyProfile);
   const recoveryProfile = useQuery(api.profiles.getProfile);
   const { locked, authenticate } = useAppLock();
@@ -201,6 +241,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
   const redeemMigrationTicket = useMutation(api.guest.redeemMigrationTicket);
   const migrationTicket = useRef<string | null>(null);
   const upgradingRef = useRef(false);
+  const guestBootstrapRef = useRef(false);
   const [phase, setPhase] = useState<Phase>('loading');
   const bootDoneRef = useRef(false);
   const rcCheckedRef = useRef(false);
@@ -223,14 +264,46 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
     scheduleReminder().catch(e => console.warn('[notifications] reminder scheduling failed', e));
   }, [phase, recoveryProfile, profile?.remindersOn]);
 
+  const bootstrapGuestSession = useCallback(async () => {
+    if (!(await isFirstEverLaunch())) {
+      console.log('[auth] Existing install — showing the auth screen rather than creating a guest.');
+      setPhase('auth');
+      markBoot();
+      return;
+    }
+    try {
+      console.log('[auth] First launch — creating an anonymous session.');
+      await signIn('anonymous');
+      // isAuthenticated flips, the routing effect re-runs, and the user lands
+      // in onboarding with no profile yet.
+    } catch (e) {
+      // No connection, or the deployment has no anonymous provider. Fall back
+      // to the auth screen rather than leaving the user on a spinner; its
+      // guest button retries this same call.
+      console.warn('[auth] Anonymous sign-in failed, falling back to the auth screen.', e);
+      setPhase('auth');
+      markBoot();
+    }
+  }, [signIn, markBoot]);
+
   useEffect(() => {
     if (isLoading) return;
     // A guest registering swaps one session for another; don't bounce them back
     // to the landing screen mid-flow.
     if (upgradingRef.current) return;
     if (!isAuthenticated) {
-      setPhase('auth');
-      markBoot();
+      // Nobody is asked to register to start using Stopper. A brand-new
+      // install gets an anonymous account and goes straight to onboarding;
+      // registration stays available, and stays optional, from Profile.
+      // Anyone who signed out deliberately, or whose bootstrap failed, still
+      // gets the auth screen.
+      if (guestBootstrapRef.current) {
+        setPhase('auth');
+        markBoot();
+        return;
+      }
+      guestBootstrapRef.current = true;
+      void bootstrapGuestSession();
       return;
     }
     if (profile === undefined) return;
@@ -300,9 +373,10 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
         .catch(() => setPhase('paywall')) // Unverified: paywall, with Restore available
         .finally(markBoot);
     });
-  }, [isLoading, isAuthenticated, profile]);
+  }, [isLoading, isAuthenticated, profile, bootstrapGuestSession]);
 
   const handleAuthenticated = useCallback((authState?: AuthState) => {
+    void clearAuthIntent();
     if (authState?.displayName) appleDisplayName.current = authState.displayName;
     if (profile === undefined) { setPhase('loading'); return; }
     setPhase(profile?.onboardingComplete ? 'loading' : 'onboarding');
@@ -366,6 +440,15 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
     setPhase('upgrade');
   }, [issueMigrationTicket]);
 
+  // Backing out of the upgrade. Without this the guest is stranded on the auth
+  // screen: it has no navigation of its own, and upgradingRef short-circuits
+  // the routing effect, so force-quitting was the only way back.
+  const handleCancelUpgrade = useCallback(() => {
+    migrationTicket.current = null;
+    upgradingRef.current = false;
+    setPhase('app');
+  }, []);
+
   // Registration finished — move the guest's data onto the new account.
   const handleUpgraded = useCallback(async () => {
     const token = migrationTicket.current;
@@ -389,7 +472,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
   } else if (phase === 'paywall') {
     content = <PaywallScreen onPurchase={handlePurchase} />;
   } else if (phase === 'upgrade') {
-    content = <AuthFlow allowGuest={false} onAuthenticated={handleUpgraded} />;
+    content = <AuthFlow allowGuest={false} onAuthenticated={handleUpgraded} onCancel={handleCancelUpgrade} />;
   } else if (phase === 'app') {
     content = <TabNavigator onStartOnboarding={() => setPhase('onboarding')} />;
   } else {
@@ -411,6 +494,12 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  bootError: {
+    flex: 1, backgroundColor: colors.bg, alignItems: 'center',
+    justifyContent: 'center', padding: 32, gap: 12,
+  },
+  bootErrorTitle: { color: colors.white, fontSize: 17, fontWeight: '800', textAlign: 'center' },
+  bootErrorBody: { color: '#f87171', fontSize: 13, textAlign: 'center', lineHeight: 19 },
   root: {
     flex: 1,
     backgroundColor: colors.bg,
