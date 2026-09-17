@@ -61,9 +61,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#064634",
+          "backgroundColor": "#0A6348",
           "image": "./assets/splash-icon.png",
-          "imageWidth": 120
+          "imageWidth": 104
         }
       ],
       "expo-asset",
@@ -75,7 +75,8 @@
         }
       ],
       "expo-video",
-      "expo-sharing"
+      "expo-sharing",
+      "./plugins/withPodDeploymentTarget"
     ],
     "extra": {
       "eas": {
