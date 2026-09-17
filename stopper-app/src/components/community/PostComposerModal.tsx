@@ -212,7 +212,8 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
             </Pressable>
           </View>
 
-          <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
+          <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag">
             <View style={styles.compose}>
               <Avatar handle={myHandle} tint={colors.jade500} size={42} />
               <TextInput

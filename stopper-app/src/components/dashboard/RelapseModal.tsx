@@ -63,7 +63,8 @@ export function RelapseModal({ visible, onClose, onSubmit }: Props) {
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag">
             <Text style={styles.sectionLabel}>What triggered it?</Text>
             <View style={styles.triggerGrid}>
               {TRIGGERS.map((t) => {

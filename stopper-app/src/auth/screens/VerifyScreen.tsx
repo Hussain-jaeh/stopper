@@ -32,7 +32,7 @@ export function VerifyScreen({ state, setState, onBack, onVerified, loading, err
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 10 }]}>
       <DotTexture />
-      <View style={styles.header}><CircleBack onBack={onBack} /></View>
+      <View style={styles.header}><CircleBack onBack={onBack} insetTop={false} /></View>
       <View style={styles.intro}>
         <Text style={styles.h1}>Check your inbox</Text>
         <Text style={styles.sub}>

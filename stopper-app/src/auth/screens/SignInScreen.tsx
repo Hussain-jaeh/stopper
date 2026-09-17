@@ -39,10 +39,11 @@ export function SignInScreen({ state, setState, onBack, onSignedIn, onForgot, on
       <ScrollView
         contentContainerStyle={[styles.screen, { paddingTop: insets.top + 10 }]}
         keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
       >
         <DotTexture />
-        <View style={styles.header}><CircleBack onBack={onBack} /></View>
+        <View style={styles.header}><CircleBack onBack={onBack} insetTop={false} /></View>
         <View style={styles.intro}>
           <Text style={styles.h1}>Welcome back</Text>
           <Text style={styles.sub}>Pick up right where you left off.</Text>

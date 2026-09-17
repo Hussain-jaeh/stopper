@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { TopBar, StopperTextInput, Chip, PrimaryButton } from '../../components/primitives';
+import { DismissKeyboard, TopBar, StopperTextInput, Chip, PrimaryButton } from '../../components/primitives';
 import { AGES } from '../data';
 import { OnboardingState } from '../state';
 import { colors, fonts } from '../../theme/tokens';
@@ -15,7 +15,7 @@ interface ProfileScreenProps {
 
 export function ProfileScreen({ pct, onBack, onNext, state, setState }: ProfileScreenProps) {
   return (
-    <View style={styles.screen}>
+    <DismissKeyboard style={styles.screen}>
       <TopBar pct={pct} onBack={onBack} />
       <View style={styles.header}>
         <Text style={styles.title}>Finally</Text>
@@ -44,7 +44,7 @@ export function ProfileScreen({ pct, onBack, onNext, state, setState }: ProfileS
           Build my plan
         </PrimaryButton>
       </View>
-    </View>
+    </DismissKeyboard>
   );
 }
 

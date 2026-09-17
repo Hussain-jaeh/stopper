@@ -65,6 +65,7 @@ function HabitCostSheet({ visible, initial, onClose, onSave }: {
           style={{ flex: 1 }}
           contentContainerStyle={[styles.sheet, { paddingBottom: insets.bottom + 24 }]}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.sheetHead}>

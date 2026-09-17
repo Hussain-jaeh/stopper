@@ -74,6 +74,7 @@ export function CommentSheet({ postId, onClose }: Props) {
               style={{ flex: 1 }}
               contentContainerStyle={styles.list}
               keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
               renderItem={({ item }) => (
                 <View style={styles.comment}>
                   <Avatar handle={item.handle} size={34} tint={colors.jade500} />

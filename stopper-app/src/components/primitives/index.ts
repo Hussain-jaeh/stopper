@@ -2,6 +2,7 @@ export { PrimaryButton } from './PrimaryButton';
 export { SecondaryButton } from './SecondaryButton';
 export { SkipLink } from './SkipLink';
 export { TopBar, CircleBack } from './TopBar';
+export { DismissKeyboard } from './DismissKeyboard';
 export { MultiRow } from './MultiRow';
 export { SelectRow } from './SelectRow';
 export { GoalRow } from './GoalRow';

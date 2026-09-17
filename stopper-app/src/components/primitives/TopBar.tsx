@@ -59,12 +59,22 @@ export function TopBar({ pct, onBack }: TopBarProps) {
 
 interface CircleBackProps {
   onBack?: () => void;
+  /**
+   * Set false when the parent already applies a safe-area inset — the four
+   * auth screens do, and applying it in both places pushes the button down
+   * twice.
+   */
+  insetTop?: boolean;
 }
 
-export function CircleBack({ onBack }: CircleBackProps) {
+export function CircleBack({ onBack, insetTop = true }: CircleBackProps) {
   const insets = useSafeAreaInsets();
   return (
-    <Pressable onPress={onBack} style={[styles.circleBack, { marginTop: insets.top }]} hitSlop={12}>
+    <Pressable
+      onPress={onBack}
+      style={[styles.circleBack, insetTop && { marginTop: insets.top }]}
+      hitSlop={12}
+    >
       <ChevronLeft size={22} color={colors.white} strokeWidth={2} />
     </Pressable>
   );

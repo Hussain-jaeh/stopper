@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MailCheck } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PrimaryButton, DotTexture, CircleBack } from '../../components/primitives';
+import { DismissKeyboard, PrimaryButton, DotTexture, CircleBack } from '../../components/primitives';
 import { AuthField } from '../components/AuthField';
 import { AuthState, isValidEmail } from '../state';
 import { colors, fonts } from '../../theme/tokens';
@@ -23,9 +23,9 @@ export function ForgotPasswordScreen({ state, setState, onBack, onDone, onSendRe
   const emailOk = isValidEmail(state.email);
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top + 10 }]}>
+    <DismissKeyboard style={[styles.screen, { paddingTop: insets.top + 10 }]}>
       <DotTexture />
-      <View style={styles.header}><CircleBack onBack={onBack} /></View>
+      <View style={styles.header}><CircleBack onBack={onBack} insetTop={false} /></View>
 
       {!sent ? (
         <>
@@ -55,7 +55,7 @@ export function ForgotPasswordScreen({ state, setState, onBack, onDone, onSendRe
           <PrimaryButton icon={null} onPress={onDone}>Back to sign in</PrimaryButton>
         </>
       )}
-    </View>
+    </DismissKeyboard>
   );
 }
 

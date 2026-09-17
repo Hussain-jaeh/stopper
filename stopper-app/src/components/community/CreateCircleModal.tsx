@@ -77,7 +77,8 @@ export function CreateCircleModal({ visible, onClose, onSubmit }: Props) {
             </Pressable>
           </View>
 
-          <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
             <View style={styles.body}>
               {/* Name */}
               <Text style={styles.label}>Circle name</Text>

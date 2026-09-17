@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PrimaryButton, DotTexture, CircleBack } from '../../components/primitives';
+import { DismissKeyboard, PrimaryButton, DotTexture, CircleBack } from '../../components/primitives';
 import { AuthField } from '../components/AuthField';
 import { SocialButton } from '../components/SocialButton';
 import { OrDivider } from '../components/OrDivider';
@@ -28,9 +28,9 @@ export function SignUpScreen({ state, setState, onBack, onNext, onSignIn, error,
   const submit = () => (valid ? onNext() : setTouched(true));
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top + 10 }]}>
+    <DismissKeyboard style={[styles.screen, { paddingTop: insets.top + 10 }]}>
       <DotTexture />
-      <View style={styles.header}><CircleBack onBack={onBack} /></View>
+      <View style={styles.header}><CircleBack onBack={onBack} insetTop={false} /></View>
       <View style={styles.intro}>
         <Text style={styles.h1}>Create your account</Text>
         <Text style={styles.sub}>One account keeps your recovery in sync everywhere.</Text>
@@ -61,7 +61,7 @@ export function SignUpScreen({ state, setState, onBack, onNext, onSignIn, error,
           <Pressable onPress={onSignIn}><Text style={styles.link}>Sign in</Text></Pressable>
         </View>
       </View>
-    </View>
+    </DismissKeyboard>
   );
 }
 

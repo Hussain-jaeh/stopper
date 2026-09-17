@@ -62,7 +62,8 @@ export function CheckInModal({ visible, onClose, onSubmit }: Props) {
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag">
             {/* Mood */}
             <Text style={styles.sectionLabel}>Mood</Text>
             <View style={styles.moodRow}>
