@@ -7,6 +7,8 @@ import { RotateCcw, Check } from 'lucide-react-native';
 import { useMutation } from 'convex/react';
 import { useNavigation } from '@react-navigation/native';
 import { api } from '../../convex/_generated/api';
+import { AccountPrompt } from '../components/account/AccountPrompt';
+import { useGuestUpgrade } from '../auth/GuestUpgrade';
 import { colors, gradients } from '../constants/colors';
 import { shadow } from '../constants/spacing';
 import { useVideoRecorder } from '../recorder/useVideoRecorder';
@@ -20,9 +22,12 @@ export function VaultRecordScreen() {
   const navigation = useNavigation();
   const recorder = useVideoRecorder();
   const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [accountPrompt, setAccountPrompt] = useState(false);
+  const { startUpgrade } = useGuestUpgrade();
 
   const generateUploadUrl = useMutation(api.vault.generateUploadUrl);
   const saveRecording = useMutation(api.vault.saveRecording);
+  const claimAccountPrompt = useMutation(api.guest.claimAccountPrompt);
 
   const onSave = async () => {
     const clip = recorder.recording;
@@ -51,6 +56,16 @@ export function VaultRecordScreen() {
         durationSeconds: clip.durationSeconds,
       });
       setSaveState('saved');
+
+      // A vault message is the least replaceable thing in the app — it exists
+      // nowhere else. This is the one moment where offering an account is a
+      // service rather than an interruption. Claimed here because this is
+      // where it can actually be shown; a guest sees it once, ever.
+      try {
+        if (await claimAccountPrompt({ prompt: 'first-vault' })) {
+          setAccountPrompt(true);
+        }
+      } catch {}
     } catch {
       Alert.alert('Save failed', 'Your message is still here — check your connection and try again.');
       setSaveState('idle');
@@ -88,7 +103,14 @@ export function VaultRecordScreen() {
   ) : undefined;
 
   return (
-    <RecorderShell
+    <>
+      <AccountPrompt
+        visible={accountPrompt}
+        promptId="first-vault"
+        onCreateAccount={() => { setAccountPrompt(false); startUpgrade(); }}
+        onDismiss={() => setAccountPrompt(false)}
+      />
+      <RecorderShell
       recorder={recorder}
       onClose={() => navigation.goBack()}
       overlay={savingOverlay}
@@ -120,7 +142,8 @@ export function VaultRecordScreen() {
           </Pressable>
         </>
       }
-    />
+      />
+    </>
   );
 }
 

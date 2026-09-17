@@ -16,6 +16,8 @@ import { RelapseModal } from '../components/dashboard/RelapseModal';
 import { DashboardSkeleton, EmptyState } from '../components/dashboard/states';
 import { FutureYouCard, Recording } from '../components/vault/FutureYouCard';
 import { MilestoneRecordPrompt } from '../components/vault/VaultPrompts';
+import { AccountPrompt } from '../components/account/AccountPrompt';
+import { useGuestUpgrade } from '../auth/GuestUpgrade';
 import { MoneySavedCard } from '../components/money/MoneySavedCard';
 import { InviteCard } from '../components/share/InviteCard';
 import { SpendingSettings, savedTotal, fmtMoney } from '../lib/money';
@@ -29,6 +31,14 @@ type Props = {
   onStartOnboarding: () => void;
 };
 
+/**
+ * Streak days that offer an account. Deliberately disjoint from the vault
+ * milestones (7/30/90/365) — on those days the vault prompt takes the moment,
+ * so reusing them would mean this never fires. Two weeks is the first point
+ * where someone has enough history to actually mind losing it.
+ */
+const MILESTONE_DAYS = [14, 60, 180];
+
 export function DashboardScreen({ onStartOnboarding }: Props) {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
@@ -37,11 +47,14 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
   const logRelapse = useMutation(api.relapses.logRelapse);
   const latestRecording = useQuery(api.vault.latestRecording);
   const claimMilestone = useMutation(api.vault.claimMilestonePrompt);
+  const claimAccountPrompt = useMutation(api.guest.claimAccountPrompt);
+  const { startUpgrade } = useGuestUpgrade();
 
   const [refreshing, setRefreshing] = useState(false);
   const [checkInVisible, setCheckInVisible] = useState(false);
   const [relapseVisible, setRelapseVisible] = useState(false);
   const [milestoneDay, setMilestoneDay] = useState<number | null>(null);
+  const [accountPromptDay, setAccountPromptDay] = useState<number | null>(null);
 
   const quote = useMemo(() => QUOTES[Math.floor(Math.random() * QUOTES.length)], []);
 
@@ -53,9 +66,24 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
   const handleCheckIn = useCallback(async (mood: string, cravingLevel: number, note?: string) => {
     await checkIn({ mood, cravingLevel, note });
     const day = await claimMilestone();
-    if (day) setTimeout(() => setMilestoneDay(day), 400);
+    if (day) {
+      setTimeout(() => setMilestoneDay(day), 400);
+      return;
+    }
 
-  }, [checkIn, claimMilestone]);
+    // Only when the vault prompt hasn't taken this moment — two sheets stacked
+    // on one check-in is nagging, which is the thing we're avoiding. The claim
+    // is made only here, where it can actually be shown, so a skipped occasion
+    // isn't burnt and the offer waits for the next milestone.
+    const streak = data?.currentStreak ?? 0;
+    if (streak > 0 && MILESTONE_DAYS.includes(streak)) {
+      try {
+        if (await claimAccountPrompt({ prompt: 'streak-milestone' })) {
+          setTimeout(() => setAccountPromptDay(streak), 400);
+        }
+      } catch {}
+    }
+  }, [checkIn, claimMilestone, claimAccountPrompt, data?.currentStreak]);
 
   const handleRelapse = useCallback(async (trigger: string, note?: string) => {
     await logRelapse({ trigger, note });
@@ -153,6 +181,13 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
         visible={relapseVisible}
         onClose={() => setRelapseVisible(false)}
         onSubmit={handleRelapse}
+      />
+      <AccountPrompt
+        visible={accountPromptDay !== null && !checkInVisible}
+        promptId="streak-milestone"
+        day={accountPromptDay ?? undefined}
+        onCreateAccount={() => { setAccountPromptDay(null); startUpgrade(); }}
+        onDismiss={() => setAccountPromptDay(null)}
       />
       <MilestoneRecordPrompt
         visible={milestoneDay !== null && !checkInVisible}
