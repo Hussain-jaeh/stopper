@@ -1,13 +1,18 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Leaf, Star } from 'lucide-react-native';
 import { colors, fonts } from '../../theme/tokens';
 
 export function Laurel({ size = 26 }: { size?: number }) {
   return (
-    <View style={styles.laurelRow}>
-      <Text style={{ fontSize: size }}>🌿</Text>
-      <Text style={{ color: colors.meshYellow, fontSize: size * 0.82, letterSpacing: 2 }}>★★★★★</Text>
-      <Text style={{ fontSize: size }}>🌿</Text>
+    <View style={styles.laurelRow} accessibilityRole="image" accessibilityLabel="Rated five stars">
+      <Leaf size={size} color={colors.meshYellow} style={{ transform: [{ scaleX: -1 }] }} />
+      <View style={styles.starRow}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Star key={i} size={size * 0.62} color={colors.meshYellow} fill={colors.meshYellow} strokeWidth={1.5} />
+        ))}
+      </View>
+      <Leaf size={size} color={colors.meshYellow} />
     </View>
   );
 }
@@ -47,6 +52,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  starRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
   },
   pressRow: {
     flexDirection: 'row',

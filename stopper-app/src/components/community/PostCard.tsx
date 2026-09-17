@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Image, Alert } from 'react-native';
+import { Sticker } from '../stickers/Sticker';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { HeartHandshake, MessageCircle, Play, MoreHorizontal } from 'lucide-react-native';
 import { Avatar } from './Avatar';
@@ -90,7 +91,7 @@ export function PostCard({ post, index, onCheer, onOpen, onPlayVideo, onReport, 
               </View>
               <Text style={styles.meta}>{post.circle ? `${post.circle} · ` : ''}{post.time}</Text>
             </View>
-            {milestone && <Text style={{ fontSize: 22 }}>🎉</Text>}
+            {milestone && <Sticker name="goalConfidence" size={26} />}
           </Pressable>
           {!post.isMe && (
             <Pressable onPress={handleMore} hitSlop={8} accessibilityLabel="More options">
