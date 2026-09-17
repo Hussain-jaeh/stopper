@@ -41,7 +41,7 @@ export function FrequencyScreen({ pct, onBack, onNext, state, setState }: Freque
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 22 },
   header: { paddingTop: 22, alignItems: 'center' },
-  title: { fontFamily: fonts.display, fontWeight: '800', fontSize: 28, color: colors.white, letterSpacing: -0.3, textAlign: 'center' },
+  title: { fontFamily: fonts.display, fontSize: 28, color: colors.white, letterSpacing: -0.3, textAlign: 'center' },
   list: { flex: 1, gap: 12, marginTop: 28 },
   cta: { paddingTop: 10 },
 });

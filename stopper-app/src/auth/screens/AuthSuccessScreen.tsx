@@ -40,11 +40,11 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.3)',
     alignItems: 'center', justifyContent: 'center',
   },
-  h1: { fontFamily: fonts.display, fontWeight: '800', fontSize: 32, color: colors.white, marginTop: 22 },
+  h1: { fontFamily: fonts.display, fontSize: 32, color: colors.white, marginTop: 22 },
   sub: { fontFamily: fonts.ui, fontSize: 16, color: 'rgba(255,255,255,0.85)', lineHeight: 23, textAlign: 'center', marginTop: 12, maxWidth: 280 },
   cta: {
     height: 58, borderRadius: 32, backgroundColor: colors.white,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9,
   },
-  ctaLabel: { fontFamily: fonts.ui, fontSize: 17, fontWeight: '700', color: colors.black },
+  ctaLabel: { fontFamily: fonts.uiBold, fontSize: 17, color: colors.black },
 });

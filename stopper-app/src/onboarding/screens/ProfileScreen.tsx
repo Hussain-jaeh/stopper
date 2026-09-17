@@ -51,8 +51,8 @@ export function ProfileScreen({ pct, onBack, onNext, state, setState }: ProfileS
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 22 },
   header: { paddingTop: 26, alignItems: 'center' },
-  title: { fontFamily: fonts.display, fontWeight: '800', fontSize: 28, color: colors.white, letterSpacing: -0.3, textAlign: 'center' },
-  prompt: { fontFamily: fonts.ui, fontSize: 20, fontWeight: '500', color: colors.fgMuted, textAlign: 'center', marginTop: 18, lineHeight: 26 },
+  title: { fontFamily: fonts.display, fontSize: 28, color: colors.white, letterSpacing: -0.3, textAlign: 'center' },
+  prompt: { fontFamily: fonts.uiMedium, fontSize: 20, color: colors.fgMuted, textAlign: 'center', marginTop: 18, lineHeight: 26 },
   optional: { fontFamily: fonts.ui, fontSize: 13.5, color: colors.fgFaint, textAlign: 'center', marginTop: 10, lineHeight: 19 },
   form: { marginTop: 30, gap: 22 },
   ageLabel: { fontFamily: fonts.ui, fontSize: 15, color: colors.fgMuted, marginBottom: 10 },

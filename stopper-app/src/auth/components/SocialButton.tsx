@@ -37,9 +37,8 @@ const styles = StyleSheet.create({
     left: 22,
   },
   label: {
-    fontFamily: fonts.ui,
+    fontFamily: fonts.uiBold,
     fontSize: 16,
-    fontWeight: '700',
     color: colors.black,
   },
 });

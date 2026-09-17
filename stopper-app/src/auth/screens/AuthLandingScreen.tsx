@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accentGlowSoft,
   },
   guestGroup: { gap: 11 },
-  h1: { fontFamily: fonts.display, fontWeight: '800', fontSize: 30, color: colors.white, letterSpacing: -0.3, marginTop: 20 },
+  h1: { fontFamily: fonts.display, fontSize: 30, color: colors.white, letterSpacing: -0.3, marginTop: 20 },
   sub: { fontFamily: fonts.ui, fontSize: 16, color: colors.fgMuted, lineHeight: 23, textAlign: 'center', marginTop: 12, maxWidth: 300 },
   actions: { gap: 11 },
   guestBtn: {
@@ -172,10 +172,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   guestBtnPressed: { opacity: 0.6, backgroundColor: 'rgba(255,255,255,0.09)' },
-  guestLabel: { fontFamily: fonts.ui, fontSize: 16, fontWeight: '700', color: colors.white },
+  guestLabel: { fontFamily: fonts.uiBold, fontSize: 16, color: colors.white },
   guestNote: { fontFamily: fonts.ui, fontSize: 12.5, color: colors.fgFaint, textAlign: 'center', marginTop: -3 },
   signinRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 8 },
   muted: { fontFamily: fonts.ui, fontSize: 14.5, color: colors.fgMuted },
-  link: { fontFamily: fonts.ui, fontSize: 14.5, color: colors.jade300, fontWeight: '700' },
+  link: { fontFamily: fonts.uiBold, fontSize: 14.5, color: colors.jade300 },
   legal: { fontFamily: fonts.ui, fontSize: 11.5, color: colors.fgFaint, textAlign: 'center', lineHeight: 17, marginTop: 6, marginHorizontal: 10 },
 });

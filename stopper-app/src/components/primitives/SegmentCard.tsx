@@ -72,9 +72,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.06)',
   },
   title: {
-    fontFamily: fonts.ui,
+    fontFamily: fonts.uiBold,
     fontSize: fontSizes.button,
-    fontWeight: '700',
     color: colors.white,
   },
   sub: {

@@ -32,9 +32,8 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   label: {
-    fontFamily: fonts.ui,
+    fontFamily: fonts.uiBold,
     fontSize: fontSizes.button,
-    fontWeight: '700',
     color: colors.black,
   },
   circle: {

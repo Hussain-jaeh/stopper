@@ -69,7 +69,6 @@ const styles = StyleSheet.create({
   },
   headline: {
     fontFamily: fonts.display,
-    fontWeight: '800',
     fontSize: 44,
     letterSpacing: -1,
     color: colors.white,
@@ -90,10 +89,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   alreadyHave: {
-    fontFamily: fonts.ui,
+    fontFamily: fonts.uiSemibold,
     fontSize: 15,
     color: colors.white,
-    fontWeight: '600',
     textAlign: 'center',
   },
   legal: {

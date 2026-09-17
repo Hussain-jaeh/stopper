@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   screen: { flexGrow: 1, backgroundColor: colors.bg, paddingHorizontal: 24, paddingBottom: 26 },
   header: { paddingVertical: 4 },
   intro: { paddingTop: 10 },
-  h1: { fontFamily: fonts.display, fontWeight: '800', fontSize: 30, color: colors.white, letterSpacing: -0.3 },
+  h1: { fontFamily: fonts.display, fontSize: 30, color: colors.white, letterSpacing: -0.3 },
   sub: { fontFamily: fonts.ui, fontSize: 16, color: colors.fgMuted, lineHeight: 23, marginTop: 12 },
   form: { marginTop: 26, gap: 16 },
   forgot: { alignSelf: 'flex-end' },
@@ -88,5 +88,5 @@ const styles = StyleSheet.create({
   socialRow: { flexDirection: 'column', gap: 12
     
    },
-  link: { fontFamily: fonts.ui, fontSize: 14.5, color: colors.jade300, fontWeight: '700' },
+  link: { fontFamily: fonts.uiBold, fontSize: 14.5, color: colors.jade300 },
 });

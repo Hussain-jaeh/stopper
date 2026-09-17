@@ -63,9 +63,8 @@ const styles = StyleSheet.create({
     gap: 9,
   },
   label: {
-    fontFamily: fonts.ui,
+    fontFamily: fonts.uiSemibold,
     fontSize: fontSizes.button,
-    fontWeight: '600',
     letterSpacing: 0.16,
     color: colors.white,
   },

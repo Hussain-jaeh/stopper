@@ -55,7 +55,7 @@ export function NotificationsScreen({ onBack, onNext, setState }: NotificationsS
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 22 },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6 },
-  title: { fontFamily: fonts.display, fontWeight: '800', fontSize: 28, color: colors.white, letterSpacing: -0.3, marginTop: 18, textAlign: 'center' },
+  title: { fontFamily: fonts.display, fontSize: 28, color: colors.white, letterSpacing: -0.3, marginTop: 18, textAlign: 'center' },
   subtitle: { fontFamily: fonts.ui, fontSize: 16, color: colors.fgMuted, lineHeight: 22, textAlign: 'center', marginHorizontal: 20, marginTop: 12 },
   cta: { alignItems: 'center', gap: 6, paddingTop: 10 },
 });

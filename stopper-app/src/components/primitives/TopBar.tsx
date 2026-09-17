@@ -112,9 +112,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   langText: {
-    fontFamily: fonts.ui,
+    fontFamily: fonts.uiSemibold,
     fontSize: 13,
-    fontWeight: '600',
     color: colors.white,
   },
   circleBack: {

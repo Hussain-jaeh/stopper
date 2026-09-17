@@ -89,9 +89,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   label: {
-    fontFamily: fonts.ui,
+    fontFamily: fonts.uiSemibold,
     fontSize: fontSizes.body,
-    fontWeight: '600',
     color: colors.white,
   },
   sub: {

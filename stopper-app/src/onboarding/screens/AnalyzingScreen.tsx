@@ -54,6 +54,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
   content: { alignItems: 'center', gap: 30, zIndex: 1 },
   textBlock: { alignItems: 'center' },
-  title: { fontFamily: fonts.display, fontWeight: '800', fontSize: 24, color: colors.white, textAlign: 'center' },
+  title: { fontFamily: fonts.display, fontSize: 24, color: colors.white, textAlign: 'center' },
   msg: { fontFamily: fonts.ui, fontSize: 16, color: colors.jade300, textAlign: 'center', marginTop: 12, minHeight: 22 },
 });

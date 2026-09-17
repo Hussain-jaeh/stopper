@@ -21,9 +21,8 @@ const styles = StyleSheet.create({
     padding: 18,
   },
   text: {
-    fontFamily: fonts.ui,
+    fontFamily: fonts.uiBold,
     fontSize: fontSizes.body,
-    fontWeight: '700',
     color: colors.white,
     lineHeight: 22,
   },

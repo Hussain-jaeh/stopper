@@ -47,7 +47,6 @@ const styles = StyleSheet.create({
   },
   initials: {
     fontFamily: fonts.display,
-    fontWeight: '800',
     fontSize: 16,
     color: colors.white,
   },
@@ -61,8 +60,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   name: {
-    fontFamily: fonts.ui,
-    fontWeight: '700',
+    fontFamily: fonts.uiBold,
     fontSize: 15,
     color: colors.white,
   },
@@ -74,8 +72,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   cardTitle: {
-    fontFamily: fonts.ui,
-    fontWeight: '700',
+    fontFamily: fonts.uiBold,
     fontSize: 15.5,
     color: colors.white,
     marginBottom: 6,

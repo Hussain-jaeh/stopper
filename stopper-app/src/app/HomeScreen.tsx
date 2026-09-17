@@ -44,7 +44,6 @@ const styles = StyleSheet.create({
   headline: {
     fontFamily: fonts.display,
     fontSize: 44,
-    fontWeight: '800',
     letterSpacing: -1,
     color: colors.white,
   },
@@ -61,9 +60,8 @@ const styles = StyleSheet.create({
     borderColor: colors.borderStrong,
   },
   signOutText: {
-    fontFamily: fonts.ui,
+    fontFamily: fonts.uiSemibold,
     fontSize: 15,
-    fontWeight: '600',
     color: colors.fgMuted,
   },
 });

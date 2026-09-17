@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 24, paddingBottom: 26 },
   header: { paddingVertical: 4 },
   intro: { paddingTop: 10 },
-  h1: { fontFamily: fonts.display, fontWeight: '800', fontSize: 30, color: colors.white, letterSpacing: -0.3 },
+  h1: { fontFamily: fonts.display, fontSize: 30, color: colors.white, letterSpacing: -0.3 },
   sub: { fontFamily: fonts.ui, fontSize: 16, color: colors.fgMuted, lineHeight: 23, marginTop: 12 },
   strong: { color: colors.white, fontWeight: '600' },
   form: { marginTop: 26, gap: 12 },

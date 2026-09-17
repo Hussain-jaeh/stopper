@@ -89,9 +89,8 @@ const styles = StyleSheet.create({
     borderColor: colors.borderPill,
   },
   label: {
-    fontFamily: fonts.ui,
+    fontFamily: fonts.uiMedium,
     fontSize: fontSizes.body,
-    fontWeight: '500',
     color: colors.white,
   },
   labelBold: {

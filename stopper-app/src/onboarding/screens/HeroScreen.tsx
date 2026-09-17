@@ -84,7 +84,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fonts.display,
-    fontWeight: '800',
     fontSize: 30,
     color: colors.white,
     textAlign: 'center',

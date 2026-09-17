@@ -63,7 +63,6 @@ const styles = StyleSheet.create({
   },
   labelText: {
     fontFamily: fonts.display,
-    fontWeight: '800',
     color: colors.white,
     lineHeight: undefined,
   },

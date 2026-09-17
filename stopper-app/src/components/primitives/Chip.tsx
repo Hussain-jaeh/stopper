@@ -33,9 +33,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   label: {
-    fontFamily: fonts.ui,
+    fontFamily: fonts.uiMedium,
     fontSize: fontSizes.body,
-    fontWeight: '500',
     color: colors.white,
   },
   labelActive: {

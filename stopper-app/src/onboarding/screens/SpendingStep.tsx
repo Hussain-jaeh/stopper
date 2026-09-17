@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   curTxt: { color: colors.white, fontWeight: '600', fontSize: 15 },
   amtBox: { flex: 1, flexDirection: 'row', alignItems: 'center', height: 60, borderRadius: 14, backgroundColor: colors.surface1, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 16, gap: 6 },
   amtSym: { color: colors.textMuted, fontSize: 20, fontWeight: '600' },
-  amtInput: { flex: 1, color: colors.white, fontFamily: fonts.display, fontWeight: '800', fontSize: 24 },
+  amtInput: { flex: 1, color: colors.white, fontFamily: fonts.display, fontSize: 24 },
   segment: { flexDirection: 'row', gap: 8, backgroundColor: colors.surface1, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 4, marginTop: 12 },
   segItem: { flex: 1, height: 44, borderRadius: 11, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   segTxt: { fontSize: 14, fontWeight: '700' },

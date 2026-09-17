@@ -59,9 +59,23 @@ export const gradients = {
   coral: ['#FF6B4A', '#FF8A6B'] as const,
 } as const;
 
+/**
+ * Weight-specific family names, matching the files App.tsx actually registers.
+ *
+ * These used to be two bare families ('BricolageGrotesque', 'PlusJakartaSans'),
+ * which resolve to the 800 and 400 files respectively. Any style pairing one of
+ * them with a fontWeight got iOS's synthetic bolding instead of the real cut, so
+ * the same nominal weight rendered differently depending on which token layer a
+ * screen imported from. Name the cut; never set fontWeight alongside it.
+ */
 export const fonts = {
-  display: 'BricolageGrotesque',
-  ui: 'PlusJakartaSans',
+  display: 'BricolageGrotesque_800ExtraBold',
+  displayBold: 'BricolageGrotesque_700Bold',
+  ui: 'PlusJakartaSans_400Regular',
+  uiMedium: 'PlusJakartaSans_500Medium',
+  uiSemibold: 'PlusJakartaSans_600SemiBold',
+  uiBold: 'PlusJakartaSans_700Bold',
+  uiExtrabold: 'PlusJakartaSans_800ExtraBold',
 } as const;
 
 export const fontSizes = {

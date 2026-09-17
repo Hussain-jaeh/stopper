@@ -54,7 +54,6 @@ const styles = StyleSheet.create({
   },
   headline: {
     fontFamily: fonts.display,
-    fontWeight: '800',
     fontSize: 34,
     color: colors.white,
     lineHeight: 38,
@@ -85,9 +84,8 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   ctaText: {
-    fontFamily: fonts.ui,
+    fontFamily: fonts.uiBold,
     fontSize: 17,
-    fontWeight: '700',
     color: colors.black,
   },
 });

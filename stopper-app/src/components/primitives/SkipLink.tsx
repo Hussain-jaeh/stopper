@@ -21,9 +21,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   label: {
-    fontFamily: fonts.ui,
+    fontFamily: fonts.uiMedium,
     fontSize: fontSizes.body,
-    fontWeight: '500',
     color: colors.fgMuted,
   },
 });

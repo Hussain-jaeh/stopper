@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 22 },
   header: { paddingTop: 6, alignItems: 'center' },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  title: { fontFamily: fonts.display, fontWeight: '800', fontSize: 28, color: colors.white, letterSpacing: -0.3 },
+  title: { fontFamily: fonts.display, fontSize: 28, color: colors.white, letterSpacing: -0.3 },
   checkCircle: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   subtitle: { fontFamily: fonts.ui, fontSize: 16, color: colors.fgMuted, lineHeight: 22, marginTop: 12 },
   card: { backgroundColor: colors.surface1, borderWidth: 1, borderColor: colors.border, borderRadius: 22, padding: 24, paddingHorizontal: 18, marginTop: 16, marginBottom: 8 },

@@ -106,7 +106,6 @@ const styles = StyleSheet.create({
   },
   monogramText: {
     fontFamily: fonts.display,
-    fontWeight: '800',
     fontSize: 13,
     letterSpacing: -0.4,
     color: colors.white,
@@ -140,7 +139,6 @@ const styles = StyleSheet.create({
   },
   daysText: {
     fontFamily: fonts.display,
-    fontWeight: '800',
     fontSize: 56,
     lineHeight: 64,
     color: colors.white,
@@ -162,8 +160,7 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   sinceDate: {
-    fontFamily: fonts.display,
-    fontWeight: '700',
+    fontFamily: fonts.displayBold,
     fontSize: 18,
     color: colors.white,
   },

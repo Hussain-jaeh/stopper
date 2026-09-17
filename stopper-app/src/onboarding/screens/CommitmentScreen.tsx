@@ -61,7 +61,7 @@ export function CommitmentScreen({ onBack, onNext, state, setState }: Commitment
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 22 },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  title: { fontFamily: fonts.display, fontWeight: '800', fontSize: 28, color: colors.white, letterSpacing: -0.3, marginTop: 12, textAlign: 'center' },
+  title: { fontFamily: fonts.display, fontSize: 28, color: colors.white, letterSpacing: -0.3, marginTop: 12, textAlign: 'center' },
   subtitle: { fontFamily: fonts.ui, fontSize: 16, color: colors.fgMuted, lineHeight: 22, textAlign: 'center', marginHorizontal: 18, marginTop: 12 },
   pledgeCard: {
     marginTop: 24, width: '100%', borderRadius: 20, padding: 26,
@@ -69,13 +69,13 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: colors.border,
   },
   pledgeCardSigned: { borderColor: colors.jade500 },
-  pledgeText: { fontFamily: fonts.display, fontWeight: '700', fontSize: 19, color: colors.white, lineHeight: 26 },
+  pledgeText: { fontFamily: fonts.displayBold, fontSize: 19, color: colors.white, lineHeight: 26 },
   signLine: {
     marginTop: 22, borderTopWidth: 1, borderTopColor: colors.borderStrong,
     borderStyle: 'dashed', paddingTop: 16, minHeight: 40,
     alignItems: 'center', justifyContent: 'center',
   },
-  signature: { fontFamily: fonts.display, fontStyle: 'italic', fontWeight: '700', fontSize: 24, color: colors.jade300 },
+  signature: { fontFamily: fonts.displayBold, fontStyle: 'italic', fontSize: 24, color: colors.jade300 },
   tapHint: { fontFamily: fonts.ui, fontSize: 13, color: colors.fgFaint },
   cta: { paddingTop: 10 },
 });

@@ -47,7 +47,7 @@ export function StreakScreen({ onBack, onNext, state }: StreakScreenProps) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 22 },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6, textAlign: 'center' },
-  title: { fontFamily: fonts.display, fontWeight: '800', fontSize: 28, color: colors.white, letterSpacing: -0.3, textAlign: 'center' },
+  title: { fontFamily: fonts.display, fontSize: 28, color: colors.white, letterSpacing: -0.3, textAlign: 'center' },
   subtitle: { fontFamily: fonts.ui, fontSize: 16, color: colors.fgMuted, textAlign: 'center', marginTop: 10, marginBottom: 26 },
   hint: { fontFamily: fonts.ui, fontSize: 16, color: colors.fgMuted, textAlign: 'center', marginTop: 28 },
   cta: { paddingTop: 12 },

@@ -54,15 +54,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   label: {
-    fontFamily: fonts.ui,
+    fontFamily: fonts.uiMedium,
     fontSize: 14,
-    fontWeight: '500',
     color: colors.white,
   },
   value: {
-    fontFamily: fonts.ui,
+    fontFamily: fonts.uiBold,
     fontSize: 14,
-    fontWeight: '700',
     color: colors.jade300,
   },
   trackBg: {

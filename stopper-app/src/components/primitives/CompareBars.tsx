@@ -85,14 +85,12 @@ const styles = StyleSheet.create({
   },
   barValue: {
     fontFamily: fonts.display,
-    fontWeight: '800',
     fontSize: 26,
     color: colors.white,
   },
   barLabel: {
-    fontFamily: fonts.ui,
+    fontFamily: fonts.uiMedium,
     fontSize: 14,
     color: colors.fgMuted,
-    fontWeight: '500',
   },
 });

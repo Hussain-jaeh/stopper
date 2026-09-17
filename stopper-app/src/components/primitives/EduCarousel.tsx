@@ -107,7 +107,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fonts.display,
-    fontWeight: '800',
     fontSize: 27,
     color: colors.white,
     textAlign: 'center',

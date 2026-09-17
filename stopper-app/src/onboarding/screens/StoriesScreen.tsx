@@ -50,7 +50,7 @@ export function StoriesScreen({ onBack, onNext }: StoriesScreenProps) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 22 },
   topBar: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4 },
-  topTitle: { flex: 1, textAlign: 'center', fontFamily: fonts.display, fontWeight: '700', fontSize: 22, color: colors.white },
+  topTitle: { flex: 1, textAlign: 'center', fontFamily: fonts.displayBold, fontSize: 22, color: colors.white },
   list: { flex: 1, zIndex: 1 },
   listContent: { gap: 20, paddingTop: 16, paddingBottom: 8 },
   cta: { paddingTop: 10 },

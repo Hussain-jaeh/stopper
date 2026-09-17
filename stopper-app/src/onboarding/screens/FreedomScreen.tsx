@@ -34,10 +34,10 @@ export function FreedomScreen({ onBack, onNext }: FreedomScreenProps) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 22 },
   content: { flex: 1, justifyContent: 'center', gap: 8 },
-  title: { fontFamily: fonts.display, fontWeight: '800', fontSize: 28, color: colors.white, letterSpacing: -0.3, textAlign: 'center' },
+  title: { fontFamily: fonts.display, fontSize: 28, color: colors.white, letterSpacing: -0.3, textAlign: 'center' },
   subtitle: { fontFamily: fonts.ui, fontSize: 16, color: colors.fgMuted, lineHeight: 22, marginTop: 10, marginBottom: 22, textAlign: 'center' },
   socialProof: { alignItems: 'center', marginTop: 26 },
-  bigNum: { fontFamily: fonts.display, fontWeight: '800', fontSize: 34, color: colors.white },
+  bigNum: { fontFamily: fonts.display, fontSize: 34, color: colors.white },
   bigNumSub: { fontFamily: fonts.ui, fontSize: 14.5, color: colors.fgMuted, marginTop: 4, textAlign: 'center' },
   cta: { paddingTop: 10 },
 });

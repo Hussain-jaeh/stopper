@@ -68,12 +68,12 @@ const styles = StyleSheet.create({
     width: 62, height: 62, borderRadius: 20, alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(45,212,168,0.12)', borderWidth: 1, borderColor: 'rgba(45,212,168,0.25)',
   },
-  title: { fontFamily: fonts.display, fontWeight: '800', fontSize: 21, color: colors.white, marginTop: 18, textAlign: 'center' },
+  title: { fontFamily: fonts.display, fontSize: 21, color: colors.white, marginTop: 18, textAlign: 'center' },
   msg: { fontFamily: fonts.ui, fontSize: 15, color: colors.fgMuted, lineHeight: 22, textAlign: 'center', marginTop: 10 },
   cta: {
     marginTop: 22, height: 50, paddingHorizontal: 28, borderRadius: radii.pill,
     backgroundColor: colors.jade500, alignItems: 'center', justifyContent: 'center',
   },
-  ctaTxt: { fontFamily: fonts.ui, fontSize: 15.5, fontWeight: '700', color: colors.white },
+  ctaTxt: { fontFamily: fonts.uiBold, fontSize: 15.5, color: colors.white },
   fine: { fontFamily: fonts.ui, fontSize: 12.5, color: colors.fgFaint, marginTop: 12, textAlign: 'center' },
 });
