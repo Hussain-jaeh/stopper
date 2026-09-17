@@ -8,7 +8,6 @@ import { api } from '../../convex/_generated/api';
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
 import { StreakCard } from '../components/dashboard/StreakCard';
 import { ProgressCard } from '../components/dashboard/ProgressCard';
-import { StatsGrid } from '../components/dashboard/StatsGrid';
 import { MotivationCard, QUOTES } from '../components/dashboard/MotivationCard';
 import { CheckInCard } from '../components/dashboard/CheckInCard';
 import { CheckInModal } from '../components/dashboard/CheckInModal';
@@ -188,19 +187,12 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
           onRelapse={() => setRelapseVisible(true)}
           index={3}
         />
-        <StatsGrid
-          longestStreak={data.longestStreak}
-          cravingAverage={data.cravingAverage}
-          totalCheckIns={data.totalCheckIns}
-          totalRelapses={data.totalRelapses}
-          index={4}
-        />
         <FutureYouCard
           latest={latestRecording ?? undefined}
           onRecord={() => navigation.navigate('VaultRecord')}
           onWatch={(r: Recording) => navigation.navigate('VaultPlay', { recordingId: r.id, title: r.title, day: r.day })}
           onViewAll={() => navigation.navigate('Vault')}
-          index={5}
+          index={4}
         />
         {hasSpending && (
           <MoneySavedCard
@@ -212,10 +204,10 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
             } as SpendingSettings}
             daysSinceQuit={data.daysSinceQuit}
             onViewInsights={() => navigation.navigate('MoneyInsights')}
-            index={6}
+            index={5}
           />
         )}
-        <MotivationCard quote={quote} index={7} />
+        <MotivationCard quote={quote} index={6} />
         <InviteCard inviteUrl={data.referralUrl ?? 'https://stopper.app'} />
       </View>
     );
