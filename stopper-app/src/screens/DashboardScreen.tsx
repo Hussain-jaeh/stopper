@@ -187,13 +187,6 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
           onRelapse={() => setRelapseVisible(true)}
           index={3}
         />
-        <FutureYouCard
-          latest={latestRecording ?? undefined}
-          onRecord={() => navigation.navigate('VaultRecord')}
-          onWatch={(r: Recording) => navigation.navigate('VaultPlay', { recordingId: r.id, title: r.title, day: r.day })}
-          onViewAll={() => navigation.navigate('Vault')}
-          index={4}
-        />
         {hasSpending && (
           <MoneySavedCard
             settings={{
@@ -204,9 +197,16 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
             } as SpendingSettings}
             daysSinceQuit={data.daysSinceQuit}
             onViewInsights={() => navigation.navigate('MoneyInsights')}
-            index={5}
+            index={4}
           />
         )}
+        <FutureYouCard
+          latest={latestRecording ?? undefined}
+          onRecord={() => navigation.navigate('VaultRecord')}
+          onWatch={(r: Recording) => navigation.navigate('VaultPlay', { recordingId: r.id, title: r.title, day: r.day })}
+          onViewAll={() => navigation.navigate('Vault')}
+          index={5}
+        />
         <MotivationCard quote={quote} index={6} />
         <InviteCard inviteUrl={data.referralUrl ?? 'https://stopper.app'} />
       </View>

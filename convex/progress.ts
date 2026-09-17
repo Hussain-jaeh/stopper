@@ -51,14 +51,28 @@ export const getProgress = query({
           )
         : 100;
 
-    // Resistance trend: last 14 check-ins, oldest → newest, scaled 0–100.
-    const recentCheckIns = await ctx.db
+    // One read serves three things below: the trend (14), the craving average
+    // (30) and the total count.
+    const allCheckIns = await ctx.db
       .query("checkIns")
       .withIndex("by_userId_createdAt", (q) => q.eq("userId", userId))
       .order("desc")
-      .take(14);
+      .take(5000);
 
-    const trendValues = [...recentCheckIns]
+    const totalCheckIns = allCheckIns.length;
+
+    const averageWindow = allCheckIns.slice(0, 30);
+    const cravingAverage =
+      averageWindow.length > 0
+        ? Math.round(
+            (averageWindow.reduce((sum, c) => sum + c.cravingLevel, 0) /
+              averageWindow.length) *
+              10,
+          ) / 10
+        : 0;
+
+    // Resistance trend: last 14 check-ins, oldest → newest, scaled 0–100.
+    const trendValues = [...allCheckIns.slice(0, 14)]
       .reverse()
       .map((c) => Math.max(5, (10 - c.cravingLevel) * 10));
 
@@ -95,6 +109,9 @@ export const getProgress = query({
       cleanDays,
       bestStreak,
       successRate,
+      cravingAverage,
+      totalCheckIns,
+      totalRelapses: relapses.length,
       trend,
       calendar: {
         monthLabel,

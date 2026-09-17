@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Flame, Trophy, Target, Lightbulb, LucideIcon } from 'lucide-react-native';
+import { Flame, Trophy, Target, Lightbulb, Activity, CircleCheckBig, RotateCcw, LucideIcon } from 'lucide-react-native';
 import { colors } from '../../constants/colors';
 import { radius } from '../../constants/spacing';
 import { type } from '../../constants/typography';
@@ -31,11 +31,26 @@ export function ProgressHeader({ range, setRange, index = 0 }: { range: Range; s
 }
 
 type StatItem = { Icon: LucideIcon; label: string; value: string; tint: string };
-export function SummaryStrip({ cleanDays, bestStreak, successRate, index = 2 }: { cleanDays: number; bestStreak: number; successRate: number; index?: number }) {
+export function SummaryStrip({
+  cleanDays, bestStreak, successRate, cravingAverage, totalCheckIns, totalRelapses, index = 2,
+}: {
+  cleanDays: number;
+  bestStreak: number;
+  successRate: number;
+  cravingAverage: number;
+  totalCheckIns: number;
+  totalRelapses: number;
+  index?: number;
+}) {
+  // Six tiles, wrapping three to a row. The bottom three moved here when the
+  // dashboard grid was removed — they existed nowhere else in the app.
   const items: StatItem[] = [
     { Icon: Flame, label: 'Current', value: `${cleanDays}d`, tint: colors.coral500 },
     { Icon: Trophy, label: 'Best', value: `${bestStreak}d`, tint: colors.gold },
     { Icon: Target, label: 'Success', value: `${successRate}%`, tint: colors.jade500 },
+    { Icon: Activity, label: 'Avg. craving', value: cravingAverage.toFixed(1), tint: colors.coral400 },
+    { Icon: CircleCheckBig, label: 'Check-ins', value: `${totalCheckIns}`, tint: colors.jade500 },
+    { Icon: RotateCcw, label: 'Relapses', value: `${totalRelapses}`, tint: colors.textMuted },
   ];
   return (
     <Animated.View entering={FadeInDown.delay(index * 80).duration(550)} style={styles.strip}>
@@ -71,8 +86,8 @@ const styles = StyleSheet.create({
   segItem: { flex: 1, height: 38, borderRadius: 11, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   segOn: { backgroundColor: colors.jade500, borderRadius: 11 },
   segTxt: { fontSize: 13, fontWeight: '700' },
-  strip: { flexDirection: 'row', gap: 12 },
-  statCard: { flex: 1, backgroundColor: colors.surface1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.card, padding: 14, gap: 8, alignItems: 'flex-start' },
+  strip: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  statCard: { flexBasis: '30%', flexGrow: 1, backgroundColor: colors.surface1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.card, padding: 14, gap: 8, alignItems: 'flex-start' },
   statIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   statVal: { ...type.h1, fontSize: 20, color: colors.white },
   statLbl: { fontSize: 12, color: colors.textMuted },

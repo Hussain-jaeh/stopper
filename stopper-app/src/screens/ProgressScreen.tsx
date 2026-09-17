@@ -18,6 +18,9 @@ type ProgressData = {
   cleanDays: number;
   bestStreak: number;
   successRate: number;
+  cravingAverage: number;
+  totalCheckIns: number;
+  totalRelapses: number;
   trend: number[];
   calendar: CalendarData;
   insight: { title: string; body: string };
@@ -60,7 +63,15 @@ export function ProgressScreen() {
       <View style={{ gap: spacing.md }}>
         <ProgressHeader range={range} setRange={setRange} index={0} />
         <MilestoneRing cleanDays={data.cleanDays} nextMilestone={nextMilestoneFor(data.cleanDays)} index={1} />
-        <SummaryStrip cleanDays={data.cleanDays} bestStreak={data.bestStreak} successRate={data.successRate} index={2} />
+        <SummaryStrip
+          cleanDays={data.cleanDays}
+          bestStreak={data.bestStreak}
+          successRate={data.successRate}
+          cravingAverage={data.cravingAverage}
+          totalCheckIns={data.totalCheckIns}
+          totalRelapses={data.totalRelapses}
+          index={2}
+        />
         <CalendarHeatmap data={data.calendar} index={3} />
         <TrendChart trend={data.trend} index={4} />
         {(() => {
