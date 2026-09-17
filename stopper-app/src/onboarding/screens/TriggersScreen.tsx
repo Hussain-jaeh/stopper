@@ -40,8 +40,9 @@ export function TriggersScreen({ pct, onBack, onNext, state, setState }: Trigger
         <Text style={styles.subtitle}>We'll help you spot these moments before they hit.</Text>
       </View>
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-        {TRIGGERS.map(t => (
+        {TRIGGERS.map((t, i) => (
           <MultiRow
+            index={i}
             key={t.id}
             icon={ICONS[t.id]}
             label={t.label}

@@ -39,8 +39,9 @@ export function ActivityScreen({ pct, onBack, onNext, state, setState }: Activit
         <Text style={styles.subtitle}>Movement is one of the fastest ways to redirect a craving.</Text>
       </View>
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-        {ACTIVITIES.map(a => (
+        {ACTIVITIES.map((a, i) => (
           <MultiRow
+            index={i}
             key={a.id}
             icon={ICONS[a.id]}
             label={a.label}

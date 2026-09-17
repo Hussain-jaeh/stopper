@@ -21,8 +21,9 @@ export function FrequencyScreen({ pct, onBack, onNext, state, setState }: Freque
         <Text style={styles.title}>How often does it affect you?</Text>
       </View>
       <View style={styles.list}>
-        {FREQS.map(f => (
+        {FREQS.map((f, i) => (
           <SelectRow
+            index={i}
             key={f}
             label={f}
             selected={state.freq === f}

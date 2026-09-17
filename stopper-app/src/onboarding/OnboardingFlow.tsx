@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
+import Animated, { FadeInRight, FadeInLeft, useReducedMotion } from 'react-native-reanimated';
 import { OnboardingState, freshState } from './state';
 
 import { SplashScreen } from './screens/SplashScreen';
@@ -56,8 +57,13 @@ export function OnboardingFlow({ startStep, onComplete, onSignIn, initialName }:
     setStateRaw(prev => ({ ...prev, ...patch }));
   }, []);
 
-  const next = () => setStep(s => s + 1);
-  const back = () => setStep(s => Math.max(0, s - 1));
+  // Which way the flow is moving, so a screen entering after Back slides from
+  // the left rather than pretending it's new material.
+  const [dir, setDir] = useState<1 | -1>(1);
+  const reduceMotion = useReducedMotion();
+
+  const next = () => { setDir(1); setStep(s => s + 1); };
+  const back = () => { setDir(-1); setStep(s => Math.max(0, s - 1)); };
   const pct = getProgress(step);
 
   const screens: Record<number, React.ReactNode> = {
@@ -106,7 +112,15 @@ export function OnboardingFlow({ startStep, onComplete, onSignIn, initialName }:
 
   return (
     <View style={styles.fill}>
-      {screens[step] ?? screens[0]}
+      <Animated.View
+        key={step}
+        style={styles.fill}
+        entering={reduceMotion
+          ? undefined
+          : (dir === 1 ? FadeInRight : FadeInLeft).duration(260)}
+      >
+        {screens[step] ?? screens[0]}
+      </Animated.View>
     </View>
   );
 }

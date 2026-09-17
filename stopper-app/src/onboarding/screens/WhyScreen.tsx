@@ -40,8 +40,9 @@ export function WhyScreen({ pct, onBack, onNext, state, setState }: WhyScreenPro
         <Text style={styles.subtitle}>Your reasons become your anchor on hard days.</Text>
       </View>
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-        {REASONS.map(r => (
+        {REASONS.map((r, i) => (
           <MultiRow
+            index={i}
             key={r.id}
             icon={ICONS[r.id]}
             label={r.label}

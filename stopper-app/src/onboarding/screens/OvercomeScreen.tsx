@@ -45,8 +45,9 @@ export function OvercomeScreen({ pct, onBack, onNext, state, setState }: Overcom
         <Text style={styles.subtitle}>Choose one or more. You can change this anytime.</Text>
       </View>
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-        {OVERCOME.map(o => (
+        {OVERCOME.map((o, i) => (
           <MultiRow
+            index={i}
             key={o.id}
             icon={ICONS[o.id]}
             label={o.label}

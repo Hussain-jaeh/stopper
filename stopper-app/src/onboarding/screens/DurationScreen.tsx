@@ -21,8 +21,9 @@ export function DurationScreen({ pct, onBack, onNext, state, setState }: Duratio
         <Text style={styles.title}>How long has {primaryHabit(state)} been a challenge?</Text>
       </View>
       <View style={styles.list}>
-        {DURATIONS.map(d => (
+        {DURATIONS.map((d, i) => (
           <SelectRow
+            index={i}
             key={d}
             label={d}
             selected={state.duration === d}

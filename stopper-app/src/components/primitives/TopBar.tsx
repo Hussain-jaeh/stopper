@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withTiming, Easing, useReducedMotion,
+} from 'react-native-reanimated';
 import { ArrowLeft, ChevronLeft } from 'lucide-react-native';
 import { colors, fonts, radii, gradients } from '../../theme/tokens';
 
@@ -10,18 +13,35 @@ interface TopBarProps {
 }
 
 export function TopBar({ pct, onBack }: TopBarProps) {
+  const target = Math.min(100, Math.max(0, pct));
+  const reduceMotion = useReducedMotion();
+  const width = useSharedValue(target);
+
+  // The bar was jumping to its new width on every step. Travelling there is
+  // the whole point of a progress bar — it's the only thing telling someone
+  // sixteen questions in that the end is getting closer.
+  useEffect(() => {
+    width.value = reduceMotion
+      ? target
+      : withTiming(target, { duration: 420, easing: Easing.out(Easing.cubic) });
+  }, [target, reduceMotion, width]);
+
+  const fill = useAnimatedStyle(() => ({ width: `${width.value}%` }));
+
   return (
     <View style={styles.row}>
       <Pressable onPress={onBack} style={styles.backBtn} hitSlop={8}>
         <ArrowLeft size={22} color={colors.fgMuted} strokeWidth={2} />
       </Pressable>
       <View style={styles.trackBg}>
-        <LinearGradient
-          colors={gradients.primary}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={[styles.trackFill, { width: `${Math.min(100, Math.max(0, pct))}%` }]}
-        />
+        <Animated.View style={[styles.trackFill, fill]}>
+          <LinearGradient
+            colors={gradients.primary}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
       </View>
       <View style={styles.langPill}>
         <Text style={styles.langText}>🇺🇸 EN</Text>

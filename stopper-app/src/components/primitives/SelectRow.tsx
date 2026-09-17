@@ -2,18 +2,43 @@ import React from 'react';
 import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Check } from 'lucide-react-native';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withTiming, withSpring, useReducedMotion, FadeInDown,
+} from 'react-native-reanimated';
 import { colors, fonts, fontSizes, radii, gradients, shadows } from '../../theme/tokens';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+/** Shared press physics for the onboarding option rows. */
+function usePressScale() {
+  const scale = useSharedValue(1);
+  const reduceMotion = useReducedMotion();
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const onPressIn = () => { if (!reduceMotion) scale.value = withTiming(0.975, { duration: 90 }); };
+  const onPressOut = () => { if (!reduceMotion) scale.value = withSpring(1, { damping: 16, stiffness: 320 }); };
+  return { style, onPressIn, onPressOut };
+}
+
 
 interface SelectRowProps {
   label: string;
   sub?: string;
   selected: boolean;
   onPress: () => void;
+  /** Position in the list — staggers the row in. */
+  index?: number;
 }
 
-export function SelectRow({ label, sub, selected, onPress }: SelectRowProps) {
+export function SelectRow({ label, sub, selected, onPress, index }: SelectRowProps) {
+  const press = usePressScale();
   return (
-    <Pressable onPress={onPress} style={styles.wrapper}>
+    <AnimatedPressable
+      onPress={onPress}
+      onPressIn={press.onPressIn}
+      onPressOut={press.onPressOut}
+      entering={index === undefined ? undefined : FadeInDown.delay(index * 45).duration(380)}
+      style={[styles.wrapper, press.style]}
+    >
       {selected ? (
         <LinearGradient
           colors={gradients.primary}
@@ -28,7 +53,7 @@ export function SelectRow({ label, sub, selected, onPress }: SelectRowProps) {
           <RowContent label={label} sub={sub} selected={false} />
         </View>
       )}
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 

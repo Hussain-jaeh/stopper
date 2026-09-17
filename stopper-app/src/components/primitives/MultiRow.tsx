@@ -1,7 +1,23 @@
 import React from 'react';
 import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { Check } from 'lucide-react-native';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withTiming, withSpring, useReducedMotion, FadeInDown,
+} from 'react-native-reanimated';
 import { colors, fonts, fontSizes, radii } from '../../theme/tokens';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+/** Shared press physics for the onboarding option rows. */
+function usePressScale() {
+  const scale = useSharedValue(1);
+  const reduceMotion = useReducedMotion();
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const onPressIn = () => { if (!reduceMotion) scale.value = withTiming(0.975, { duration: 90 }); };
+  const onPressOut = () => { if (!reduceMotion) scale.value = withSpring(1, { damping: 16, stiffness: 320 }); };
+  return { style, onPressIn, onPressOut };
+}
+
 
 interface MultiRowProps {
   icon?: React.ReactNode;
@@ -10,15 +26,22 @@ interface MultiRowProps {
   checked: boolean;
   onPress: () => void;
   tint?: string;
+  /** Position in the list — staggers the row in. */
+  index?: number;
 }
 
-export function MultiRow({ icon, label, sub, checked, onPress, tint }: MultiRowProps) {
+export function MultiRow({ icon, label, sub, checked, onPress, tint, index }: MultiRowProps) {
+  const press = usePressScale();
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
+      onPressIn={press.onPressIn}
+      onPressOut={press.onPressOut}
+      entering={index === undefined ? undefined : FadeInDown.delay(index * 45).duration(380)}
       style={[
         styles.row,
         checked && styles.rowChecked,
+        press.style,
       ]}
     >
       {icon && (
@@ -33,7 +56,7 @@ export function MultiRow({ icon, label, sub, checked, onPress, tint }: MultiRowP
       <View style={[styles.check, checked && styles.checkActive]}>
         {checked && <Check size={14} color={colors.ink900} strokeWidth={3} />}
       </View>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
