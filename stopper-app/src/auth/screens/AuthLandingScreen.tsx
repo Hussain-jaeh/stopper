@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, {
+  FadeIn, FadeInDown, Easing, useReducedMotion,
+  useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming,
+} from 'react-native-reanimated';
 import { ShieldCheck, Mail, X } from 'lucide-react-native';
 import { PrimaryButton, Wordmark, DotTexture } from '../../components/primitives';
 import { SocialButton } from '../components/SocialButton';
@@ -33,6 +37,31 @@ export function AuthLandingScreen({
   loading,
 }: Props) {
   const insets = useSafeAreaInsets();
+  const reduceMotion = useReducedMotion();
+
+  // The shield breathes. It's the brand mark and the only thing on the screen
+  // that isn't a button, so it carries the whole first impression — a still
+  // icon on a black field reads as a loading state.
+  const breathe = useSharedValue(0);
+  useEffect(() => {
+    if (reduceMotion) return;
+    breathe.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 2200, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 2200, easing: Easing.inOut(Easing.ease) }),
+      ), -1, false);
+  }, [reduceMotion, breathe]);
+
+  const shieldStyle = useAnimatedStyle(() => ({ transform: [{ scale: 1 + breathe.value * 0.045 }] }));
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: 0.35 + breathe.value * 0.4,
+    transform: [{ scale: 0.92 + breathe.value * 0.16 }],
+  }));
+
+  /** Entrance timings — one cascade down the screen, then it settles. */
+  const enter = (delay: number) =>
+    reduceMotion ? undefined : FadeInDown.delay(delay).duration(520);
+
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 10 }]}>
       <DotTexture />
@@ -48,27 +77,45 @@ export function AuthLandingScreen({
             <X size={18} color={colors.fgMuted} />
           </Pressable>
         )}
-        <Wordmark size={26} />
+        <Animated.View entering={reduceMotion ? undefined : FadeIn.duration(600)}>
+          <Wordmark size={26} />
+        </Animated.View>
       </View>
 
       <View style={styles.hero}>
-        <ShieldCheck size={50} color={colors.jade400} strokeWidth={2} />
-        <Text style={styles.h1}>Start your recovery</Text>
-        <Text style={styles.sub}>
+        <Animated.View
+          entering={reduceMotion ? undefined : FadeIn.delay(140).duration(700)}
+          style={styles.shieldWrap}
+        >
+          <Animated.View pointerEvents="none" style={[styles.shieldGlow, glowStyle]} />
+          <Animated.View style={shieldStyle}>
+            <ShieldCheck size={50} color={colors.jade400} strokeWidth={2} />
+          </Animated.View>
+        </Animated.View>
+        <Animated.Text entering={enter(260)} style={styles.h1}>Start your recovery</Animated.Text>
+        <Animated.Text entering={enter(340)} style={styles.sub}>
           You can use Stopper without an account. Sign up only if you want your
           progress backed up across devices, or to join the community.
-        </Text>
+        </Animated.Text>
       </View>
 
       <View style={styles.actions}>
-        {onApple && <SocialButton provider="apple" label="Continue with Apple" onPress={onApple} loading={loading} />}
-        <SocialButton provider="google" label="Continue with Google" onPress={onGoogle} loading={loading} />
-        <PrimaryButton icon={<Mail size={20} color={colors.white} strokeWidth={2} />} onPress={onEmail}>
-          Sign up with email
-        </PrimaryButton>
+        {onApple && (
+          <Animated.View entering={enter(460)}>
+            <SocialButton provider="apple" label="Continue with Apple" onPress={onApple} loading={loading} />
+          </Animated.View>
+        )}
+        <Animated.View entering={enter(520)}>
+          <SocialButton provider="google" label="Continue with Google" onPress={onGoogle} loading={loading} />
+        </Animated.View>
+        <Animated.View entering={enter(580)}>
+          <PrimaryButton icon={<Mail size={20} color={colors.white} strokeWidth={2} />} onPress={onEmail}>
+            Sign up with email
+          </PrimaryButton>
+        </Animated.View>
 
         {onContinueAsGuest && (
-          <>
+          <Animated.View entering={enter(660)} style={styles.guestGroup}>
             <OrDivider />
             <Pressable
               onPress={onContinueAsGuest}
@@ -80,14 +127,16 @@ export function AuthLandingScreen({
               <Text style={styles.guestLabel}>Continue without an account</Text>
             </Pressable>
             <Text style={styles.guestNote}>No email, no password, nothing personal asked.</Text>
-          </>
+          </Animated.View>
         )}
 
-        <View style={styles.signinRow}>
+        <Animated.View entering={enter(740)} style={styles.signinRow}>
           <Text style={styles.muted}>Already have an account? </Text>
           <Pressable onPress={onSignIn} hitSlop={12}><Text style={styles.link}>Sign in</Text></Pressable>
-        </View>
-        <Text style={styles.legal}>By continuing you agree to our Terms & Conditions and Privacy Policy.</Text>
+        </Animated.View>
+        <Animated.Text entering={enter(800)} style={styles.legal}>
+          By continuing you agree to our Terms &amp; Conditions and Privacy Policy.
+        </Animated.Text>
       </View>
     </View>
   );
@@ -103,6 +152,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.06)',
   },
   hero: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  shieldWrap: { alignItems: 'center', justifyContent: 'center' },
+  shieldGlow: {
+    position: 'absolute',
+    width: 104, height: 104, borderRadius: 52,
+    backgroundColor: colors.accentGlowSoft,
+  },
+  guestGroup: { gap: 11 },
   h1: { fontFamily: fonts.display, fontWeight: '800', fontSize: 30, color: colors.white, letterSpacing: -0.3, marginTop: 20 },
   sub: { fontFamily: fonts.ui, fontSize: 16, color: colors.fgMuted, lineHeight: 23, textAlign: 'center', marginTop: 12, maxWidth: 300 },
   actions: { gap: 11 },
