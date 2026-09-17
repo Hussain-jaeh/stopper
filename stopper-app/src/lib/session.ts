@@ -37,6 +37,22 @@ export async function isFirstEverLaunch(): Promise<boolean> {
   }
 }
 
+/**
+ * Makes this device look untouched, so the next launch takes the first-ever
+ * path: guest session, straight into onboarding, no auth screen.
+ *
+ * This exists because the iOS keychain survives app deletion — reinstalling
+ * does NOT reset these keys, which makes the new-user flow the one path in
+ * the app you cannot test by reinstalling. DEV ONLY; the caller guards on
+ * __DEV__ so it can't ship.
+ */
+export async function resetFirstLaunchState(): Promise<void> {
+  await Promise.all([
+    SecureStore.deleteItemAsync(AUTH_INTENT_KEY).catch(() => {}),
+    SecureStore.deleteItemAsync(SUB_CACHE_KEY).catch(() => {}),
+  ]);
+}
+
 /** Clears the manual-sign-out marker once the user is signed in again. */
 export async function clearAuthIntent(): Promise<void> {
   await SecureStore.deleteItemAsync(AUTH_INTENT_KEY).catch(() => {});

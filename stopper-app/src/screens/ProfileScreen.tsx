@@ -13,10 +13,10 @@ import * as StoreReview from 'expo-store-review';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as SecureStore from 'expo-secure-store';
 import { SUB_CACHE_KEY } from '../lib/purchases';
-import { markManualSignOut } from '../lib/session';
+import { markManualSignOut, resetFirstLaunchState } from '../lib/session';
 import {
   Target, VenetianMask, Lock, Smartphone, Star, Share2, ShieldCheck,
-  FileText, LogOut, Trash2, PiggyBank, X, UserPlus, CloudOff,
+  FileText, LogOut, Trash2, PiggyBank, X, UserPlus, CloudOff, RotateCcw,
 } from 'lucide-react-native';
 
 import { api } from '../../convex/_generated/api';
@@ -136,6 +136,29 @@ export function ProfileScreen() {
   const navigation = useNavigation<Nav>();
   const { signOut } = useAuthActions();
   const { isGuest, startUpgrade } = useGuestUpgrade();
+
+  /**
+   * Dev only. The keychain outlives app deletion, so without this the
+   * first-launch path can't be re-run on a device that has already been
+   * through it — you'd need a new simulator or a wiped one every time.
+   */
+  const handleDevReset = () => {
+    Alert.alert(
+      'Reset first-launch state?',
+      'Clears the auth-intent marker and the cached subscription flag, then signs out. The next launch will behave like a brand-new install.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            await resetFirstLaunchState();
+            signOut();
+          },
+        },
+      ],
+    );
+  };
 
   const handleSignOut = async () => {
     // Marks this as a deliberate exit so the next launch shows the auth screen
@@ -291,6 +314,15 @@ export function ProfileScreen() {
                 ) : (
                   <>
                     <SettingsRow Icon={LogOut} tint={colors.textMuted} label="Sign out" danger onPress={handleSignOut} />
+                    {__DEV__ && (
+                      <SettingsRow
+                        Icon={RotateCcw}
+                        tint={colors.gold}
+                        label="Reset first-launch state"
+                        value="DEV"
+                        onPress={handleDevReset}
+                      />
+                    )}
                     <SettingsRow Icon={Trash2} tint={colors.textMuted} label="Delete account" danger external onPress={handleDeleteAccount} last />
                   </>
                 )}
