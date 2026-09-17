@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, Easing, useReducedMotion,
@@ -13,6 +14,12 @@ interface TopBarProps {
 }
 
 export function TopBar({ pct, onBack }: TopBarProps) {
+  // Only 2 of 26 onboarding screens applied a safe-area inset, so on a 14 Pro
+  // this row rendered underneath the Dynamic Island — the bar was clipped by
+  // it and the back arrow's touch target sat in the status bar, which is why
+  // Back appeared not to work. Applied here so every screen using a TopBar is
+  // fixed at once.
+  const insets = useSafeAreaInsets();
   const target = Math.min(100, Math.max(0, pct));
   const reduceMotion = useReducedMotion();
   const width = useSharedValue(target);
@@ -29,8 +36,8 @@ export function TopBar({ pct, onBack }: TopBarProps) {
   const fill = useAnimatedStyle(() => ({ width: `${width.value}%` }));
 
   return (
-    <View style={styles.row}>
-      <Pressable onPress={onBack} style={styles.backBtn} hitSlop={8}>
+    <View style={[styles.row, { marginTop: insets.top }]}>
+      <Pressable onPress={onBack} style={styles.backBtn} hitSlop={14}>
         <ArrowLeft size={22} color={colors.fgMuted} strokeWidth={2} />
       </Pressable>
       <View style={styles.trackBg}>
@@ -55,8 +62,9 @@ interface CircleBackProps {
 }
 
 export function CircleBack({ onBack }: CircleBackProps) {
+  const insets = useSafeAreaInsets();
   return (
-    <Pressable onPress={onBack} style={styles.circleBack} hitSlop={8}>
+    <Pressable onPress={onBack} style={[styles.circleBack, { marginTop: insets.top }]} hitSlop={12}>
       <ChevronLeft size={22} color={colors.white} strokeWidth={2} />
     </Pressable>
   );

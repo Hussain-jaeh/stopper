@@ -68,6 +68,14 @@ const styles = StyleSheet.create({
   doneIcon: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.jade500, alignItems: 'center', justifyContent: 'center' },
   doneTitle: { ...type.body, fontWeight: '700', color: colors.white },
   doneSub: { ...type.label, color: colors.textMuted, marginTop: 2 },
-  relapseBtn: { alignItems: 'center', paddingVertical: 10 },
-  relapseTxt: { fontSize: 13.5, color: colors.textFaint, textDecorationLine: 'underline' },
+  relapseBtn: { alignItems: 'center', paddingVertical: 12 },
+  // Was textFaint (#5A5A5A), about 2.6:1 on this card — under the 4.5:1 floor
+  // and hard to find. Logging a slip is an honest action the app should make
+  // easy to reach, not something to hide.
+  relapseTxt: {
+    fontSize: 14.5,
+    fontWeight: '600',
+    color: colors.textMuted,
+    textDecorationLine: 'underline',
+  },
 });
