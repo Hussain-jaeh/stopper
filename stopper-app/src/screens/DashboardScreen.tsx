@@ -1,8 +1,8 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { ScrollView, View, StyleSheet, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation } from 'convex/react';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api } from '../../convex/_generated/api';
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
@@ -21,6 +21,7 @@ import { useGuestUpgrade } from '../auth/GuestUpgrade';
 import { MoneySavedCard } from '../components/money/MoneySavedCard';
 import { InviteCard } from '../components/share/InviteCard';
 import { SpendingSettings, savedTotal, fmtMoney } from '../lib/money';
+import { ShareData, isShareMilestone } from '../lib/shareCard';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
 import { RootStackParamList } from '../navigation/TabNavigator';
@@ -42,12 +43,14 @@ const MILESTONE_DAYS = [14, 60, 180];
 export function DashboardScreen({ onStartOnboarding }: Props) {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
+  const isFocused = useIsFocused();
   const data = useQuery(api.dashboard.getDashboard);
   const checkIn = useMutation(api.checkins.createCheckIn);
   const logRelapse = useMutation(api.relapses.logRelapse);
   const latestRecording = useQuery(api.vault.latestRecording);
   const claimMilestone = useMutation(api.vault.claimMilestonePrompt);
   const claimAccountPrompt = useMutation(api.guest.claimAccountPrompt);
+  const markShareMilestone = useMutation(api.profiles.markShareMilestoneCelebrated);
   const { startUpgrade } = useGuestUpgrade();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -55,8 +58,74 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
   const [relapseVisible, setRelapseVisible] = useState(false);
   const [milestoneDay, setMilestoneDay] = useState<number | null>(null);
   const [accountPromptDay, setAccountPromptDay] = useState<number | null>(null);
+  // Guards a double-fire while the mutation is in flight — the query hasn't
+  // re-run with the new lastCelebratedShareDay yet, so the effect would
+  // otherwise trip a second time on the next render.
+  const celebrating = useRef(false);
 
   const quote = useMemo(() => QUOTES[Math.floor(Math.random() * QUOTES.length)], []);
+
+  /** The payload both share entry points hand to the share screens. */
+  const shareData: ShareData | null = useMemo(() => {
+    if (!data?.profile) return null;
+    const p = data.profile;
+    const currency = p.currency ?? 'USD';
+    const money = p.spendingAmount
+      ? fmtMoney(savedTotal({
+          spendingAmount: p.spendingAmount,
+          spendingFrequency: p.spendingFrequency ?? 'monthly',
+          currency,
+          trackingEnabled: true,
+        } as SpendingSettings, data.daysSinceQuit), currency)
+      : fmtMoney(0, currency);
+    return {
+      days: data.currentStreak,
+      longest: data.longestStreak,
+      money,
+      cleanPct: data.daysSinceQuit > 0
+        ? Math.round(((data.daysSinceQuit - data.totalRelapses) / data.daysSinceQuit) * 100)
+        : 100,
+      resisted: p.resistedUrges ?? 0,
+      habit: p.addictionType,
+    };
+  }, [data]);
+
+  const openShare = useCallback(() => {
+    if (!shareData) return;
+    navigation.navigate('ShareSheet', { ...shareData, shareUrl: data?.referralUrl });
+  }, [navigation, shareData, data?.referralUrl]);
+
+  /**
+   * Auto-celebration. Fires once per milestone day: the server records the day
+   * and returns null if it has already been celebrated, so a reinstall or a
+   * second device can't replay it. Held back while any other sheet is up —
+   * a full-screen takeover landing on top of the check-in modal is the kind
+   * of thing that makes people close the app.
+   */
+  useEffect(() => {
+    const day = data?.currentStreak ?? 0;
+    if (!shareData || day <= 0 || !isShareMilestone(day)) return;
+    if (data?.lastCelebratedShareDay === day) return;
+    if (celebrating.current) return;
+    if (checkInVisible || relapseVisible || milestoneDay !== null || accountPromptDay !== null) return;
+    // Only when Home is actually on screen — the tab stays mounted in the
+    // background, and a full-screen takeover fired from another tab would
+    // come out of nowhere.
+    if (!isFocused) return;
+
+    celebrating.current = true;
+    (async () => {
+      try {
+        const claimed = await markShareMilestone({ day });
+        if (claimed !== null) {
+          navigation.navigate('MilestoneCelebration', { ...shareData, shareUrl: data?.referralUrl });
+        }
+      } catch {} finally {
+        celebrating.current = false;
+      }
+    })();
+  }, [data?.currentStreak, data?.lastCelebratedShareDay, data?.referralUrl, shareData,
+      checkInVisible, relapseVisible, milestoneDay, accountPromptDay, markShareMilestone, navigation, isFocused]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -99,7 +168,12 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
 
     return (
       <View style={{ gap: spacing.gap + 6 }}>
-        <DashboardHeader name={data.name ?? 'there'} avatarUri={data.avatarUri} index={0} />
+        <DashboardHeader
+          name={data.name ?? 'there'}
+          avatarUri={data.avatarUri}
+          onShare={shareData ? openShare : undefined}
+          index={0}
+        />
         <StreakCard
           current={data.currentStreak}
           daysSinceQuit={data.daysSinceQuit}
