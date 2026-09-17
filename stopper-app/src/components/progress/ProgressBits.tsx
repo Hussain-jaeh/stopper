@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Flame, Trophy, Target, Lightbulb, LucideIcon } from 'lucide-react-native';
-import { colors, gradients } from '../../constants/colors';
+import { colors } from '../../constants/colors';
 import { radius } from '../../constants/spacing';
 import { type } from '../../constants/typography';
 
@@ -13,24 +13,18 @@ export function ProgressHeader({ range, setRange, index = 0 }: { range: Range; s
   const ranges: Range[] = ['Week', 'Month', 'Year'];
   return (
     <Animated.View entering={FadeInDown.delay(index * 80).duration(550)}>
-      <View style={styles.headerRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.h1}>Your progress</Text>
-          <Text style={styles.sub}>Every clean day is a win worth seeing.</Text>
-        </View>
-        <View style={styles.segment}>
-          {ranges.map(r => {
-            const on = r === range;
-            return (
-              <Pressable key={r} onPress={() => setRange(r)} accessibilityRole="tab" accessibilityState={{ selected: on }} style={styles.segItem}>
-                {on
-                  ? <LinearGradient colors={gradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
-                  : null}
-                <Text style={[styles.segTxt, { color: on ? colors.onAccent : colors.textMuted }]}>{r}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+      <Text style={styles.h1}>Your progress</Text>
+      <Text style={styles.sub}>Every clean day is a win worth seeing.</Text>
+      <View style={styles.segment} accessibilityRole="tablist">
+        {ranges.map(r => {
+          const on = r === range;
+          return (
+            <Pressable key={r} onPress={() => setRange(r)} accessibilityRole="tab" accessibilityState={{ selected: on }} style={styles.segItem}>
+              {on ? <View style={[StyleSheet.absoluteFill, styles.segOn]} /> : null}
+              <Text style={[styles.segTxt, { color: on ? colors.onAccent : colors.textMuted }]}>{r}</Text>
+            </Pressable>
+          );
+        })}
       </View>
     </Animated.View>
   );
@@ -73,9 +67,9 @@ export function InsightCard({ title, body, index = 6 }: { title: string; body: s
 const styles = StyleSheet.create({
   h1: { ...type.h1, color: colors.white },
   sub: { ...type.label, color: colors.textMuted, marginTop: 6 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  segment: { flexDirection: 'row', gap: 5, backgroundColor: colors.surface1,  borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 4 },
-  segItem: { width: 52, height: 36, borderRadius: 11, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  segment: { flexDirection: 'row', gap: 5, backgroundColor: colors.surface1, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 4, marginTop: 18 },
+  segItem: { flex: 1, height: 38, borderRadius: 11, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  segOn: { backgroundColor: colors.jade500, borderRadius: 11 },
   segTxt: { fontSize: 13, fontWeight: '700' },
   strip: { flexDirection: 'row', gap: 12 },
   statCard: { flex: 1, backgroundColor: colors.surface1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.card, padding: 14, gap: 8, alignItems: 'flex-start' },
