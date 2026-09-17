@@ -4,6 +4,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { RotateCcw, PartyPopper } from 'lucide-react-native';
 import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
+import type { Doc } from '../../../convex/_generated/dataModel';
 import { colors } from '../../constants/colors';
 import { radius } from '../../constants/spacing';
 import { type } from '../../constants/typography';
@@ -30,7 +31,7 @@ export function RelapseHistory({ index = 7 }: { index?: number }) {
   // Still loading
   if (result === undefined) return null;
 
-  const relapses = result?.page ?? [];
+  const relapses: Doc<'relapses'>[] = result?.page ?? [];
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 80).duration(550)}>

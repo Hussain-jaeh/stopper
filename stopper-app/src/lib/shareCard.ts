@@ -4,6 +4,9 @@
 export type ShareCardType = 'streak' | 'money' | 'stats' | 'win';
 export type ShareFormat = 'story' | 'square';
 
+/** Fallback when a caller doesn't pass one — better than 'undefined' landing in someone's post. */
+export const APP_URL = 'https://stopper.mintlify.io';
+
 export type ShareData = {
   days: number;
   longest: number;

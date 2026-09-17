@@ -10,7 +10,7 @@ import { colors } from '../../constants/colors';
 import { spacing } from '../../constants/spacing';
 import { type as T } from '../../constants/typography';
 import { ShareCardView } from '../../components/share/ShareCardView';
-import { ShareData, ShareCardType, ShareFormat, FORMAT_SIZE } from '../../lib/shareCard';
+import { ShareData, ShareCardType, ShareFormat, FORMAT_SIZE, APP_URL } from '../../lib/shareCard';
 import { RootStackParamList } from '../../navigation/TabNavigator';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -29,7 +29,7 @@ const PREVIEW_H = { story: 307, square: 302 };
 export function ShareSheet() {
   const navigation = useNavigation<Nav>();
   const { params } = useRoute<Route>();
-  const { shareUrl, ...shareData } = params;
+  const { shareUrl = APP_URL, ...shareData } = params;
   const d: ShareData = shareData;
 
   const [type, setType] = useState<ShareCardType>('streak');

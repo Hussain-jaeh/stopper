@@ -11,6 +11,9 @@ import { CommunityScreen } from '../screens/CommunityScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { PlanScreen } from '../screens/PlanScreen';
 import { PanicScreen } from '../screens/PanicScreen';
+import { ShareSheet } from '../screens/share/ShareSheet';
+import { MilestoneCelebration } from '../screens/share/MilestoneCelebration';
+import type { ShareData } from '../lib/shareCard';
 
 function NativeUnavailable({ feature }: { feature: string }) {
   return (
@@ -66,6 +69,10 @@ export type RootStackParamList = {
   MoneyInsights: undefined;
   CircleDetail: { circleId: string; name: string; tint: string; iconKey: string };
   CircleChat: { circleId: string; name: string; tint: string };
+  // Both carry the full share payload: MilestoneCelebration forwards its own
+  // params straight through to ShareSheet when "Share my progress" is tapped.
+  ShareSheet: ShareData & { shareUrl?: string };
+  MilestoneCelebration: ShareData & { shareUrl?: string };
 };
 
 export type TabParamList = {
@@ -137,6 +144,16 @@ export function TabNavigator({ onStartOnboarding }: Props) {
         name="CircleChat"
         component={CircleChatScreen}
         options={{ animation: 'slide_from_right', headerShown: false }}
+      />
+      <RootStack.Screen
+        name="ShareSheet"
+        component={ShareSheet}
+        options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+      />
+      <RootStack.Screen
+        name="MilestoneCelebration"
+        component={MilestoneCelebration}
+        options={{ presentation: 'fullScreenModal', animation: 'fade' }}
       />
     </RootStack.Navigator>
   );
