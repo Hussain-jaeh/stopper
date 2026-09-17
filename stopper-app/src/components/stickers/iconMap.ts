@@ -11,7 +11,7 @@
 
 import {
   // dashboard + core
-  Trophy, PiggyBank, Target, Check, Sprout, Quote, RefreshCw, CircleCheckBig,
+  Trophy, PiggyBank, Target, Check, Sprout, Quote, RefreshCw, CircleCheckBig, Activity, RotateCcw,
   // navigation / tab bar
   House, ChartLine, LifeBuoy, Users, User,
   // onboarding — habits
@@ -56,6 +56,10 @@ export const GLYPHS = {
   growth:         [Sprout, 'jade'],
   motivation:     [Quote, 'jade'],
   retry:          [RefreshCw, 'slate'],
+  cravingAvg:     [Activity, 'coral'],
+  // Slate, not coral: the relapse count sits on the dashboard every day, and a
+  // bright warning disc next to it reads as a telling-off rather than a stat.
+  relapseCount:   [RotateCcw, 'slate'],
 
   /* ── Tab bar ───────────────────────────────────────────── */
   tabHome:        [House, 'jade'],

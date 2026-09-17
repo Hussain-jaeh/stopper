@@ -1,21 +1,37 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LucideIcon } from 'lucide-react-native';
+import { Sticker } from '../stickers/Sticker';
+import type { StickerKey } from '../stickers/iconMap';
 import { colors } from '../../constants/colors';
 import { radius } from '../../constants/spacing';
 import { type } from '../../constants/typography';
 
-type Props = { Icon: LucideIcon; label: string; value: string | number; tint: string };
+type Props = {
+  label: string;
+  value: string | number;
+  /** Preferred: renders the branded gradient disc. */
+  sticker?: StickerKey;
+  /** Fallback for callers that haven't moved over yet. */
+  Icon?: LucideIcon;
+  tint?: string;
+};
 
-export function StatCard({ Icon, label, value, tint }: Props) {
+export function StatCard({ Icon, label, value, sticker, tint }: Props) {
   return (
     <View
       style={styles.card}
       accessibilityLabel={`${label}: ${value}`}
     >
-      <View style={[styles.iconWrap, { backgroundColor: tint + '29' }]}>
-        <Icon size={20} color={tint} />
-      </View>
+      {sticker
+        ? <Sticker name={sticker} size={38} shape="squircle" />
+        : Icon
+          ? (
+            <View style={[styles.iconWrap, { backgroundColor: (tint ?? colors.jade500) + '29' }]}>
+              <Icon size={20} color={tint ?? colors.jade500} />
+            </View>
+          )
+          : null}
       <View>
         <Text style={styles.value}>{value}</Text>
         <Text style={styles.label}>{label}</Text>

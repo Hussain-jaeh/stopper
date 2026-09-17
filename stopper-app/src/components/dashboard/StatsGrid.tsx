@@ -1,8 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Trophy, Activity, CircleCheckBig, RotateCcw } from 'lucide-react-native';
 import { StatCard } from './StatCard';
-import { colors } from '../../constants/colors';
 
 type Props = {
   longestStreak: number;
@@ -16,12 +14,12 @@ export function StatsGrid({ longestStreak, cravingAverage, totalCheckIns, totalR
   return (
     <View style={{ gap: 12 }}>
       <View style={styles.row}>
-        <StatCard Icon={Trophy} label="Longest streak" value={`${longestStreak}d`} tint={colors.gold} />
-        <StatCard Icon={Activity} label="Avg. craving" value={cravingAverage.toFixed(1)} tint={colors.coral500} />
+        <StatCard sticker="bestStreak" label="Longest streak" value={`${longestStreak}d`} />
+        <StatCard sticker="cravingAvg" label="Avg. craving" value={cravingAverage.toFixed(1)} />
       </View>
       <View style={styles.row}>
-        <StatCard Icon={CircleCheckBig} label="Check-ins" value={totalCheckIns} tint={colors.jade500} />
-        <StatCard Icon={RotateCcw} label="Relapses" value={totalRelapses} tint={colors.textMuted} />
+        <StatCard sticker="checkIn" label="Check-ins" value={totalCheckIns} />
+        <StatCard sticker="relapseCount" label="Relapses" value={totalRelapses} />
       </View>
     </View>
   );

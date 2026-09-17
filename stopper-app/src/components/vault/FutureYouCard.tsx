@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Video, Play } from 'lucide-react-native';
+import { Sticker } from '../stickers/Sticker';
 import { VaultThumb } from './VaultThumb';
 import { colors, gradients } from '../../constants/colors';
 import { radius } from '../../constants/spacing';
@@ -31,7 +32,7 @@ export function FutureYouCard({ latest, onRecord, onWatch, onViewAll, index = 5 
     return (
       <Animated.View entering={FadeInDown.delay(index * 80).duration(550)} style={styles.card}>
         <View style={styles.headRow}>
-          <View style={styles.iconBadge}><Video size={21} color={colors.jade400} /></View>
+          <Sticker name="vaultRecord" tone="jade" size={44} shape="squircle" />
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>Message to Future You</Text>
             <Text style={styles.sub}>Leave a message for the you who'll need it on a hard day.</Text>
