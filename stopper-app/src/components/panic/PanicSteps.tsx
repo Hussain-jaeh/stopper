@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  X, Waves, Anchor, Footprints, GlassWater, MessageCircle, Dumbbell, Shuffle,
+  X, Waves, Anchor,
   Check, ShieldCheck, HeartHandshake,
 } from 'lucide-react-native';
 import { colors } from '../../constants/colors';
@@ -46,59 +46,6 @@ export function WhyStep({ p, onNext, onClose }: { p: PanicProfile; onNext: () =>
         </View>
       </View>
       <PanicCta onClick={onNext}>Keep going</PanicCta>
-    </View>
-  );
-}
-
-/* ---- 4 · change your state (redirect) ---- */
-const REDIRECTS = [
-  { Icon: Footprints, label: 'Take a short walk' },
-  { Icon: GlassWater, label: 'Drink a glass of water' },
-  { Icon: Dumbbell, label: 'Do 10 pushups' },
-  { Icon: MessageCircle, label: 'Message my buddy' },
-];
-
-export function RedirectStep({
-  onMadeIt, onBreakTheLoop, onClose,
-}: { onMadeIt: () => void; onBreakTheLoop: () => void; onClose: () => void }) {
-  return (
-    <View style={styles.col}>
-      <View style={styles.topClose}><CloseBtn onClose={onClose} /></View>
-      <View style={{ paddingTop: 8 }}>
-        <Text style={styles.h2}>Redirect the energy</Text>
-        <Text style={[styles.body, { textAlign: 'left', marginHorizontal: 0, marginTop: 10 }]}>
-          You don't have to act on it. Give yourself 60 seconds.
-        </Text>
-      </View>
-
-      {/*
-        Deliberately dominant rather than a fifth option in the list. Someone
-        mid-urge has the least capacity to choose, so the thing that works
-        right now, indoors, at 2am, shouldn't be one of five equals.
-      */}
-      <Pressable
-        onPress={onBreakTheLoop}
-        accessibilityRole="button"
-        style={({ pressed }) => [styles.loopCard, pressed && { opacity: 0.85 }]}
-      >
-        <View style={styles.loopIcon}><Shuffle size={22} color={colors.onAccent} /></View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.loopTitle}>Break the loop</Text>
-          <Text style={styles.loopSub}>60 seconds of something else</Text>
-        </View>
-      </Pressable>
-
-      <Text style={styles.orLabel}>OR CHANGE YOUR STATE</Text>
-
-      <View style={{ gap: 12, flex: 1 }}>
-        {REDIRECTS.map(({ Icon, label }) => (
-          <View key={label} style={styles.redirectRow}>
-            <View style={styles.redirectIcon}><Icon size={20} color={colors.jade300} /></View>
-            <Text style={styles.redirectLabel}>{label}</Text>
-          </View>
-        ))}
-      </View>
-      <PanicCta onClick={onMadeIt}>The urge is passing</PanicCta>
     </View>
   );
 }

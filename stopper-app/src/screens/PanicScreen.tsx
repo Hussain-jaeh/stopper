@@ -7,9 +7,12 @@ import { useQuery, useMutation } from 'convex/react';
 import { X } from 'lucide-react-native';
 import { api } from '../../convex/_generated/api';
 import { BreatheStep } from '../components/panic/BreatheStep';
-import { BreakTheLoopStep } from '../components/panic/BreakTheLoop';
+import { RedirectStep } from './breakloop/RedirectStep';
+import { BreakTheLoopSession } from './breakloop/BreakTheLoopSession';
+import { BreakTheLoopComplete } from './breakloop/BreakTheLoopComplete';
+import { STEER_AFTER_SESSIONS } from '../lib/breakTheLoop';
 import {
-  IntroStep, WhyStep, RedirectStep, WinStep, RelapseStep, ResetStep, PanicProfile,
+  IntroStep, WhyStep, WinStep, RelapseStep, ResetStep, PanicProfile,
 } from '../components/panic/PanicSteps';
 import { PanicCta, TextButton } from '../components/panic/PanicChrome';
 import { CravingVaultPrompt } from '../components/vault/VaultPrompts';
@@ -18,12 +21,19 @@ import { colors } from '../constants/colors';
 import { RootStackParamList } from '../navigation/TabNavigator';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
-type Step = 'vault' | 'intro' | 'breathe' | 'why' | 'redirect' | 'loop' | 'outcome' | 'win' | 'relapse' | 'reset';
+type Step = 'vault' | 'intro' | 'breathe' | 'why' | 'redirect' | 'loop' | 'loopDone' | 'outcome' | 'win' | 'relapse' | 'reset';
 
 export function PanicScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const [step, setStep] = useState<Step>('vault');
+  /**
+   * Sessions in THIS craving episode, not lifetime. The screen is a
+   * fullScreenModal, so mounting is the episode — it resets on its own.
+   * Never persisted and never displayed: a visible count is a score, which is
+   * the one thing this feature must not grow.
+   */
+  const [loopSessions, setLoopSessions] = useState(0);
 
   const p = (useQuery(api.panic.getContext) ?? {
     streak: 0, longest: 0, habit: '', reason: '',
@@ -63,16 +73,26 @@ export function PanicScreen() {
       {step === 'why' && <WhyStep p={p} onNext={() => setStep('redirect')} onClose={close} />}
       {step === 'redirect' && (
         <RedirectStep
-          onMadeIt={() => setStep('outcome')}
-          onBreakTheLoop={() => setStep('loop')}
-          onClose={close}
+          onStart={() => setStep('loop')}
+          onBack={() => setStep('why')}
+          // Picking a redirect means they're going to go and do it — the
+          // question left is how it went.
+          onPick={() => setStep('outcome')}
         />
       )}
       {step === 'loop' && (
-        <BreakTheLoopStep
-          onFinish={() => setStep('outcome')}
-          onSomethingElse={() => setStep('redirect')}
-          onClose={close}
+        <BreakTheLoopSession
+          onDone={() => { setLoopSessions(n => n + 1); setStep('loopDone'); }}
+          onExit={() => setStep('outcome')}
+        />
+      )}
+      {step === 'loopDone' && (
+        <BreakTheLoopComplete
+          variant={loopSessions >= STEER_AFTER_SESSIONS ? 'third' : 'first'}
+          onAgain={() => setStep('loop')}
+          onDone={() =>
+            setStep(loopSessions >= STEER_AFTER_SESSIONS ? 'redirect' : 'outcome')
+          }
         />
       )}
       {step === 'outcome' && <OutcomeFork onWin={onMadeIt} onSlip={() => setStep('relapse')} onClose={close} />}
