@@ -21,6 +21,7 @@ import { MoneySavedCard } from '../components/money/MoneySavedCard';
 import { InviteCard } from '../components/share/InviteCard';
 import { SpendingSettings, savedTotal, fmtMoney } from '../lib/money';
 import { ShareData, isShareMilestone } from '../lib/shareCard';
+import { syncMilestoneNotifications } from '../notifications/reminders';
 import { colors } from '../constants/colors';
 import { spacing } from '../constants/spacing';
 import { RootStackParamList } from '../navigation/TabNavigator';
@@ -61,6 +62,23 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
   // re-run with the new lastCelebratedShareDay yet, so the effect would
   // otherwise trip a second time on the next render.
   const celebrating = useRef(false);
+  /** Last streak we scheduled notifications for, so this runs on change only. */
+  const syncedStreak = useRef<number | null>(null);
+
+  /**
+   * Milestone notifications were only ever scheduled by the relapse handler,
+   * so anyone who never relapsed got none — and anyone who did got a schedule
+   * anchored to the moment they tapped "I slipped". Reconciling here, against
+   * the streak actually being displayed, is what stops a notification claiming
+   * a streak the user doesn't have.
+   */
+  useEffect(() => {
+    const streak = data?.currentStreak;
+    if (typeof streak !== 'number') return;
+    if (syncedStreak.current === streak) return;
+    syncedStreak.current = streak;
+    syncMilestoneNotifications(streak).catch(() => {});
+  }, [data?.currentStreak]);
 
   const quote = useMemo(() => QUOTES[Math.floor(Math.random() * QUOTES.length)], []);
 

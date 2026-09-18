@@ -80,39 +80,63 @@ export async function scheduleReminder(): Promise<boolean> {
 }
 
 /**
- * Schedule milestone notifications based on the user's quit date.
- * Safe to call multiple times — cancels old milestone notifications first.
+ * Keep milestone notifications in step with the streak the app is showing.
+ *
+ * Takes the CURRENT STREAK rather than a timestamp, deliberately. The previous
+ * version was handed Date.now() from the one place that called it — the relapse
+ * handler — so the schedule was anchored to the moment someone tapped "I
+ * slipped", which is unrelated to the streak on the dashboard. The two then
+ * drifted, and the app cheerfully announced "3 days strong" to someone whose
+ * streak said otherwise. Congratulating a person for a streak they have just
+ * broken is the worst thing this app can do.
+ *
+ * Deriving day 0 from the displayed streak means the two cannot disagree: the
+ * streak is counted in calendar days (daysBetween floors to startOfDay), so
+ * day 0 is simply local midnight, `streak` days ago.
+ *
+ * Calendar arithmetic via setDate, not 24-hour blocks — otherwise every DST
+ * change shifts the whole schedule by an hour and eventually across midnight.
  */
-export async function scheduleMilestoneNotifications(quitDateMs: number): Promise<void> {
+export async function syncMilestoneNotifications(currentStreak: number): Promise<void> {
   await cancelMilestoneNotifications();
 
   const granted = await ensurePermissions();
   if (!granted) return;
 
+  const day0 = new Date();
+  day0.setHours(0, 0, 0, 0);
+  day0.setDate(day0.getDate() - Math.max(0, currentStreak));
+
   const now = Date.now();
 
   for (const day of MILESTONES) {
-    const fireMs = quitDateMs + day * 24 * 60 * 60 * 1000;
-    if (fireMs <= now) continue;
-
-    const msg = MILESTONE_MESSAGES[day];
-    const fireDate = new Date(fireMs);
+    const fireDate = new Date(day0);
+    fireDate.setDate(day0.getDate() + day);
     fireDate.setHours(10, 0, 0, 0);
     if (fireDate.getTime() <= now) continue;
 
+    const msg = MILESTONE_MESSAGES[day];
     await Notifications.scheduleNotificationAsync({
       identifier: `${MILESTONE_PREFIX}${day}`,
-      content: {
-        title: msg.title,
-        body: msg.body,
-        sound: true,
-      },
+      content: { title: msg.title, body: msg.body, sound: true },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: fireDate,
       },
     }).catch(() => {});
   }
+}
+
+/**
+ * Same thing for a user with no relapse history yet — converts a quit date to
+ * a streak using the calendar-day rule the backend uses, then delegates, so
+ * there is still only one scheduling path.
+ */
+export async function syncMilestonesFromQuitDate(quitDateMs: number): Promise<void> {
+  const start = new Date(quitDateMs); start.setHours(0, 0, 0, 0);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const days = Math.max(0, Math.round((today.getTime() - start.getTime()) / 86_400_000));
+  await syncMilestoneNotifications(days);
 }
 
 export async function sendTestNotification(): Promise<boolean> {

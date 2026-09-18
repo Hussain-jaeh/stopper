@@ -24,7 +24,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import Purchases from 'react-native-purchases';
 import { initPurchases, SUB_CACHE_KEY } from './src/lib/purchases';
 import { clearAuthIntent, isFirstEverLaunch } from './src/lib/session';
-import { scheduleMilestoneNotifications, scheduleReminder } from './src/notifications/reminders';
+import { syncMilestonesFromQuitDate, scheduleReminder } from './src/notifications/reminders';
 import { AuthFlow } from './src/auth/AuthFlow';
 import { GuestUpgradeProvider } from './src/auth/GuestUpgrade';
 import { OnboardingFlow } from './src/onboarding/OnboardingFlow';
@@ -260,7 +260,11 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
     if (phase === 'loading' || phase === 'auth' || phase === 'onboarding') return;
     if (notifScheduledRef.current || !recoveryProfile) return;
     notifScheduledRef.current = true;
-    scheduleMilestoneNotifications(recoveryProfile.quitDate).catch(e => console.warn('[notifications] milestone scheduling failed', e));
+    // Milestones are NOT scheduled here any more. This effect only had
+    // profile.quitDate, which ignores every relapse — so on each launch it
+    // overwrote the post-relapse schedule with one counted from the original
+    // quit date, and the app started announcing streaks the user didn't have.
+    // DashboardScreen reconciles them against the streak actually displayed.
     scheduleReminder().catch(e => console.warn('[notifications] reminder scheduling failed', e));
   }, [phase, recoveryProfile, profile?.remindersOn]);
 
@@ -411,7 +415,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
       }),
     ]);
 
-    scheduleMilestoneNotifications(quitDate).catch(() => {});
+    syncMilestonesFromQuitDate(quitDate).catch(() => {});
     scheduleReminder().catch(() => {});
 
     if (SKIP_PAYWALL) { setPhase('app'); return; }

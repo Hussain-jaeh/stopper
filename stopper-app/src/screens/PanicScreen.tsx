@@ -13,7 +13,7 @@ import {
 } from '../components/panic/PanicSteps';
 import { PanicCta, TextButton } from '../components/panic/PanicChrome';
 import { CravingVaultPrompt } from '../components/vault/VaultPrompts';
-import { scheduleMilestoneNotifications } from '../notifications/reminders';
+import { syncMilestoneNotifications } from '../notifications/reminders';
 import { colors } from '../constants/colors';
 import { RootStackParamList } from '../navigation/TabNavigator';
 
@@ -41,7 +41,8 @@ export function PanicScreen() {
   const onMadeIt = () => { logResistedUrge(); setStep('win'); };
   const onReset = (trigger?: string) => {
     logRelapse({ trigger });
-    scheduleMilestoneNotifications(Date.now()).catch(() => {});
+    // The streak is now 0; schedule from there rather than from the clock.
+    syncMilestoneNotifications(0).catch(() => {});
     setStep('reset');
   };
 
