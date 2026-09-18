@@ -18,9 +18,12 @@ type ProgressData = {
   cleanDays: number;
   bestStreak: number;
   successRate: number;
-  cravingAverage: number;
-  totalCheckIns: number;
-  totalRelapses: number;
+  // Optional: this type is a hand-written assertion over an untyped query, so
+  // anything added server-side must be treated as possibly-absent until the
+  // deployment catches up.
+  cravingAverage?: number;
+  totalCheckIns?: number;
+  totalRelapses?: number;
   trend: number[];
   calendar: CalendarData;
   insight: { title: string; body: string };

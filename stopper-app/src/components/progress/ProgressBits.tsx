@@ -37,20 +37,29 @@ export function SummaryStrip({
   cleanDays: number;
   bestStreak: number;
   successRate: number;
-  cravingAverage: number;
-  totalCheckIns: number;
-  totalRelapses: number;
+  // Optional on purpose: ProgressData is hand-written, so TypeScript cannot
+  // check it against what getProgress actually returns. Declaring these
+  // required made the compiler vouch for fields the server might not send —
+  // and an app running against a deployment without them white-screened on
+  // cravingAverage.toFixed(). A missing field shows a dash instead.
+  cravingAverage?: number;
+  totalCheckIns?: number;
+  totalRelapses?: number;
   index?: number;
 }) {
+  const num = (n?: number) => (typeof n === 'number' && Number.isFinite(n) ? n : null);
+  const avg = num(cravingAverage);
+  const checkIns = num(totalCheckIns);
+  const relapses = num(totalRelapses);
   // Six tiles, wrapping three to a row. The bottom three moved here when the
   // dashboard grid was removed — they existed nowhere else in the app.
   const items: StatItem[] = [
     { Icon: Flame, label: 'Current', value: `${cleanDays}d`, tint: colors.coral500 },
     { Icon: Trophy, label: 'Best', value: `${bestStreak}d`, tint: colors.gold },
     { Icon: Target, label: 'Success', value: `${successRate}%`, tint: colors.jade500 },
-    { Icon: Activity, label: 'Avg. craving', value: cravingAverage.toFixed(1), tint: colors.coral400 },
-    { Icon: CircleCheckBig, label: 'Check-ins', value: `${totalCheckIns}`, tint: colors.jade500 },
-    { Icon: RotateCcw, label: 'Relapses', value: `${totalRelapses}`, tint: colors.textMuted },
+    { Icon: Activity, label: 'Avg. craving', value: avg === null ? '—' : avg.toFixed(1), tint: colors.coral400 },
+    { Icon: CircleCheckBig, label: 'Check-ins', value: checkIns === null ? '—' : `${checkIns}`, tint: colors.jade500 },
+    { Icon: RotateCcw, label: 'Relapses', value: relapses === null ? '—' : `${relapses}`, tint: colors.textMuted },
   ];
   return (
     <Animated.View entering={FadeInDown.delay(index * 80).duration(550)} style={styles.strip}>
