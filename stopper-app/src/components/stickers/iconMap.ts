@@ -11,7 +11,7 @@
 
 import {
   // dashboard + core
-  Trophy, PiggyBank, Target, Check, Sprout, Quote, RefreshCw, CircleCheckBig, Activity, RotateCcw,
+  Trophy, PiggyBank, Target, Check, Sprout, Quote, RefreshCw, CircleCheckBig, Activity, RotateCcw, Flame,
   // navigation / tab bar
   House, ChartLine, LifeBuoy, Users, User,
   // onboarding — habits
@@ -48,6 +48,10 @@ export type StickerKey = keyof typeof GLYPHS;
 /** semantic key → [glyph, default tone] */
 export const GLYPHS = {
   /* ── Dashboard ─────────────────────────────────────────── */
+  // The handoff left this out because the ANIMATED FlameSticker owns the hero
+  // treatment. A static disc at tile size needs none of that, and leaving it
+  // out was the only thing keeping the summary row off the sticker system.
+  streakFlame:    [Flame, 'coral'],
   bestStreak:     [Trophy, 'gold'],
   moneySaved:     [PiggyBank, 'gold'],
   successRate:    [Target, 'jade'],        // sole owner of Target now

@@ -2,7 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Flame, Trophy, Target, Lightbulb, Activity, CircleCheckBig, RotateCcw, LucideIcon } from 'lucide-react-native';
+import { Lightbulb, LucideIcon } from 'lucide-react-native';
+import { Sticker } from '../stickers/Sticker';
+import type { StickerKey } from '../stickers/iconMap';
 import { colors } from '../../constants/colors';
 import { radius } from '../../constants/spacing';
 import { type } from '../../constants/typography';
@@ -30,7 +32,7 @@ export function ProgressHeader({ range, setRange, index = 0 }: { range: Range; s
   );
 }
 
-type StatItem = { Icon: LucideIcon; label: string; value: string; tint: string };
+type StatItem = { sticker: StickerKey; label: string; value: string };
 export function SummaryStrip({
   cleanDays, bestStreak, successRate, cravingAverage, totalCheckIns, totalRelapses, index = 2,
 }: {
@@ -54,18 +56,18 @@ export function SummaryStrip({
   // Six tiles, wrapping three to a row. The bottom three moved here when the
   // dashboard grid was removed — they existed nowhere else in the app.
   const items: StatItem[] = [
-    { Icon: Flame, label: 'Current', value: `${cleanDays}d`, tint: colors.coral500 },
-    { Icon: Trophy, label: 'Best', value: `${bestStreak}d`, tint: colors.gold },
-    { Icon: Target, label: 'Success', value: `${successRate}%`, tint: colors.jade500 },
-    { Icon: Activity, label: 'Avg. craving', value: avg === null ? '—' : avg.toFixed(1), tint: colors.coral400 },
-    { Icon: CircleCheckBig, label: 'Check-ins', value: checkIns === null ? '—' : `${checkIns}`, tint: colors.jade500 },
-    { Icon: RotateCcw, label: 'Relapses', value: relapses === null ? '—' : `${relapses}`, tint: colors.textMuted },
+    { sticker: 'streakFlame',  label: 'Current',      value: `${cleanDays}d` },
+    { sticker: 'bestStreak',   label: 'Best',         value: `${bestStreak}d` },
+    { sticker: 'successRate',  label: 'Success',      value: `${successRate}%` },
+    { sticker: 'cravingAvg',   label: 'Avg. craving', value: avg === null ? '—' : avg.toFixed(1) },
+    { sticker: 'checkIn',      label: 'Check-ins',    value: checkIns === null ? '—' : `${checkIns}` },
+    { sticker: 'relapseCount', label: 'Relapses',     value: relapses === null ? '—' : `${relapses}` },
   ];
   return (
     <Animated.View entering={FadeInDown.delay(index * 80).duration(550)} style={styles.strip}>
-      {items.map(({ Icon, label, value, tint }) => (
+      {items.map(({ sticker, label, value }) => (
         <View key={label} style={styles.statCard}>
-          <View style={[styles.statIcon, { backgroundColor: tint + '29' }]}><Icon size={17} color={tint} /></View>
+          <Sticker name={sticker} size={32} shape="squircle" />
           <Text style={styles.statVal}>{value}</Text>
           <Text style={styles.statLbl}>{label}</Text>
         </View>
@@ -97,7 +99,6 @@ const styles = StyleSheet.create({
   segTxt: { fontSize: 13, fontWeight: '700' },
   strip: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   statCard: { flexBasis: '30%', flexGrow: 1, backgroundColor: colors.surface1, borderWidth: 1, borderColor: colors.border, borderRadius: radius.card, padding: 14, gap: 8, alignItems: 'flex-start' },
-  statIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   statVal: { ...type.h1, fontSize: 20, color: colors.white },
   statLbl: { fontSize: 12, color: colors.textMuted },
   insight: { flexDirection: 'row', gap: 14, alignItems: 'flex-start', padding: 18, borderRadius: radius.card, borderWidth: 1, borderColor: 'rgba(20,184,136,0.22)' },
