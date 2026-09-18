@@ -7,6 +7,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { X } from 'lucide-react-native';
 import { api } from '../../convex/_generated/api';
 import { BreatheStep } from '../components/panic/BreatheStep';
+import { BreakTheLoopStep } from '../components/panic/BreakTheLoop';
 import {
   IntroStep, WhyStep, RedirectStep, WinStep, RelapseStep, ResetStep, PanicProfile,
 } from '../components/panic/PanicSteps';
@@ -17,7 +18,7 @@ import { colors } from '../constants/colors';
 import { RootStackParamList } from '../navigation/TabNavigator';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
-type Step = 'vault' | 'intro' | 'breathe' | 'why' | 'redirect' | 'outcome' | 'win' | 'relapse' | 'reset';
+type Step = 'vault' | 'intro' | 'breathe' | 'why' | 'redirect' | 'loop' | 'outcome' | 'win' | 'relapse' | 'reset';
 
 export function PanicScreen() {
   const insets = useSafeAreaInsets();
@@ -59,7 +60,20 @@ export function PanicScreen() {
       {step === 'intro' && <IntroStep onStart={() => setStep('breathe')} onClose={close} />}
       {step === 'breathe' && <BreatheStep onDone={() => setStep('why')} onSkip={() => setStep('why')} />}
       {step === 'why' && <WhyStep p={p} onNext={() => setStep('redirect')} onClose={close} />}
-      {step === 'redirect' && <RedirectStep onMadeIt={() => setStep('outcome')} onClose={close} />}
+      {step === 'redirect' && (
+        <RedirectStep
+          onMadeIt={() => setStep('outcome')}
+          onBreakTheLoop={() => setStep('loop')}
+          onClose={close}
+        />
+      )}
+      {step === 'loop' && (
+        <BreakTheLoopStep
+          onFinish={() => setStep('outcome')}
+          onSomethingElse={() => setStep('redirect')}
+          onClose={close}
+        />
+      )}
       {step === 'outcome' && <OutcomeFork onWin={onMadeIt} onSlip={() => setStep('relapse')} onClose={close} />}
       {step === 'win' && <WinStep p={p} onClose={close} />}
       {step === 'relapse' && <RelapseStep onReset={onReset} onClose={close} />}

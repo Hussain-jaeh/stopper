@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  X, Waves, Anchor, Footprints, GlassWater, MessageCircle, Dumbbell,
+  X, Waves, Anchor, Footprints, GlassWater, MessageCircle, Dumbbell, Shuffle,
   Check, ShieldCheck, HeartHandshake,
 } from 'lucide-react-native';
 import { colors } from '../../constants/colors';
@@ -58,17 +58,39 @@ const REDIRECTS = [
   { Icon: MessageCircle, label: 'Message my buddy' },
 ];
 
-export function RedirectStep({ onMadeIt, onClose }: { onMadeIt: () => void; onClose: () => void }) {
+export function RedirectStep({
+  onMadeIt, onBreakTheLoop, onClose,
+}: { onMadeIt: () => void; onBreakTheLoop: () => void; onClose: () => void }) {
   return (
     <View style={styles.col}>
       <View style={styles.topClose}><CloseBtn onClose={onClose} /></View>
       <View style={{ paddingTop: 8 }}>
         <Text style={styles.h2}>Redirect the energy</Text>
         <Text style={[styles.body, { textAlign: 'left', marginHorizontal: 0, marginTop: 10 }]}>
-          Change your state — pick one and do it right now.
+          You don't have to act on it. Give yourself 60 seconds.
         </Text>
       </View>
-      <View style={{ gap: 12, marginTop: 22, flex: 1 }}>
+
+      {/*
+        Deliberately dominant rather than a fifth option in the list. Someone
+        mid-urge has the least capacity to choose, so the thing that works
+        right now, indoors, at 2am, shouldn't be one of five equals.
+      */}
+      <Pressable
+        onPress={onBreakTheLoop}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.loopCard, pressed && { opacity: 0.85 }]}
+      >
+        <View style={styles.loopIcon}><Shuffle size={22} color={colors.onAccent} /></View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.loopTitle}>Break the loop</Text>
+          <Text style={styles.loopSub}>60 seconds of something else</Text>
+        </View>
+      </Pressable>
+
+      <Text style={styles.orLabel}>OR CHANGE YOUR STATE</Text>
+
+      <View style={{ gap: 12, flex: 1 }}>
         {REDIRECTS.map(({ Icon, label }) => (
           <View key={label} style={styles.redirectRow}>
             <View style={styles.redirectIcon}><Icon size={20} color={colors.jade300} /></View>
@@ -192,6 +214,20 @@ const styles = StyleSheet.create({
   },
   streakNum: { fontFamily: 'BricolageGrotesque_800ExtraBold', fontSize: 22, color: '#FF8A6B' },
   streakSub: { fontSize: 13.5, color: colors.textMuted, marginTop: 5 },
+  loopCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: colors.jade500, borderRadius: 18, padding: 16, marginTop: 20,
+  },
+  loopIcon: {
+    width: 42, height: 42, borderRadius: 13,
+    backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center',
+  },
+  loopTitle: { fontFamily: 'BricolageGrotesque_700Bold', fontSize: 18, color: colors.onAccent },
+  loopSub: { fontSize: 13.5, color: 'rgba(4,32,26,0.72)', marginTop: 2, fontFamily: 'PlusJakartaSans_500Medium' },
+  orLabel: {
+    fontSize: 11.5, letterSpacing: 1.4, color: colors.textFaint,
+    marginTop: 22, marginBottom: 12, fontFamily: 'PlusJakartaSans_600SemiBold',
+  },
   redirectRow: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
     backgroundColor: colors.surface1, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 15,
