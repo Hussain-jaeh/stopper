@@ -83,12 +83,14 @@ const styles = StyleSheet.create({
   fill: { width: '100%', height: '100%', backgroundColor: colors.jade500 },
   step: { fontSize: 12, color: colors.textMuted, fontWeight: '700' },
   eyebrow: { fontSize: 11.5, letterSpacing: 2, fontWeight: '800', color: colors.jade300 },
-  h1: { ...T.h1, fontSize: 30, marginTop: 10, lineHeight: 32 },
+  // constants/typography carries no colours — every ...type.h1 in this app has
+  // to set one or it renders black on black.
+  h1: { ...T.h1, fontSize: 30, marginTop: 10, lineHeight: 32, color: colors.white },
   lede: { fontSize: 16.5, color: colors.textMuted, marginTop: 12, fontWeight: '500' },
   hero: { marginTop: 26, padding: 22, borderRadius: 20, borderWidth: 1.5, borderColor: 'rgba(45,212,160,0.42)', backgroundColor: 'rgba(20,184,136,0.10)' },
   heroHead: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   heroIcon: { width: 46, height: 46, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  heroTitle: { ...T.h1, fontSize: 21 },
+  heroTitle: { ...T.h1, fontSize: 21, color: colors.white },
   heroMeta: { fontSize: 13.5, color: colors.jade300, fontWeight: '600', marginTop: 2 },
   heroBody: { fontSize: 14.5, color: '#B9C4C0', lineHeight: 22, marginTop: 16, marginBottom: 18, fontWeight: '500' },
   heroCta: { height: 52, borderRadius: 26, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },

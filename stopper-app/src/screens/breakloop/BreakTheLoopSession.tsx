@@ -16,13 +16,30 @@ export function BreakTheLoopSession({ onDone, onExit }: { onDone: () => void; on
   const progress = useSharedValue(1);
   const finished = useRef(false);
 
+  // Both animation callbacks below run as worklets on the UI thread, so they
+  // may do nothing except hand back to JS. The original called makeTrial() and
+  // mutated a React ref from inside one, which crashed the app on the first
+  // tap — a non-worklet function cannot be invoked on the UI thread, and a
+  // captured ref is frozen once it crosses over.
+  const finishOnce = useCallback(() => {
+    if (finished.current) return;
+    finished.current = true;
+    onDone();
+  }, [onDone]);
+
+  const advance = useCallback(() => {
+    setTrial(prev => makeTrial(prev));
+    opacity.value = withTiming(1, { duration: 110 });
+  }, [opacity]);
+
   // The only passage-of-time signal: a line that quietly runs out.
   // No digits — a ticking clock creates urgency and invites beating it.
   useEffect(() => {
     progress.value = withTiming(0, { duration: DURATION_SECONDS * 1000, easing: Easing.linear }, (done) => {
-      if (done && !finished.current) { finished.current = true; runOnJS(onDone)(); }
+      'worklet';
+      if (done) runOnJS(finishOnce)();
     });
-  }, [onDone]);
+  }, [finishOnce, progress]);
 
   const barStyle = useAnimatedStyle(() => ({ width: `${progress.value * 100}%` }));
   const wordStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
@@ -30,11 +47,11 @@ export function BreakTheLoopSession({ onDone, onExit }: { onDone: () => void; on
   const answer = useCallback((tapped: InkId) => {
     // A wrong tap is indistinguishable from no tap. No shake, flash, sound or haptic.
     if (!isCorrect(trial, tapped)) return;
-    opacity.value = withTiming(0, { duration: 110 }, () => {
-      runOnJS(setTrial)(makeTrial(trial));
-      opacity.value = withTiming(1, { duration: 110 });
+    opacity.value = withTiming(0, { duration: 110 }, (done) => {
+      'worklet';
+      if (done) runOnJS(advance)();
     });
-  }, [trial]);
+  }, [trial, advance, opacity]);
 
   return (
     <View style={styles.screen}>
