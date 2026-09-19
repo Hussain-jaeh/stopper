@@ -99,20 +99,35 @@ export function AuthFlow({ initialRoute = 'landing', onAuthenticated, allowGuest
     const callbackUrl = Linking.createURL('/');
     try {
       const result = await signIn('google', { redirectTo: callbackUrl });
-      if (!result.redirect) return;
+      if (!result.redirect) {
+        console.warn('[auth/google] no redirect returned', result);
+        Alert.alert('Google sign in failed', 'Could not start Google sign in. Please try again.');
+        return;
+      }
       const browserResult = await WebBrowser.openAuthSessionAsync(
         result.redirect.toString(),
         callbackUrl,
       );
-      if (browserResult.type === 'success') {
-        const parsed = Linking.parse(browserResult.url);
-        const code = parsed.queryParams?.code as string | undefined;
-        if (code) {
-          await (signIn as Function)(undefined, { code });
-          go('success');
-        }
+      // Previously every branch below returned silently, so a half-finished
+      // sign-in looked identical to a successful one: the sheet closed, the
+      // session was never exchanged, and the user stayed a guest.
+      if (browserResult.type === 'cancel' || browserResult.type === 'dismiss') return;
+      if (browserResult.type !== 'success') {
+        console.warn('[auth/google] browser result', browserResult.type);
+        Alert.alert('Google sign in failed', 'The sign-in window closed before finishing.');
+        return;
       }
+      const parsed = Linking.parse(browserResult.url);
+      const code = parsed.queryParams?.code as string | undefined;
+      if (!code) {
+        console.warn('[auth/google] no code on callback url', browserResult.url);
+        Alert.alert('Google sign in failed', 'Google did not return a sign-in code.');
+        return;
+      }
+      await (signIn as Function)(undefined, { code });
+      go('success');
     } catch (e: any) {
+      console.warn('[auth/google] threw', e?.message, e);
       Alert.alert('Google sign in failed', e?.message ?? 'Please try again.');
     }
   });
