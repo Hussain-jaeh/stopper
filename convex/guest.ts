@@ -142,14 +142,26 @@ export const redeemMigrationTicket = mutation({
         ctx.db.query("profiles").withIndex("by_userId", (q) => q.eq("userId", toUserId)).unique(),
       ]);
 
+    // Only true for a NEW registration, where the target is an empty shell.
+    // A guest who taps "Create an account" and then "Sign in" lands here with
+    // a target that already has a real recovery history — and the code below
+    // deletes the target's profile and replaces it with the guest's. Someone
+    // who reinstalled, used guest mode for a day and then signed back into an
+    // account with a 200-day streak would have had that streak overwritten by
+    // the one-day guest record. Migration is abandoned in that case: nothing
+    // is moved, nothing is deleted, and the account they signed into is left
+    // exactly as it was.
+    if (targetRecovery) return { migrated: false, reason: "target-has-history" as const };
+
     // The guest's history is the real one — it replaces the empty shell a
     // freshly registered account starts with.
     if (guestUserProfile) {
       if (targetUserProfile) await ctx.db.delete(targetUserProfile._id);
       await ctx.db.patch(guestUserProfile._id, { userId: toUserId });
     }
+    // targetRecovery is null past the guard above, so there is nothing here
+    // to overwrite — the target is a fresh registration.
     if (guestRecovery) {
-      if (targetRecovery) await ctx.db.delete(targetRecovery._id);
       await ctx.db.patch(guestRecovery._id, { userId: toUserId });
     }
 
