@@ -43,10 +43,24 @@ export const getAccountStatus = query({
     const user = await ctx.db.get(userId);
     if (!user) return null;
 
+    // Two independent signals, either of which ends guest mode:
+    //  - a credential that isn't the anonymous provider, and
+    //  - isAnonymous === false, written by redeemMigrationTicket when someone
+    //    registers onto their existing record.
+    // Deriving from credentials alone regressed the second case: an upgraded
+    // guest still carries only an anonymous authAccount, so they stayed gated
+    // even though the upgrade had explicitly marked them registered.
+    const registered =
+      user.isAnonymous === false || (await hasRealCredential(ctx, userId));
+
     return {
-      isGuest: !(await hasRealCredential(ctx, userId)),
+      isGuest: !registered,
       email: user.email ?? null,
       name: user.name ?? null,
+      // Diagnostic only — which user the app is actually authenticated as.
+      // Without it, "I made an account but I'm still a guest" is unanswerable
+      // from the client, because the session may simply never have switched.
+      userId,
     };
   },
 });
@@ -268,6 +282,8 @@ export const claimAccountPrompt = mutation({
   handler: async (ctx, { prompt }) => {
     const userId = await requireAuth(ctx);
 
+    const promptUser = await ctx.db.get(userId);
+    if (promptUser?.isAnonymous === false) return false;
     if (await hasRealCredential(ctx, userId)) return false;
 
     const profile = await ctx.db
