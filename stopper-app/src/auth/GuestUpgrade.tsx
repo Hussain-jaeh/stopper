@@ -8,12 +8,15 @@ import { colors, fonts, radii } from '../theme/tokens';
 interface GuestUpgradeValue {
   /** True while the user is using Stopper without having registered. */
   isGuest: boolean;
+  /** Dev diagnostics: which user the app is actually authenticated as. */
+  userId?: string;
   /** Opens registration, carrying the guest's existing data across. */
   startUpgrade: () => void;
 }
 
 const GuestUpgradeContext = createContext<GuestUpgradeValue>({
   isGuest: false,
+  userId: undefined,
   startUpgrade: () => {},
 });
 
@@ -26,8 +29,12 @@ export function GuestUpgradeProvider({
 }) {
   const status = useQuery(api.guest.getAccountStatus);
   const value = useMemo(
-    () => ({ isGuest: status?.isGuest ?? false, startUpgrade: onStartUpgrade }),
-    [status?.isGuest, onStartUpgrade],
+    () => ({
+      isGuest: status?.isGuest ?? false,
+      userId: (status as { userId?: string } | null | undefined)?.userId,
+      startUpgrade: onStartUpgrade,
+    }),
+    [status?.isGuest, (status as { userId?: string } | null | undefined)?.userId, onStartUpgrade],
   );
   return <GuestUpgradeContext.Provider value={value}>{children}</GuestUpgradeContext.Provider>;
 }

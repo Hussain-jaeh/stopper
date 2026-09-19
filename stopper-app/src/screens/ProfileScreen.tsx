@@ -136,7 +136,7 @@ export function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const { signOut } = useAuthActions();
-  const { isGuest, startUpgrade } = useGuestUpgrade();
+  const { isGuest, userId: authUserId, startUpgrade } = useGuestUpgrade();
 
   /**
    * Dev only. The keychain outlives app deletion, so without this the
@@ -303,6 +303,14 @@ export function ProfileScreen() {
                       label="No account yet"
                       value="Tied to this phone"
                     />
+                    {__DEV__ && (
+                      <SettingsRow
+                        Icon={CloudOff}
+                        tint={colors.gold}
+                        label="Signed in as"
+                        value={authUserId ? `${authUserId.slice(0, 10)}…` : 'unknown'}
+                      />
+                    )}
                     <SettingsRow
                       Icon={UserPlus}
                       tint={colors.jade500}
