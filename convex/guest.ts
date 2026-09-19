@@ -1,10 +1,28 @@
-import { internalMutation, mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query, type QueryCtx } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { requireAuth } from "./lib/auth";
 import { Id } from "./_generated/dataModel";
 
 const TICKET_TTL_MS = 15 * 60 * 1000;
+
+/**
+ * Whether the user holds a real credential — any auth account that isn't the
+ * anonymous provider.
+ *
+ * Guest-ness was read off users.isAnonymous, which NOTHING in the codebase
+ * ever cleared. Registering therefore left the flag set: the Community tab
+ * kept showing "Create a free account" to someone who had just made one, and
+ * the account prompts stayed armed. Deriving it from the credentials is
+ * self-correcting — there is no flag left to forget to clear.
+ */
+async function hasRealCredential(ctx: QueryCtx, userId: Id<"users">): Promise<boolean> {
+  const accounts = await ctx.db
+    .query("authAccounts")
+    .withIndex("userIdAndProvider", (q) => q.eq("userId", userId))
+    .collect();
+  return accounts.some((a) => a.provider !== "anonymous");
+}
 
 function randomToken() {
   const bytes = new Uint8Array(32);
@@ -26,7 +44,7 @@ export const getAccountStatus = query({
     if (!user) return null;
 
     return {
-      isGuest: user.isAnonymous === true,
+      isGuest: !(await hasRealCredential(ctx, userId)),
       email: user.email ?? null,
       name: user.name ?? null,
     };
@@ -90,6 +108,13 @@ export const redeemMigrationTicket = mutation({
     await ctx.db.delete(ticket._id);
 
     if (expired) throw new ConvexError("ExpiredTicket");
+
+    // Clear the flag on whoever is now signed in. If the provider linked the
+    // new credential onto the SAME user record, this is the only thing that
+    // ends guest mode — there is nothing to migrate.
+    const target = await ctx.db.get(toUserId);
+    if (target?.isAnonymous) await ctx.db.patch(toUserId, { isAnonymous: false });
+
     if (fromUserId === toUserId) return { migrated: false };
 
     const fromUser = await ctx.db.get(fromUserId);
@@ -191,6 +216,11 @@ export const sweepAbandonedGuests = internalMutation({
 
       if (userProfile || recovery || checkIn || relapse || recording) { kept++; continue; }
 
+      // Belt and braces: isAnonymous is a flag, and a stale one previously
+      // survived registration. This mutation DELETES accounts, so it checks
+      // the credentials directly before touching anything.
+      if (await hasRealCredential(ctx, user._id)) { kept++; continue; }
+
       swept++;
       if (dryRun) continue;
 
@@ -238,8 +268,7 @@ export const claimAccountPrompt = mutation({
   handler: async (ctx, { prompt }) => {
     const userId = await requireAuth(ctx);
 
-    const user = await ctx.db.get(userId);
-    if (!user?.isAnonymous) return false;
+    if (await hasRealCredential(ctx, userId)) return false;
 
     const profile = await ctx.db
       .query("userProfiles")
