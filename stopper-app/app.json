@@ -77,7 +77,8 @@
       ],
       "expo-video",
       "expo-sharing",
-      "./plugins/withPodDeploymentTarget"
+      "./plugins/withPodDeploymentTarget",
+      "./plugins/withSigningTeam"
     ],
     "extra": {
       "eas": {
