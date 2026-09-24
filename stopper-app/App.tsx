@@ -241,10 +241,12 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
   const redeemMigrationTicket = useMutation(api.guest.redeemMigrationTicket);
   const migrationTicket = useRef<string | null>(null);
   const upgradingRef = useRef(false);
+  const savingOnboardingRef = useRef(false);
   const guestBootstrapRef = useRef(false);
   const [phase, setPhase] = useState<Phase>('loading');
   const bootDoneRef = useRef(false);
   const rcCheckedRef = useRef(false);
+  const entitledRef = useRef<boolean | null>(null);
   const notifScheduledRef = useRef(false);
   const appleDisplayName = useRef<string | undefined>(undefined);
 
@@ -291,10 +293,29 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
   }, [signIn, markBoot]);
 
   useEffect(() => {
+    if (isAuthenticated) void clearAuthIntent();
+  }, [isAuthenticated]);
+
+  // Signing out has to undo the per-process one-shots the routing effect keeps.
+  // Without this rcCheckedRef stayed true for the life of the app process, so
+  // signing back in to an existing account made the routing effect return
+  // early and left the user on the spinner until they force-quit the app.
+  useEffect(() => {
+    if (isLoading || isAuthenticated) return;
+    rcCheckedRef.current = false;
+    entitledRef.current = null;
+    notifScheduledRef.current = false;
+  }, [isLoading, isAuthenticated]);
+
+  useEffect(() => {
     if (isLoading) return;
     // A guest registering swaps one session for another; don't bounce them back
     // to the landing screen mid-flow.
     if (upgradingRef.current) return;
+    // Onboarding's save sets phase to 'loading' before the profile mutation
+    // lands; without this the effect would read the not-yet-saved profile and
+    // bounce the user straight back into onboarding.
+    if (savingOnboardingRef.current) return;
     if (!isAuthenticated) {
       // Nobody is asked to register to start using Stopper. A brand-new
       // install gets an anonymous account and goes straight to onboarding;
@@ -310,7 +331,10 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
       void bootstrapGuestSession();
       return;
     }
-    if (profile === undefined) return;
+    // undefined = still loading. null = the signed-out session's cached value
+    // still in hand; getMyProfile never returns null for an authenticated user,
+    // so acting on it here would push a returning user back into onboarding.
+    if (profile === undefined || profile === null) return;
 
     if (!profile?.onboardingComplete) {
       setPhase(prev => prev === 'loading' ? 'onboarding' : prev);
@@ -319,6 +343,14 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
     }
 
     if (rcCheckedRef.current) {
+      // Entitlement was already resolved this session. Re-apply the answer
+      // instead of returning with phase stuck on 'loading' — that is what a
+      // sign-in after a sign-out used to do.
+      setPhase(prev => {
+        if (prev !== 'loading') return prev;
+        if (SKIP_PAYWALL || entitledRef.current) return 'app';
+        return 'paywall';
+      });
       markBoot();
       return;
     }
@@ -338,6 +370,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
     // initialization race.
     SecureStore.getItemAsync(SUB_CACHE_KEY).then(cached => {
       if (cached === 'true') {
+        entitledRef.current = true;
         setPhase('app');
         markBoot();
         // Re-verify in background — only update the cache, never interrupt an active session.
@@ -345,6 +378,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
         rcGetCustomerInfo()
           .then(info => {
             const hasSub = Object.keys(info.entitlements.active).length > 0;
+            entitledRef.current = hasSub;
             SecureStore.setItemAsync(SUB_CACHE_KEY, hasSub ? 'true' : 'false').catch(() => {});
           })
           .catch(() => {});
@@ -355,6 +389,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
       rcGetCustomerInfo()
         .then(info => {
           const hasSub = Object.keys(info.entitlements.active).length > 0;
+          entitledRef.current = hasSub;
           SecureStore.setItemAsync(SUB_CACHE_KEY, hasSub ? 'true' : 'false').catch(() => {});
           setPhase(hasSub ? 'app' : 'paywall');
         })
@@ -364,6 +399,7 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
           // subscriber — show the paywall rather than granting access. A real
           // subscriber whose check failed still has Restore Purchase there.
           // Granting instead made the paywall trivially bypassable offline.
+          entitledRef.current = false;
           setPhase('paywall');
         })
         .finally(markBoot);
@@ -372,62 +408,74 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
       rcGetCustomerInfo()
         .then(info => {
           const hasSub = Object.keys(info.entitlements.active).length > 0;
+          entitledRef.current = hasSub;
           setPhase(hasSub ? 'app' : 'paywall');
         })
-        .catch(() => setPhase('paywall')) // Unverified: paywall, with Restore available
+        .catch(() => { entitledRef.current = false; setPhase('paywall'); }) // Unverified: paywall, with Restore available
         .finally(markBoot);
     });
-  }, [isLoading, isAuthenticated, profile, bootstrapGuestSession]);
+    // `phase` is a dependency on purpose: handlers hand control back here by
+    // setting 'loading', and this effect is what resolves it.
+  }, [isLoading, isAuthenticated, profile, phase, bootstrapGuestSession]);
 
   const handleAuthenticated = useCallback((authState?: AuthState) => {
-    void clearAuthIntent();
     if (authState?.displayName) appleDisplayName.current = authState.displayName;
-    if (profile === undefined) { setPhase('loading'); return; }
-    setPhase(profile?.onboardingComplete ? 'loading' : 'onboarding');
-  }, [profile]);
+    // Hand routing back to the effect above rather than deciding here. `profile`
+    // in this closure is whatever the *previous* session left behind — after a
+    // sign-out that is null, which read as "onboarding not complete" and sent a
+    // returning user back through onboarding.
+    setPhase('loading');
+  }, []);
 
   const handleOnboardingComplete = useCallback(async (state: OnboardingState) => {
+    savingOnboardingRef.current = true;
     setPhase('loading');
     rcCheckedRef.current = true;
+    try {
 
-    const addictionType = [...state.overcome][0] ?? 'other';
-    const reasonForQuitting = [...state.reasons][0] ?? 'personal growth';
-    const quitDate = Date.now();
+      const addictionType = [...state.overcome][0] ?? 'other';
+      const reasonForQuitting = [...state.reasons][0] ?? 'personal growth';
+      const quitDate = Date.now();
 
-    // Save everything in one round-trip so spending is never lost.
-    await Promise.all([
-      saveOnboarding({
-        habitType: addictionType,
-        displayName: state.name || undefined,
-        age: state.age || undefined,
-        remindersOn: true,
-      }),
-      upsertProfile({
-        addictionType,
-        quitDate,
-        reasonForQuitting,
-        ...(state.spendingAmount ? {
-          spendingAmount: state.spendingAmount,
-          spendingFrequency: (state.spendingFrequency || 'monthly') as 'daily' | 'weekly' | 'monthly',
-          currency: state.spendingCurrency || 'USD',
-          trackingEnabled: true,
-        } : {}),
-      }),
-    ]);
+      // Save everything in one round-trip so spending is never lost.
+      await Promise.all([
+        saveOnboarding({
+          habitType: addictionType,
+          displayName: state.name || undefined,
+          age: state.age || undefined,
+          remindersOn: true,
+        }),
+        upsertProfile({
+          addictionType,
+          quitDate,
+          reasonForQuitting,
+          ...(state.spendingAmount ? {
+            spendingAmount: state.spendingAmount,
+            spendingFrequency: (state.spendingFrequency || 'monthly') as 'daily' | 'weekly' | 'monthly',
+            currency: state.spendingCurrency || 'USD',
+            trackingEnabled: true,
+          } : {}),
+        }),
+      ]);
 
-    syncMilestonesFromQuitDate(quitDate).catch(() => {});
-    scheduleReminder().catch(() => {});
+      syncMilestonesFromQuitDate(quitDate).catch(() => {});
+      scheduleReminder().catch(() => {});
 
-    if (SKIP_PAYWALL) { setPhase('app'); return; }
+      if (SKIP_PAYWALL) { entitledRef.current = true; setPhase('app'); return; }
 
-    // A subscription bought as a guest carries over to the account they create.
-    const cached = await SecureStore.getItemAsync(SUB_CACHE_KEY).catch(() => null);
-    if (cached === 'true') { setPhase('app'); return; }
+      // A subscription bought as a guest carries over to the account they create.
+      const cached = await SecureStore.getItemAsync(SUB_CACHE_KEY).catch(() => null);
+      if (cached === 'true') { entitledRef.current = true; setPhase('app'); return; }
 
-    setPhase('paywall');
+      entitledRef.current = false;
+      setPhase('paywall');
+    } finally {
+      savingOnboardingRef.current = false;
+    }
   }, [saveOnboarding, upsertProfile]);
 
   const handlePurchase = useCallback(() => {
+    entitledRef.current = true;
     SecureStore.setItemAsync(SUB_CACHE_KEY, 'true').catch(() => {});
     setPhase('app');
   }, []);
