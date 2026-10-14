@@ -10,13 +10,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.stopper-app",
-      "buildNumber": "95",
+      "buildNumber": "97",
       "usesAppleSignIn": true,
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "UIApplicationSceneManifest": {
-          "UIApplicationSupportsMultipleScenes": false
-        }
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -81,7 +78,8 @@
       "expo-video",
       "expo-sharing",
       "./plugins/withPodDeploymentTarget",
-      "./plugins/withSigningTeam"
+      "./plugins/withSigningTeam",
+      "./plugins/withSceneLifecycle"
     ],
     "extra": {
       "eas": {
