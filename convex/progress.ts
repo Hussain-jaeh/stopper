@@ -100,8 +100,18 @@ export const getProgress = query({
     const relapsesDays = monthRelapses.map((r) => new Date(r.createdAt).getDate());
     const relapsesDaySet = new Set(relapsesDays);
 
+    // First day of this month that counts: the quit day if it falls in this
+    // month, day 1 if earlier, past the end if later. Days before it were
+    // previously painted "clean", which contradicted a 0-day streak.
+    const quit = new Date(profile.quitDate);
+    const startDay =
+      profile.quitDate < monthStart ? 1
+      : quit.getFullYear() === year && quit.getMonth() === month ? quit.getDate()
+      : daysInMonth + 1;
+
+    // Completed days only (today is still in progress), matching the streak.
     let calendarCleanDays = 0;
-    for (let d = 1; d <= todayDay; d++) {
+    for (let d = startDay; d < todayDay; d++) {
       if (!relapsesDaySet.has(d)) calendarCleanDays++;
     }
 
@@ -118,6 +128,7 @@ export const getProgress = query({
         monthStartDow,
         daysInMonth,
         today: todayDay,
+        startDay,
         cleanDays: calendarCleanDays,
         relapses: relapsesDays,
       },

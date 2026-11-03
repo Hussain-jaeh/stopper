@@ -144,12 +144,12 @@ export function RecorderShell({
 
 export const recorderStyles = StyleSheet.create({
   ghost: {
-    flex: 1, height: 52, borderRadius: 16,
+    flex: 1, height: 52, borderRadius: 14,
     backgroundColor: 'rgba(255,255,255,0.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
   },
   ghostTxt: { fontSize: 15, fontWeight: '700', color: colors.white },
-  cta: { height: 52, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  cta: { height: 52, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   ctaTxt: { fontSize: 15, fontWeight: '800', color: colors.onAccent },
   h: { fontFamily: 'BricolageGrotesque_800ExtraBold', fontSize: 24, lineHeight: 30, color: colors.white, textAlign: 'center' },
   p: { fontSize: 14.5, color: 'rgba(255,255,255,0.65)', marginTop: 14, lineHeight: 21, textAlign: 'center' },
@@ -178,6 +178,6 @@ const styles = StyleSheet.create({
   recBtn: { width: 76, height: 76, borderRadius: 38, backgroundColor: '#FF4D4D', borderWidth: 5, borderColor: 'rgba(255,255,255,0.85)' },
   stopBtn: { backgroundColor: 'rgba(255,77,77,0.25)', alignItems: 'center', justifyContent: 'center' },
   stopSquare: { width: 26, height: 26, borderRadius: 7, backgroundColor: '#FF4D4D' },
-  allowBtn: { marginTop: 20, backgroundColor: colors.jade500, paddingHorizontal: 24, paddingVertical: 13, borderRadius: 16 },
+  allowBtn: { marginTop: 20, backgroundColor: colors.jade500, paddingHorizontal: 24, paddingVertical: 13, borderRadius: 14 },
   allowTxt: { fontSize: 15, fontWeight: '700', color: colors.white },
 });

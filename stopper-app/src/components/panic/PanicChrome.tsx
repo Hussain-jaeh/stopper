@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 10,
   },
-  cta: { height: 56, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
+  cta: { height: 56, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   ctaTxt: { fontFamily: 'PlusJakartaSans_700Bold', fontSize: 17, color: colors.white },
   textBtn: { height: 46, alignItems: 'center', justifyContent: 'center' },
   textBtnTxt: { fontSize: 15, fontWeight: '600', color: colors.textMuted },

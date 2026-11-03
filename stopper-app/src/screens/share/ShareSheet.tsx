@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   pSub: { fontSize: 12.5, color: colors.textMuted, marginTop: 2 },
   toggle: { width: 48, height: 29, borderRadius: 999 },
   knob: { position: 'absolute', top: 3, width: 23, height: 23, borderRadius: 12, backgroundColor: '#fff' },
-  cta: { height: 56, borderRadius: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  cta: { height: 56, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   ctaTxt: { color: colors.onAccent, fontSize: 17, fontWeight: '800' },
   sec: { flex: 1, height: 50, borderRadius: 25, backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   secTxt: { color: colors.white, fontSize: 15, fontWeight: '700' },

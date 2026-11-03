@@ -27,12 +27,16 @@ export type RCPlan = {
 
 const TYPE_META: Record<string, { label: string; best: boolean; badge?: string }> = {
   [PackageType.WEEKLY]:  { label: 'Weekly',  best: false },
-  [PackageType.MONTHLY]: { label: 'Monthly', best: true, badge: 'Best value' },
+  [PackageType.MONTHLY]: { label: 'Monthly', best: false },
+  // $24.99/yr vs $3.99 × 12 = $47.88 → ~48% off.
+  [PackageType.ANNUAL]:  { label: 'Yearly',  best: true, badge: 'Save 48%' },
 };
 
 export function mapPackages(pkgs: PurchasesPackage[]): RCPlan[] {
-  const ORDER = [PackageType.WEEKLY, PackageType.MONTHLY];
-  const sorted = [...pkgs].sort(
+  // Weekly is dropped from the paywall: at $6.99/wk it cost more than monthly
+  // and made the $3.99 plan look like a trick. Existing weekly subscribers keep it.
+  const ORDER = [PackageType.ANNUAL, PackageType.MONTHLY];
+  const sorted = pkgs.filter(p => ORDER.includes(p.packageType as any)).sort(
     (a, b) => ORDER.indexOf(a.packageType as any) - ORDER.indexOf(b.packageType as any),
   );
 
@@ -45,7 +49,11 @@ export function mapPackages(pkgs: PurchasesPackage[]): RCPlan[] {
       id: pkg.identifier,
       label: meta.label,
       priceString,
-      subLabel: `${priceString} billed ${meta.label.toLowerCase()}`,
+      subLabel: pkg.packageType === PackageType.ANNUAL
+        ? (pkg.product.pricePerMonthString
+            ? `${priceString} billed yearly · ${pkg.product.pricePerMonthString}/mo`
+            : `${priceString} billed yearly`)
+        : `${priceString} billed ${meta.label.toLowerCase()}`,
       best: meta.best,
       badge: meta.badge,
     };

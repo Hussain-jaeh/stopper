@@ -77,7 +77,7 @@ export function PostCard({ post, index, onCheer, onOpen, onPlayVideo, onReport, 
   };
 
   return (
-    <Animated.View entering={FadeInDown.delay(index * 70).duration(500)}>
+    <Animated.View>
       <View style={[styles.card, milestone && styles.milestoneCard]}>
         <View style={styles.head}>
           <Pressable style={styles.headContent} onPress={() => onOpen?.(post.id)}>
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   headContent: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   handleRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   handle: { fontWeight: '700', fontSize: 15, color: colors.white },
-  streakChip: { backgroundColor: 'rgba(255,107,74,0.14)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 },
+  streakChip: { backgroundColor: 'rgba(255,107,74,0.14)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, flexDirection: 'row', alignItems: 'center', gap: 3 },
   streakTxt: { fontSize: 11.5, fontWeight: '700', color: '#FF8A6B' },
   meta: { fontSize: 12.5, color: colors.textFaint, marginTop: 2 },
   milestoneTitle: { ...type.cardTitle, fontSize: 19, color: colors.jade300, marginTop: 14 },

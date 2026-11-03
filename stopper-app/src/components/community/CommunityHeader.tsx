@@ -12,23 +12,25 @@ export function CommunityHeader({ tab, setTab, onlineCount, index = 0 }: {
 }) {
   const tabs: CommunityTab[] = ['Feed', 'Circles', 'Leaders'];
   return (
-    <Animated.View entering={FadeInDown.delay(index * 80).duration(550)} style={{ gap: 16 }}>
+    <Animated.View style={{ gap: 16 }}>
       <View style={styles.row}>
         <View>
           <Text style={styles.h1}>Community</Text>
           <Text style={styles.sub}>You're never doing this alone.</Text>
         </View>
-        <View style={styles.online} accessibilityLabel={`${onlineCount} people online`}>
-          <View style={styles.dot} />
-          <Text style={styles.onlineTxt}>{onlineCount.toLocaleString()} online</Text>
-        </View>
+        {onlineCount > 0 && (
+          <View style={styles.online} accessibilityLabel={`${onlineCount} people active today`}>
+            <View style={styles.dot} />
+            <Text style={styles.onlineTxt}>{onlineCount.toLocaleString()} active today</Text>
+          </View>
+        )}
       </View>
       <View style={styles.segment}>
         {tabs.map(t => {
           const on = t === tab;
           return (
             <Pressable key={t} onPress={() => setTab(t)} accessibilityRole="tab" accessibilityState={{ selected: on }} style={styles.segItem}>
-              {on && <LinearGradient colors={gradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />}
+              {on && <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.jade500 }]} />}
               <Text style={[styles.segTxt, { color: on ? colors.onAccent : colors.textMuted }]}>{t}</Text>
             </Pressable>
           );

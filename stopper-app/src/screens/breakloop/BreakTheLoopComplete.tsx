@@ -64,6 +64,6 @@ const styles = StyleSheet.create({
   // equal weight: identical height, radius and type — only the fill differs
   equal: { height: 54, borderRadius: 27, backgroundColor: colors.surface1, borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)', alignItems: 'center', justifyContent: 'center' },
   equalTxt: { color: colors.white, fontSize: 16.5, fontWeight: '700' },
-  primary: { height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center' },
+  primary: { height: 54, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   primaryTxt: { color: colors.onAccent, fontSize: 16.5, fontWeight: '800' },
 });

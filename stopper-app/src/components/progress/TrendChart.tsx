@@ -20,7 +20,7 @@ function Bar({ value, last, i }: { value: number; last: boolean; i: number }) {
   return (
     <View style={styles.barCol}>
       <Animated.View style={[styles.bar, style, !last && { backgroundColor: colors.surface3 }]}>
-        {last && <LinearGradient colors={gradients.primary} start={{ x: 0, y: 1 }} end={{ x: 0, y: 0 }} style={StyleSheet.absoluteFill} />}
+        {last && <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.jade500 }]} />}
       </Animated.View>
     </View>
   );
@@ -29,7 +29,7 @@ function Bar({ value, last, i }: { value: number; last: boolean; i: number }) {
 export function TrendChart({ trend, index = 4 }: Props) {
   const delta = trend[trend.length - 1] - trend[0];
   return (
-    <Animated.View entering={FadeInDown.delay(index * 80).duration(550)} style={styles.card}>
+    <Animated.View style={styles.card}>
       <View style={styles.head}>
         <View>
           <Text style={styles.title}>Resistance score</Text>

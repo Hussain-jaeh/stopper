@@ -75,10 +75,6 @@ export function PulseHero({ icon, size = 200 }: PulseHeroProps) {
           alignItems: 'center',
           justifyContent: 'center',
           transform: [{ scale: breathe }],
-          shadowColor: colors.jade500,
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.6,
-          shadowRadius: 25,
         }}
       >
         {icon}

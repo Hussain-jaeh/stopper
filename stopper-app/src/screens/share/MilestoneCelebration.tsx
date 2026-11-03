@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   kick: { fontSize: 13, letterSpacing: 2.6, fontWeight: '800', color: colors.jade300, marginTop: 18, textTransform: 'uppercase' },
   h1: { ...T.h1, fontSize: 40, color: colors.white, marginTop: 12 },
   sub: { fontSize: 17, color: colors.textMuted, lineHeight: 24, textAlign: 'center', marginTop: 14, paddingHorizontal: 24 },
-  cta: { height: 58, borderRadius: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  cta: { height: 58, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   ctaTxt: { color: colors.onAccent, fontSize: 17, fontWeight: '800' },
   later: { color: colors.textMuted, fontSize: 16, fontWeight: '600', marginTop: 6 },
 });

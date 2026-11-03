@@ -14,6 +14,7 @@ import { Leaderboard, Leader } from '../components/community/Leaderboard';
 import { PostComposerModal } from '../components/community/PostComposerModal';
 import { CreateCircleModal } from '../components/community/CreateCircleModal';
 import { CommentSheet } from '../components/community/CommentSheet';
+import { CommunityNameModal } from '../components/community/CommunityNameModal';
 import { DashboardSkeleton } from '../components/dashboard/states';
 import { GuestGate, useGuestUpgrade } from '../auth/GuestUpgrade';
 import { colors } from '../constants/colors';
@@ -44,6 +45,7 @@ export function CommunityScreen() {
   const feed       = useQuery(api.community.getFeed, { mode: feedMode }) as Post[] | undefined;
   const circlesRaw = useQuery(api.community.getCircles);
   const leaders    = useQuery(api.community.getLeaders) as Leader[] | undefined;
+  const activeCount = useQuery(api.community.getActiveCount);
 
   const cheer         = useMutation(api.community.cheer);
   const toggleJoin    = useMutation(api.community.toggleJoin);
@@ -91,13 +93,17 @@ export function CommunityScreen() {
 
   return (
     <>
+      <CommunityNameModal
+        visible={me !== undefined && !me.hasCommunityName}
+        suggested={me?.suggestedName ?? ''}
+      />
       <ScrollView
         style={styles.screen}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 96 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={{ gap: spacing.md }}>
-          <CommunityHeader tab={tab} setTab={setTab} onlineCount={12402} index={0} />
+          <CommunityHeader tab={tab} setTab={setTab} onlineCount={activeCount ?? 0} index={0} />
 
           {loading ? (
             <DashboardSkeleton />

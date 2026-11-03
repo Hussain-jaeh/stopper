@@ -15,7 +15,7 @@ type Props = {
 
 export function ProfileIdentity({ name, tagline, avatarUri, onEditAvatar, index = 1 }: Props) {
   return (
-    <Animated.View entering={FadeInDown.delay(index * 80).duration(550)} style={styles.wrap}>
+    <Animated.View style={styles.wrap}>
       <Pressable onPress={onEditAvatar} accessibilityRole="button" accessibilityLabel="Change photo" style={styles.ring}>
         {avatarUri ? (
           <Image source={{ uri: avatarUri }} style={styles.avatar} />
@@ -35,7 +35,7 @@ export function ProfileIdentity({ name, tagline, avatarUri, onEditAvatar, index 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', marginTop: 38, marginBottom: 44 },
   ring: { width: 112, height: 112, borderRadius: 56, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface2,
-          shadowColor: colors.jade500, shadowOpacity: 0.35, shadowRadius: 0, shadowOffset: { width: 0, height: 0 }, borderWidth: 4, borderColor: 'rgba(20,184,136,0.25)' },
+          borderWidth: 4, borderColor: 'rgba(20,184,136,0.25)' },
   avatar: { width: 104, height: 104, borderRadius: 52 },
   avatarFallback: { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface3 },
   initial: { fontFamily: 'BricolageGrotesque_800ExtraBold', fontSize: 38, color: colors.jade300 },

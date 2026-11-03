@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { OnboardingFlow } from '../onboarding/OnboardingFlow';
 import {
   ScrollView, View, Text, StyleSheet, Linking, Share, Alert,
   Modal, TextInput, Pressable, KeyboardAvoidingView, Platform,
@@ -143,6 +144,9 @@ export function ProfileScreen() {
    * first-launch path can't be re-run on a device that has already been
    * through it — you'd need a new simulator or a wiped one every time.
    */
+  // DEV: walk through onboarding without touching this account's data.
+  const [previewOnboarding, setPreviewOnboarding] = useState(false);
+
   const handleDevReset = () => {
     Alert.alert(
       'Reset first-launch state?',
@@ -257,6 +261,12 @@ export function ProfileScreen() {
 
   return (
     <>
+      {__DEV__ && (
+        <Modal visible={previewOnboarding} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setPreviewOnboarding(false)}>
+          {/* No onComplete side effects: finishing just closes the preview. */}
+          <OnboardingFlow startStep={2} onComplete={() => setPreviewOnboarding(false)} />
+        </Modal>
+      )}
       <ScrollView
         style={styles.screen}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 4, paddingBottom: insets.bottom + 96 }]}
@@ -323,6 +333,15 @@ export function ProfileScreen() {
                 ) : (
                   <>
                     <SettingsRow Icon={LogOut} tint={colors.textMuted} label="Sign out" danger onPress={handleSignOut} />
+                    {__DEV__ && (
+                      <SettingsRow
+                        Icon={RotateCcw}
+                        tint={colors.gold}
+                        label="Preview onboarding"
+                        value="DEV"
+                        onPress={() => setPreviewOnboarding(true)}
+                      />
+                    )}
                     {__DEV__ && (
                       <SettingsRow
                         Icon={RotateCcw}

@@ -32,10 +32,10 @@ export function DashboardSkeleton() {
 export function EmptyState({ onStart }: { onStart: () => void }) {
   return (
     <View style={styles.center}>
-      <LinearGradient colors={[colors.jade400, colors.jade700]} style={styles.orb}>
+      <View style={[styles.orb, { backgroundColor: colors.jade600 }]}>
         <Sprout size={42} color={colors.white} />
-      </LinearGradient>
-      <Text style={styles.title}>Let's start your{'\n'}recovery journey</Text>
+      </View>
+      <Text style={styles.title}>Let's start{'\n'}day one</Text>
       <Text style={styles.body}>Set up your profile to begin tracking your streak and progress.</Text>
       <Pressable onPress={onStart} accessibilityRole="button" style={[styles.cta, shadow.cta]}>
         <LinearGradient colors={gradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.ctaFill}>

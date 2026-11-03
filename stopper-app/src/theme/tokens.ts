@@ -102,7 +102,8 @@ export const radii = {
   md: 12,
   lg: 14,
   xl: 20,
-  pill: 32,
+  // Buttons and selectable rows. Was 32 (fully round); 14 reads less templated.
+  pill: 14,
   full: 999,
 } as const;
 
@@ -119,12 +120,13 @@ export const spacing = {
 } as const;
 
 export const shadows = {
+  // Name kept for existing callers; no longer a coloured glow.
   glowCta: {
-    shadowColor: '#14B888',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.42,
-    shadowRadius: 20,
-    elevation: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    elevation: 4,
   },
   card: {
     shadowColor: '#000',

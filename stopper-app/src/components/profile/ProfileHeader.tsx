@@ -16,11 +16,11 @@ type Props = {
 
 export function ProfileHeader({ name, pseudonym, joined, onEdit, index = 0 }: Props) {
   return (
-    <Animated.View entering={FadeInDown.delay(index * 80).duration(550)} style={styles.wrap}>
+    <Animated.View style={styles.wrap}>
       <Pressable onPress={onEdit} accessibilityRole="button" accessibilityLabel="Edit profile" style={styles.avatarWrap}>
-        <LinearGradient colors={[colors.jade400, colors.jade700]} start={{ x: 0.38, y: 0.32 }} end={{ x: 1, y: 1 }} style={styles.avatar}>
+        <View style={[styles.avatar, { backgroundColor: colors.jade600 }]}>
           <Text style={styles.avatarTxt}>{name.slice(0, 1).toUpperCase()}</Text>
-        </LinearGradient>
+        </View>
         <View style={styles.editBadge}><Pencil size={14} color={colors.jade300} /></View>
       </Pressable>
       <Text style={styles.name}>{name}</Text>

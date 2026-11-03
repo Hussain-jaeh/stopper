@@ -30,7 +30,7 @@ export function MoneySavedCard({
   const cells: [string, number][] = [['Per day', pd], ['Per week', pd * 7], ['Per month', pd * 30]];
 
   return (
-    <Animated.View entering={FadeInDown.delay(index * 70).duration(550)} style={styles.card}>
+    <Animated.View style={styles.card}>
       <View style={styles.head}>
         <View style={styles.title}><PiggyBank size={18} color={colors.jade400} /><Text style={styles.titleTxt}>Money saved</Text></View>
         <Pressable onPress={onViewInsights}><Text style={styles.link}>Insights ›</Text></Pressable>

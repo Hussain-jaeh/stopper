@@ -18,11 +18,17 @@ export default defineSchema({
     anonymous: v.optional(v.boolean()),
     appLockEnabled: v.optional(v.boolean()),
     avatarStorageId: v.optional(v.id("_storage")),
+    // Public name in the community. Chosen by the user on first community visit;
+    // kept separate from displayName, which may be a real first name.
+    communityName: v.optional(v.string()),
+    communityNameLower: v.optional(v.string()),
     // Ids of the one-time "create an account" offers already shown. Lives on
     // userProfiles so it follows the doc that redeemMigrationTicket moves —
     // a guest who registers is never re-prompted.
     accountPromptsSeen: v.optional(v.array(v.string())),
-  }).index("by_userId", ["userId"]),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_communityNameLower", ["communityNameLower"]),
 
   // Recovery profile — quit date, addiction type, reasons.
   // Separate from userProfiles so onboarding data and tracker data stay decoupled.
@@ -66,7 +72,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_userId", ["userId"])
-    .index("by_userId_createdAt", ["userId", "createdAt"]),
+    .index("by_userId_createdAt", ["userId", "createdAt"])
+    .index("by_createdAt", ["createdAt"]),
 
   // Each relapse event resets the current streak.
   relapses: defineTable({

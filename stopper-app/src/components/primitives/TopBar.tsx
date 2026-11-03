@@ -42,12 +42,7 @@ export function TopBar({ pct, onBack }: TopBarProps) {
       </Pressable>
       <View style={styles.trackBg}>
         <Animated.View style={[styles.trackFill, fill]}>
-          <LinearGradient
-            colors={gradients.primary}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.jade500 }]} />
         </Animated.View>
       </View>
       <View style={styles.langPill}>

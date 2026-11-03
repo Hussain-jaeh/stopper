@@ -5,28 +5,36 @@ import { Avatar } from './Avatar';
 import { colors } from '../../constants/colors';
 import { radius } from '../../constants/spacing';
 
-export type Leader = { handle: string; circle: string; streak: number; you?: boolean };
+export type Leader = { handle: string; circle: string; streak: number; you?: boolean; rank?: number; checkIns?: number };
 
 const MEDAL = ['#F2B23E', '#C7CCD1', '#CD7F4D'];
 
 export function Leaderboard({ leaders }: { leaders: Leader[] }) {
   return (
     <View style={{ gap: 10 }}>
-      {leaders.map((l, i) => (
-        <Animated.View key={l.handle + i} entering={FadeInDown.delay((i + 1) * 70).duration(500)}>
+      {leaders.length === 0 && (
+        <Text style={styles.circle}>Check in daily to get on the board.</Text>
+      )}
+      {leaders.map((l, i) => {
+        const rank = l.rank ?? i + 1;
+        return (
+        <Animated.View key={l.handle + i}>
           <View style={[styles.row, l.you && styles.you]}>
-            <Text style={[styles.rank, { color: i < 3 ? MEDAL[i] : colors.textFaint }]}>{i + 1}</Text>
+            <Text style={[styles.rank, { color: rank <= 3 ? MEDAL[rank - 1] : colors.textFaint }]}>{rank}</Text>
             <Avatar handle={l.handle} size={40} />
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={styles.handle}>
                 {l.handle}{l.you ? <Text style={styles.youTag}> · You</Text> : null}
               </Text>
-              <Text style={styles.circle}>{l.circle}</Text>
+              <Text style={styles.circle}>
+                {l.circle}{l.checkIns ? ` · ${l.checkIns} check-ins this month` : ''}
+              </Text>
             </View>
             <Text style={styles.streak}>🔥 {l.streak}</Text>
           </View>
         </Animated.View>
-      ))}
+        );
+      })}
     </View>
   );
 }

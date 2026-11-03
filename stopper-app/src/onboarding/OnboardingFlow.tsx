@@ -29,6 +29,7 @@ import { PlanScreen } from './screens/PlanScreen';
 import { StreakScreen } from './screens/StreakScreen';
 import { FinalScreen } from './screens/FinalScreen';
 import { SpendingStep, SpendingValue } from './screens/SpendingStep';
+import { VaultIntentionScreen } from './screens/VaultIntentionScreen';
 
 // Progress bar spans screens 3–16 (overcome → profile, 0-indexed)
 const PROGRESS_START = 3;
@@ -99,7 +100,9 @@ export function OnboardingFlow({ startStep, onComplete, onSignIn, initialName }:
     22: <NotificationsScreen onBack={back} onNext={next} setState={setState} />,
     23: <PlanScreen onBack={back} onNext={next} state={state} />,
     24: <StreakScreen onBack={back} onNext={next} state={state} />,
-    25: (
+    // Free Day 1 vault message — the hook right before the paywall.
+    25: <VaultIntentionScreen onBack={back} onNext={next} state={state} />,
+    26: (
       <FinalScreen
         state={state}
         onFinish={() => {

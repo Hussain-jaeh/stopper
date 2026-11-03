@@ -15,7 +15,7 @@ export function JourneyStrip({ cleanDays, bestStreak, badges, rank, index = 1 }:
     { Icon: TrendingUp, label: 'Rank',         value: `#${rank}`,     tint: '#2E7DD1' },
   ];
   return (
-    <Animated.View entering={FadeInDown.delay(index * 80).duration(550)} style={styles.card}>
+    <Animated.View style={styles.card}>
       {items.map(({ Icon, label, value, tint }, i) => (
         <View key={label} style={[styles.col, i > 0 && styles.divider]}>
           <Icon size={18} color={tint} />

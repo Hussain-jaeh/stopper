@@ -34,7 +34,7 @@ export function RelapseHistory({ index = 7 }: { index?: number }) {
   const relapses: Doc<'relapses'>[] = result?.page ?? [];
 
   return (
-    <Animated.View entering={FadeInDown.delay(index * 80).duration(550)}>
+    <Animated.View>
       <Text style={styles.sectionLabel}>RELAPSE HISTORY</Text>
 
       {relapses.length === 0 ? (

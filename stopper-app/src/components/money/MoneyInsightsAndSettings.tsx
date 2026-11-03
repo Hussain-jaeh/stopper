@@ -28,7 +28,7 @@ export function MoneyInsights({
         <Text style={styles.navTitle}>Money saved</Text>
       </View>
 
-      <Animated.View entering={FadeInDown.duration(500)} style={styles.hero}>
+      <Animated.View style={styles.hero}>
         <Text style={styles.heroEyebrow}>KEPT SO FAR</Text>
         <Text style={styles.heroBig}>{fmtMoney(total, settings.currency)}</Text>
         <Text style={styles.heroSub}>across {daysSinceQuit} days free</Text>

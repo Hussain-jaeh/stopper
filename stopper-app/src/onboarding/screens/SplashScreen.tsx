@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Wordmark, Laurel } from '../../components/primitives';
+import { Wordmark } from '../../components/primitives';
 import { fonts } from '../../theme/tokens';
 import styled from 'styled-components/native';
 
@@ -26,7 +26,6 @@ export function SplashScreen({ onNext }: SplashScreenProps) {
       >
         <Wordmark size={56} />
         <Tagline>Embrace this pause.</Tagline>
-        <Laurel size={22} />
       </LinearGradient>
     </Pressable>
   );

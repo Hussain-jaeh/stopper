@@ -11,7 +11,7 @@ type Props = { reason: string; habit: string; started: string; index?: number };
 
 export function WhyCard({ reason, habit, started, index = 2 }: Props) {
   return (
-    <Animated.View entering={FadeInDown.delay(index * 80).duration(550)}>
+    <Animated.View>
       <LinearGradient
         colors={['rgba(20,184,136,0.10)', 'rgba(46,125,209,0.07)']}
         start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
