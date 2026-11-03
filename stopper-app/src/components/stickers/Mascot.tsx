@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { ImageSourcePropType, ImageStyle, StyleProp } from 'react-native';
+import { Image, ImageSourcePropType, ImageStyle, StyleProp, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, withDelay,
   Easing, useReducedMotion, cancelAnimation,
@@ -51,13 +51,18 @@ export function Mascot({
     ],
   }));
 
+  // Animate a plain wrapper and keep the Image itself static: animating an
+  // Image directly can leave it blank on some RN/Reanimated builds.
+  const flat = StyleSheet.flatten(style) ?? {};
   return (
-    <Animated.Image
-      source={source}
-      style={[style, anim]}
-      resizeMode="contain"
-      accessibilityLabel={accessibilityLabel}
-      accessibilityIgnoresInvertColors
-    />
+    <Animated.View style={[flat as any, anim]} pointerEvents="none">
+      <Image
+        source={source}
+        style={StyleSheet.absoluteFill}
+        resizeMode="contain"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityIgnoresInvertColors
+      />
+    </Animated.View>
   );
 }
