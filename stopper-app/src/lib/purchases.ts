@@ -40,8 +40,17 @@ export function mapPackages(pkgs: PurchasesPackage[]): RCPlan[] {
     (a, b) => ORDER.indexOf(a.packageType as any) - ORDER.indexOf(b.packageType as any),
   );
 
+  // The yearly badge is computed from the store's real prices, so it stays
+  // true whatever the yearly plan is priced at in App Store Connect.
+  const monthly = sorted.find(p => p.packageType === PackageType.MONTHLY)?.product.price;
+  const annual = sorted.find(p => p.packageType === PackageType.ANNUAL)?.product.price;
+  const savePct = monthly && annual ? Math.round((1 - annual / (monthly * 12)) * 100) : 0;
+
   return sorted.map(pkg => {
-    const meta = TYPE_META[pkg.packageType] ?? { label: pkg.identifier, best: false };
+    const base = TYPE_META[pkg.packageType] ?? { label: pkg.identifier, best: false };
+    const meta = pkg.packageType === PackageType.ANNUAL
+      ? { ...base, badge: savePct >= 5 ? `Save ${savePct}%` : undefined }
+      : base;
     const priceString = pkg.product.priceString;
 
     return {
