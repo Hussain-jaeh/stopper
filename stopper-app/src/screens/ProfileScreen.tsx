@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { OnboardingFlow } from '../onboarding/OnboardingFlow';
+import { APP_STORE_URL, APP_STORE_REVIEW_URL } from '../lib/links';
 import {
   ScrollView, View, Text, StyleSheet, Linking, Share, Alert,
   Modal, TextInput, Pressable, KeyboardAvoidingView, Platform,
@@ -236,7 +237,7 @@ export function ProfileScreen() {
   };
 
   const handleShare = () => {
-    Share.share({ message: 'I\'m using Stopper to track my recovery — every day counts. 🌱', url: 'https://stopper.mintlify.io' });
+    Share.share({ message: 'I\'m using Stopper to track my recovery — every day counts. 🌱', url: APP_STORE_URL });
   };
 
   const handleDeleteAccount = () => {
@@ -297,7 +298,7 @@ export function ProfileScreen() {
                 <SettingsRow Icon={Smartphone} tint={colors.textMuted} label="Version" value="1.0.0" />
                 <SettingsRow Icon={Star} tint={colors.coral400} label="Rate Stopper" external onPress={async () => {
                   if (await StoreReview.hasAction()) { StoreReview.requestReview(); }
-                  else { Linking.openURL('https://apps.apple.com/app/stopper'); }
+                  else { Linking.openURL(APP_STORE_REVIEW_URL); }
                 }} />
                 <SettingsRow Icon={Share2} tint="#2BB6C4" label="Share Stopper" chevron onPress={handleShare} />
                 <SettingsRow Icon={ShieldCheck} tint="#2E7DD1" label="Privacy Policy" external onPress={() => Linking.openURL('https://stopper.mintlify.io/legal/privacy')} />

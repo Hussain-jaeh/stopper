@@ -92,7 +92,8 @@ export const getDashboard = query({
       todayCheckedIn: todayCheckIn !== null,
       cravingAverage,
       lastCelebratedShareDay: profile?.lastCelebratedShareDay ?? null,
-      referralUrl: `https://stopper.app/u/${userId.slice(0, 8)}`,
+      // App Store link. stopper.app is a parked domain we don't own.
+      referralUrl: `https://apps.apple.com/app/id6781569038`,
     };
   },
 });

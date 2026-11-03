@@ -5,6 +5,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { api } from '../../convex/_generated/api';
+import { APP_STORE_URL } from '../lib/links';
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
 import { StreakCard } from '../components/dashboard/StreakCard';
 import { ProgressCard } from '../components/dashboard/ProgressCard';
@@ -109,7 +110,7 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
 
   const openShare = useCallback(() => {
     if (!shareData) return;
-    navigation.navigate('ShareSheet', { ...shareData, shareUrl: data?.referralUrl });
+    navigation.navigate('ShareSheet', { ...shareData, shareUrl: APP_STORE_URL });
   }, [navigation, shareData, data?.referralUrl]);
 
   /**
@@ -135,7 +136,7 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
       try {
         const claimed = await markShareMilestone({ day });
         if (claimed !== null) {
-          navigation.navigate('MilestoneCelebration', { ...shareData, shareUrl: data?.referralUrl });
+          navigation.navigate('MilestoneCelebration', { ...shareData, shareUrl: APP_STORE_URL });
         }
       } catch {} finally {
         celebrating.current = false;
@@ -226,7 +227,7 @@ export function DashboardScreen({ onStartOnboarding }: Props) {
           index={5}
         />
         <MotivationCard quote={quote} index={6} />
-        <InviteCard inviteUrl={data.referralUrl ?? 'https://stopper.app'} />
+        <InviteCard inviteUrl={APP_STORE_URL} />
       </View>
     );
   })();
