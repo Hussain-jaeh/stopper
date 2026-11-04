@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { OnboardingFlow } from '../onboarding/OnboardingFlow';
 import { APP_STORE_URL, APP_STORE_REVIEW_URL } from '../lib/links';
+import Constants from 'expo-constants';
 import {
   ScrollView, View, Text, StyleSheet, Linking, Share, Alert,
   Modal, TextInput, Pressable, KeyboardAvoidingView, Platform,
@@ -295,7 +296,7 @@ export function ProfileScreen() {
               </SettingsGroup>
 
               <SettingsGroup title="About">
-                <SettingsRow Icon={Smartphone} tint={colors.textMuted} label="Version" value="1.0.0" />
+                <SettingsRow Icon={Smartphone} tint={colors.textMuted} label="Version" value={Constants.expoConfig?.version ?? ''} />
                 <SettingsRow Icon={Star} tint={colors.coral400} label="Rate Stopper" external onPress={async () => {
                   if (await StoreReview.hasAction()) { StoreReview.requestReview(); }
                   else { Linking.openURL(APP_STORE_REVIEW_URL); }
