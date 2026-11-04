@@ -203,7 +203,7 @@ export function PaywallScreen({ onPurchase }: Props) {
         </View>
         <Text style={styles.fine}>
           {selected
-            ? `${selected.label} subscription — ${selected.priceString} per ${selected.label.toLowerCase() === 'weekly' ? 'week' : 'month'}. `
+            ? `${selected.label} subscription — ${selected.priceString} per ${({ weekly: 'week', monthly: 'month', yearly: 'year' } as Record<string, string>)[selected.label.toLowerCase()] ?? 'period'}. `
             : ''}
           Payment is charged to your Apple ID at confirmation. It renews automatically unless
           cancelled at least 24 hours before the end of the current period. Manage or cancel in
