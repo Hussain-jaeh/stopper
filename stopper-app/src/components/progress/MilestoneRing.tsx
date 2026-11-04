@@ -20,7 +20,7 @@ export function MilestoneRing({ cleanDays, nextMilestone, index = 1 }: Props) {
   const animatedProps = useAnimatedProps(() => ({ strokeDashoffset: C * (1 - p.value) }));
 
   return (
-    <Animated.View entering={FadeInDown.delay(index * 80).duration(550)} style={styles.card}>
+    <Animated.View style={styles.card}>
       <View style={styles.ringWrap}>
         <Svg width={SIZE} height={SIZE}>
           <Defs>

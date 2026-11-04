@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   previewBig: { ...type.h1, fontSize: 30, color: colors.white, marginTop: 6 },
   previewUnit: { fontSize: 16, color: colors.textMuted },
   previewSub: { fontSize: 13, color: colors.textMuted, marginTop: 6 },
-  cta: { height: 56, borderRadius: 30, alignItems: 'center', justifyContent: 'center' },
+  cta: { height: 56, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   ctaTxt: { color: colors.onAccent, fontSize: 17, fontWeight: '800' },
   skip: { alignItems: 'center', paddingVertical: 10 },
   skipTxt: { color: colors.textMuted, fontSize: 15, fontWeight: '500' },

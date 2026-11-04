@@ -14,24 +14,25 @@ export const radius = {
   md: 12,
   lg: 14,
   card: 20,
-  hero: 26,
-  pill: 32,
+  hero: 20,
+  // Buttons and selectable rows. Was 32 (fully round).
+  pill: 14,
   full: 999,
 } as const;
 
 export const shadow = {
   cta: {
-    shadowColor: '#14B888',
-    shadowOpacity: 0.42,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
   hero: {
-    shadowColor: '#0B6B4D',
-    shadowOpacity: 0.55,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 14 },
-    elevation: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
   },
 } as const;

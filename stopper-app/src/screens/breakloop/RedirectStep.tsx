@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   heroTitle: { ...T.h1, fontSize: 21, color: colors.white },
   heroMeta: { fontSize: 13.5, color: colors.jade300, fontWeight: '600', marginTop: 2 },
   heroBody: { fontSize: 14.5, color: '#B9C4C0', lineHeight: 22, marginTop: 16, marginBottom: 18, fontWeight: '500' },
-  heroCta: { height: 52, borderRadius: 26, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
+  heroCta: { height: 52, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
   heroCtaTxt: { color: colors.onAccent, fontSize: 16, fontWeight: '800' },
   divider: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 26, marginBottom: 12 },
   rule: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.07)' },

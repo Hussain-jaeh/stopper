@@ -2,7 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { requireAuth } from "./lib/auth";
 import { calculateCurrentStreak } from "./services/streak";
-import { makeHandle } from "./lib/handle";
+import { makeHandle, handleResolver, COMMUNITY_NAME_RE } from "./lib/handle";
 
 function relTime(ts: number): string {
   const d = Date.now() - ts;
@@ -38,7 +38,55 @@ export const getMe = query({
   args: {},
   handler: async (ctx) => {
     const userId = await requireAuth(ctx);
-    return { handle: makeHandle(userId) };
+    const up = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    return {
+      handle: up?.communityName ?? makeHandle(userId),
+      hasCommunityName: !!up?.communityName,
+      // Pre-fills the picker; never shown publicly unless the user keeps it.
+      suggestedName: (up?.displayName ?? "").replace(/[^A-Za-z0-9_]/g, "").slice(0, 20),
+    };
+  },
+});
+
+/** Pick or change the public community name. Unique, case-insensitive. */
+export const setCommunityName = mutation({
+  args: { name: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx);
+    const name = args.name.trim();
+    if (!COMMUNITY_NAME_RE.test(name)) {
+      throw new ConvexError("Use 3–20 letters, numbers or underscores.");
+    }
+    const lower = name.toLowerCase();
+    const taken = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_communityNameLower", (q) => q.eq("communityNameLower", lower))
+      .first();
+    if (taken && taken.userId !== userId) throw new ConvexError("That name is taken.");
+
+    const up = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (!up) throw new ConvexError("Finish setting up your profile first.");
+    await ctx.db.patch(up._id, { communityName: name, communityNameLower: lower });
+  },
+});
+
+/** Distinct people who checked in during the last 24h. Replaces the hardcoded 12,402. */
+export const getActiveCount = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireAuth(ctx);
+    const since = Date.now() - 24 * 60 * 60 * 1000;
+    const recent = await ctx.db
+      .query("checkIns")
+      .withIndex("by_createdAt", (q) => q.gte("createdAt", since))
+      .take(5000);
+    return new Set(recent.map((c) => c.userId as string)).size;
   },
 });
 
@@ -141,6 +189,10 @@ async function enrichPosts(
     ),
   ]);
 
+  const handleOf = handleResolver(ctx);
+  const handleMap = new Map(
+    await Promise.all(uniqueUserIds.map(async (uid) => [uid, await handleOf(uid)] as const)),
+  );
   const streakMap = new Map(userStreaks);
   const circleMap = new Map(circleNames);
   const cheerMap = new Map(
@@ -153,7 +205,7 @@ async function enrichPosts(
     type: post.type,
     authorId: post.userId as string,
     isMe: post.userId === userId,
-    handle: makeHandle(post.userId),
+    handle: handleMap.get(post.userId as string) ?? makeHandle(post.userId),
     streak: streakMap.get(post.userId as string) ?? 0,
     circle: post.circleId
       ? (circleMap.get(post.circleId as string) ?? "Recovery")
@@ -259,36 +311,70 @@ export const getCircles = query({
   },
 });
 
+/**
+ * Leaderboard of the most consistent people right now.
+ *
+ * Only people who checked in during the last 7 days are eligible — the old
+ * version took the first 100 profiles ever created, so abandoned and test
+ * accounts sat at the top on streaks nobody was living. Ranked by current
+ * streak, ties broken by check-ins in the last 30 days (dedication). The
+ * caller's own row is appended with their real rank when outside the top 10.
+ */
 export const getLeaders = query({
   args: {},
   handler: async (ctx) => {
     const userId = await requireAuth(ctx);
+    const now = Date.now();
+    const DAY = 24 * 60 * 60 * 1000;
 
-    const profiles = await ctx.db.query("profiles").take(100);
+    const recent = await ctx.db
+      .query("checkIns")
+      .withIndex("by_createdAt", (q) => q.gte("createdAt", now - 7 * DAY))
+      .take(5000);
+    const activeIds = [...new Set(recent.map((c) => c.userId as string))].slice(0, 500);
 
-    const entries = await Promise.all(
-      profiles.map(async (p) => {
-        const relapses = await ctx.db
-          .query("relapses")
-          .withIndex("by_userId_createdAt", (q) => q.eq("userId", p.userId))
-          .order("asc")
-          .take(500);
+    const handleOf = handleResolver(ctx);
+    const entries = (
+      await Promise.all(
+        activeIds.map(async (uid) => {
+          const p = await ctx.db
+            .query("profiles")
+            .withIndex("by_userId", (q) => q.eq("userId", uid as any))
+            .unique();
+          if (!p) return null;
+          const [relapses, checkIns30] = await Promise.all([
+            ctx.db
+              .query("relapses")
+              .withIndex("by_userId_createdAt", (q) => q.eq("userId", p.userId))
+              .order("asc")
+              .take(500),
+            ctx.db
+              .query("checkIns")
+              .withIndex("by_userId_createdAt", (q) =>
+                q.eq("userId", p.userId).gte("createdAt", now - 30 * DAY),
+              )
+              .take(31),
+          ]);
+          return {
+            handle: await handleOf(p.userId),
+            circle: p.addictionType,
+            streak: calculateCurrentStreak({
+              quitDate: p.quitDate,
+              relapseTimestamps: relapses.map((r) => r.createdAt),
+            }),
+            checkIns: checkIns30.length,
+            you: p.userId === userId,
+          };
+        }),
+      )
+    ).filter((e): e is NonNullable<typeof e> => e !== null);
 
-        const streak = calculateCurrentStreak({
-          quitDate: p.quitDate,
-          relapseTimestamps: relapses.map((r) => r.createdAt),
-        });
-
-        return {
-          handle: makeHandle(p.userId),
-          circle: p.addictionType,
-          streak,
-          you: p.userId === userId,
-        };
-      }),
-    );
-
-    return entries.sort((a, b) => b.streak - a.streak).slice(0, 10);
+    entries.sort((a, b) => b.streak - a.streak || b.checkIns - a.checkIns);
+    const ranked = entries.map((e, i) => ({ ...e, rank: i + 1 }));
+    const top = ranked.slice(0, 10);
+    const mine = ranked.find((e) => e.you);
+    if (mine && mine.rank > 10) top.push(mine);
+    return top;
   },
 });
 
@@ -460,12 +546,13 @@ export const getPostComments = query({
       .order("asc")
       .take(200);
 
-    return comments.map((c) => ({
+    const handleOf = handleResolver(ctx);
+    return Promise.all(comments.map(async (c) => ({
       id: c._id as string,
-      handle: makeHandle(c.userId),
+      handle: await handleOf(c.userId),
       body: c.body,
       time: relTime(c.createdAt),
-    }));
+    })));
   },
 });
 

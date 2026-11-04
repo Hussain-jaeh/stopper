@@ -40,14 +40,9 @@ export function SelectRow({ label, sub, selected, onPress, index }: SelectRowPro
       style={[styles.wrapper, press.style]}
     >
       {selected ? (
-        <LinearGradient
-          colors={gradients.primary}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.row, shadows.glowCta]}
-        >
+        <View style={[styles.row, { backgroundColor: colors.jade500 }]}>
           <RowContent label={label} sub={sub} selected />
-        </LinearGradient>
+        </View>
       ) : (
         <View style={[styles.row, styles.rowUnsel]}>
           <RowContent label={label} sub={sub} selected={false} />

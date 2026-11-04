@@ -18,8 +18,23 @@ import { uploadFile, videoContentType } from '../recorder/uploadFile';
 type SaveState = 'idle' | 'saving' | 'saved';
 
 export function VaultRecordScreen() {
-  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  return <VaultRecorder onClose={() => navigation.goBack()} onDone={() => navigation.goBack()} />;
+}
+
+interface VaultRecorderProps {
+  onClose: () => void;
+  onDone: () => void;
+  /** Onboarding's Day 1 / intention message: skips the account prompt and uses intention copy. */
+  intention?: boolean;
+}
+
+/**
+ * The recorder itself, free of navigation so onboarding (which runs outside the
+ * tab stack) can show it for the free Day 1 message before the paywall.
+ */
+export function VaultRecorder({ onClose, onDone, intention = false }: VaultRecorderProps) {
+  const insets = useSafeAreaInsets();
   const recorder = useVideoRecorder();
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [accountPrompt, setAccountPrompt] = useState(false);
@@ -61,7 +76,7 @@ export function VaultRecordScreen() {
       // nowhere else. This is the one moment where offering an account is a
       // service rather than an interruption. Claimed here because this is
       // where it can actually be shown; a guest sees it once, ever.
-      try {
+      if (!intention) try {
         if (await claimAccountPrompt({ prompt: 'first-vault' })) {
           setAccountPrompt(true);
         }
@@ -86,13 +101,13 @@ export function VaultRecordScreen() {
               <Check size={34} color={colors.onAccent} strokeWidth={3} />
             </LinearGradient>
             <Text style={[recorderStyles.h, { marginTop: 18 }]}>Saved to your vault</Text>
-            <Text style={recorderStyles.p}>Future you says thank you.</Text>
+            <Text style={recorderStyles.p}>{intention ? "You'll see this again on a hard day." : 'Future you says thank you.'}</Text>
           </Animated.View>
         )}
       </View>
       <View style={[styles.overlayBottom, { paddingBottom: insets.bottom + 26 }]}>
         {saveState === 'saved' && (
-          <Pressable onPress={() => navigation.goBack()} style={[{ width: '100%' }, shadow.cta]}>
+          <Pressable onPress={onDone} style={[{ width: '100%' }, shadow.cta]}>
             <LinearGradient colors={gradients.primary} style={recorderStyles.cta}>
               <Text style={recorderStyles.ctaTxt}>Done</Text>
             </LinearGradient>
@@ -112,9 +127,9 @@ export function VaultRecordScreen() {
       />
       <RecorderShell
       recorder={recorder}
-      onClose={() => navigation.goBack()}
+      onClose={onClose}
       overlay={savingOverlay}
-      prepTitle={`What do you want\nfuture you to remember?`}
+      prepTitle={intention ? `Day 1. Why are\nyou doing this?` : `What do you want\nfuture you to remember?`}
       prepBody={`Speak like you're talking to a friend.\n30–60 seconds. Only you will ever see this.`}
       reviewTitle="Keep this one?"
       reviewBody={`${recorder.recording?.durationSeconds ?? 0}s · saved privately to your vault`}

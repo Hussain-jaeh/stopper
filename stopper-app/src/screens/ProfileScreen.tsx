@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { OnboardingFlow } from '../onboarding/OnboardingFlow';
+import { APP_STORE_URL, APP_STORE_REVIEW_URL } from '../lib/links';
+import Constants from 'expo-constants';
 import {
   ScrollView, View, Text, StyleSheet, Linking, Share, Alert,
   Modal, TextInput, Pressable, KeyboardAvoidingView, Platform,
@@ -143,6 +146,9 @@ export function ProfileScreen() {
    * first-launch path can't be re-run on a device that has already been
    * through it — you'd need a new simulator or a wiped one every time.
    */
+  // DEV: walk through onboarding without touching this account's data.
+  const [previewOnboarding, setPreviewOnboarding] = useState(false);
+
   const handleDevReset = () => {
     Alert.alert(
       'Reset first-launch state?',
@@ -232,7 +238,7 @@ export function ProfileScreen() {
   };
 
   const handleShare = () => {
-    Share.share({ message: 'I\'m using Stopper to track my recovery — every day counts. 🌱', url: 'https://stopper.mintlify.io' });
+    Share.share({ message: 'I\'m using Stopper to track my recovery — every day counts. 🌱', url: APP_STORE_URL });
   };
 
   const handleDeleteAccount = () => {
@@ -257,6 +263,12 @@ export function ProfileScreen() {
 
   return (
     <>
+      {__DEV__ && (
+        <Modal visible={previewOnboarding} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setPreviewOnboarding(false)}>
+          {/* No onComplete side effects: finishing just closes the preview. */}
+          <OnboardingFlow startStep={2} onComplete={() => setPreviewOnboarding(false)} />
+        </Modal>
+      )}
       <ScrollView
         style={styles.screen}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 4, paddingBottom: insets.bottom + 96 }]}
@@ -284,10 +296,10 @@ export function ProfileScreen() {
               </SettingsGroup>
 
               <SettingsGroup title="About">
-                <SettingsRow Icon={Smartphone} tint={colors.textMuted} label="Version" value="1.0.0" />
+                <SettingsRow Icon={Smartphone} tint={colors.textMuted} label="Version" value={Constants.expoConfig?.version ?? ''} />
                 <SettingsRow Icon={Star} tint={colors.coral400} label="Rate Stopper" external onPress={async () => {
                   if (await StoreReview.hasAction()) { StoreReview.requestReview(); }
-                  else { Linking.openURL('https://apps.apple.com/app/stopper'); }
+                  else { Linking.openURL(APP_STORE_REVIEW_URL); }
                 }} />
                 <SettingsRow Icon={Share2} tint="#2BB6C4" label="Share Stopper" chevron onPress={handleShare} />
                 <SettingsRow Icon={ShieldCheck} tint="#2E7DD1" label="Privacy Policy" external onPress={() => Linking.openURL('https://stopper.mintlify.io/legal/privacy')} />
@@ -323,6 +335,15 @@ export function ProfileScreen() {
                 ) : (
                   <>
                     <SettingsRow Icon={LogOut} tint={colors.textMuted} label="Sign out" danger onPress={handleSignOut} />
+                    {__DEV__ && (
+                      <SettingsRow
+                        Icon={RotateCcw}
+                        tint={colors.gold}
+                        label="Preview onboarding"
+                        value="DEV"
+                        onPress={() => setPreviewOnboarding(true)}
+                      />
+                    )}
                     {__DEV__ && (
                       <SettingsRow
                         Icon={RotateCcw}

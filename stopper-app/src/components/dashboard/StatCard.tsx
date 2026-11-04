@@ -24,7 +24,7 @@ export function StatCard({ Icon, label, value, sticker, tint }: Props) {
       accessibilityLabel={`${label}: ${value}`}
     >
       {sticker
-        ? <Sticker name={sticker} size={38} shape="squircle" />
+        ? <Sticker name={sticker} size={38} shape="squircle" flat />
         : Icon
           ? (
             <View style={[styles.iconWrap, { backgroundColor: (tint ?? colors.jade500) + '29' }]}>

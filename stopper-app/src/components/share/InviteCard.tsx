@@ -21,45 +21,38 @@ export function InviteCard({ inviteUrl }: { inviteUrl: string }) {
     } catch {}
   };
 
-  // Shares a full human-readable invite message (always opens share sheet).
+  // One tap opens the iOS share sheet (Messages, WhatsApp, etc.) with a
+  // ready-to-send message; the link rides inside it instead of being the UI.
   const sendInvite = () =>
-    Share.share({ message: `I'm rebuilding my life with Stopper. Join me: ${inviteUrl}` });
+    Share.share({
+      message: `I'm quitting a bad habit with Stopper and I'd like you with me. Download it here: ${inviteUrl}`,
+    }).catch(() => {});
 
   return (
-    <LinearGradient
-      colors={['rgba(20,184,136,0.16)', 'rgba(46,125,209,0.10)']}
-      start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-      style={styles.card}
-    >
-      <View style={styles.head}>
-        <View style={styles.icon}><UserPlus size={22} color={colors.onAccent} /></View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.title}>Recover together</Text>
-          <Text style={styles.sub}>Bring a friend — you're 2× more likely to stick with it.</Text>
+    <Pressable onPress={sendInvite} accessibilityRole="button" accessibilityLabel="Invite a friend">
+      <LinearGradient
+        colors={['rgba(20,184,136,0.16)', 'rgba(46,125,209,0.10)']}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        style={styles.card}
+      >
+        <View style={styles.head}>
+          <View style={styles.icon}><UserPlus size={22} color={colors.onAccent} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.title}>Recover with a friend</Text>
+            <Text style={styles.sub}>People who quit with someone are more likely to stick with it.</Text>
+          </View>
         </View>
-      </View>
 
-      <View style={styles.linkRow}>
-        {/* selectable so long-press → native copy also works */}
-        <View style={styles.linkBox}>
-          <Text selectable style={styles.linkTxt} numberOfLines={1}>
-            {inviteUrl.replace(/^https?:\/\//, '')}
-          </Text>
+        <View style={styles.send}>
+          <Share2 size={18} color={colors.onAccent} />
+          <Text style={styles.sendTxt}>Invite a friend</Text>
         </View>
-        <Pressable
-          onPress={copyLink}
-          accessibilityLabel="Copy invite link"
-          style={[styles.copyBtn, { backgroundColor: copied ? colors.jade600 : colors.jade500 }]}
-        >
-          <Text style={styles.copyTxt}>{copied ? 'Copied ✓' : 'Copy'}</Text>
+
+        <Pressable onPress={copyLink} hitSlop={10} accessibilityLabel="Copy invite link" style={styles.copyRow}>
+          <Text style={styles.copyTxt}>{copied ? 'Link copied' : 'Copy link instead'}</Text>
         </Pressable>
-      </View>
-
-      <Pressable onPress={sendInvite} style={styles.send} accessibilityLabel="Send invite">
-        <Share2 size={18} color={colors.white} />
-        <Text style={styles.sendTxt}>Send invite</Text>
-      </Pressable>
-    </LinearGradient>
+      </LinearGradient>
+    </Pressable>
   );
 }
 
@@ -69,11 +62,8 @@ const styles = StyleSheet.create({
   icon: { width: 46, height: 46, borderRadius: 14, backgroundColor: colors.jade500, alignItems: 'center', justifyContent: 'center' },
   title: { ...T.h1, fontSize: 20, color: colors.white },
   sub: { fontSize: 13.5, color: colors.textMuted, marginTop: 2 },
-  linkRow: { flexDirection: 'row', gap: 10, marginTop: 18 },
-  linkBox: { flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.35)', borderWidth: 1, borderColor: colors.border, borderRadius: 14, paddingHorizontal: 16, height: 48 },
-  linkTxt: { fontSize: 15, color: colors.gray100, fontWeight: '600' },
-  copyBtn: { height: 48, paddingHorizontal: 16, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  copyTxt: { color: colors.onAccent, fontWeight: '800', fontSize: 14 },
-  send: { height: 52, borderRadius: 26, marginTop: 10, backgroundColor: colors.ink900, borderWidth: 1, borderColor: colors.jade700, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
-  sendTxt: { color: colors.white, fontSize: 15, fontWeight: '700' },
+  send: { height: 52, borderRadius: 14, marginTop: 18, backgroundColor: colors.jade500, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
+  sendTxt: { color: colors.onAccent, fontSize: 16, fontWeight: '800' },
+  copyRow: { alignSelf: 'center', marginTop: 12 },
+  copyTxt: { color: colors.textMuted, fontSize: 13.5, fontWeight: '600' },
 });

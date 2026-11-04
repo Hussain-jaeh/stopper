@@ -18,14 +18,7 @@ export function SegmentCard({ icon, title, sub, selected, onPress }: SegmentCard
       style={[styles.card, selected && styles.cardSelected]}
     >
       {selected ? (
-        <LinearGradient
-          colors={['#14B888', '#2DD4A0']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.iconWrap}
-        >
-          {icon}
-        </LinearGradient>
+        <View style={[styles.iconWrap, { backgroundColor: colors.jade500 }]}>{icon}</View>
       ) : (
         <View style={styles.iconWrapUnsel}>{icon}</View>
       )}

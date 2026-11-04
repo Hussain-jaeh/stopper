@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
-  Crown, Infinity as InfinityIcon, Bot, ChartLine, Users, Bell, ArrowRight, X,
+  Crown, Infinity as InfinityIcon, Bot, ChartLine, Users, Bell, ArrowRight, X, Video,
 } from 'lucide-react-native';
 import Purchases, { PurchasesError, PURCHASES_ERROR_CODE } from 'react-native-purchases';
 import * as SecureStore from 'expo-secure-store';
@@ -21,6 +21,7 @@ const TERMS_URL = 'https://stopper.mintlify.io/legal/terms';
 const PRIVACY_URL = 'https://stopper.mintlify.io/legal/privacy';
 
 const BENEFITS: [React.ComponentType<any>, string][] = [
+  [Video,        'Unlock your Future You Vault: Day 7, 30 & 90 messages'],
   [InfinityIcon, 'Unlimited panic-mode support'],
   [Bot,          'Your 24/7 AI recovery coach'],
   [ChartLine,    'Full progress insights & trends'],
@@ -33,7 +34,8 @@ interface Props {
 }
 
 const PREVIEW_PLANS: RCPlan[] = [
-  { pkg: null as any, id: 'monthly', label: 'Monthly', priceString: '$7.99', subLabel: '$7.99 billed monthly', best: true, badge: 'Best value' },
+  { pkg: null as any, id: 'yearly', label: 'Yearly', priceString: '$24.99', subLabel: '$24.99 billed yearly', best: true, badge: 'Save 48%' },
+  { pkg: null as any, id: 'monthly', label: 'Monthly', priceString: '$3.99', subLabel: '$3.99 billed monthly', best: false },
 ];
 
 export function PaywallScreen({ onPurchase }: Props) {
@@ -237,7 +239,7 @@ const styles = StyleSheet.create({
   benefitIcon: { width: 28, height: 28, borderRadius: 9, backgroundColor: 'rgba(20,184,136,0.14)', alignItems: 'center', justifyContent: 'center' },
   benefitTxt: { fontFamily: 'PlusJakartaSans_400Regular', fontSize: 14.5, color: colors.gray100 },
   footer: { paddingHorizontal: spacing.screenPad, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.bg },
-  cta: { height: 56, borderRadius: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
+  cta: { height: 56, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
   ctaTxt: { fontFamily: 'PlusJakartaSans_800ExtraBold', fontSize: 17, color: colors.white },
   metaRow: { flexDirection: 'row', justifyContent: 'center', gap: 18, marginTop: 10 },
   legalRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10, marginTop: 8 },

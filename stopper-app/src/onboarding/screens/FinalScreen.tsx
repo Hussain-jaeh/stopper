@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { Mascot } from '../../components/stickers/Mascot';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowRight } from 'lucide-react-native';
 import { Wordmark, Sparkles } from '../../components/primitives';
@@ -24,13 +25,19 @@ export function FinalScreen({ onFinish, state }: FinalScreenProps) {
       <View style={styles.inner}>
         <View style={[styles.content, { zIndex: 1 }]}>
           <Wordmark size={30} />
+          <Mascot
+            source={require('../../../assets/mascot/best.png')}
+            style={styles.mascot}
+            mood="cheer"
+            accessibilityLabel="Stopper mascot cheering with two trophies"
+          />
           <Text style={styles.headline}>You're ready{fn ? `, ${fn}` : ''}.</Text>
           <Text style={styles.subtitle}>
             Your personalized plan is built. Day one starts the moment you tap below.
           </Text>
         </View>
         <Pressable onPress={onFinish} style={styles.ctaBtn}>
-          <Text style={styles.ctaText}>Start my recovery journey</Text>
+          <Text style={styles.ctaText}>Start day one</Text>
           <ArrowRight size={20} color={colors.black} strokeWidth={2} />
         </Pressable>
       </View>
@@ -52,6 +59,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
+  mascot: { width: 200, height: 200, marginTop: 18 },
   headline: {
     fontFamily: fonts.display,
     fontSize: 34,

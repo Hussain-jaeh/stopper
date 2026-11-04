@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   recTitle: { fontSize: 15, fontWeight: '600', color: colors.white },
   meta: { fontSize: 12.5, color: colors.textMuted, marginTop: 4 },
   actions: { flexDirection: 'row', gap: 8, marginTop: 12 },
-  watchWrap: { borderRadius: 999, overflow: 'hidden' },
+  watchWrap: { borderRadius: 12, overflow: 'hidden' },
   watch: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8 },
   watchTxt: { fontSize: 13, fontWeight: '700', color: colors.onAccent },
   recordNew: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: colors.surface2, borderWidth: 1, borderColor: colors.border },

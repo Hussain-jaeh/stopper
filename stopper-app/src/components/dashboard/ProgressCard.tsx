@@ -36,7 +36,7 @@ export function ProgressCard({ current, milestone, index = 2 }: Props) {
         accessibilityValue={{ min: 0, max: 100, now: pct }}
       >
         <Animated.View style={[styles.fillWrap, fillStyle]}>
-          <LinearGradient colors={gradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.fill} />
+          <View style={[styles.fill, { backgroundColor: colors.jade500 }]} />
         </Animated.View>
       </View>
 

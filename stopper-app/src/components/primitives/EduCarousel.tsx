@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ImageSourcePropType } from 'react-native';
+import { Mascot } from '../stickers/Mascot';
 import { PrimaryButton } from './PrimaryButton';
 import { colors, fonts, fontSizes } from '../../theme/tokens';
 
@@ -8,6 +9,8 @@ export interface EduSlide {
   title: string;
   body: string;
   tint?: string;
+  /** Mascot pose; shown instead of the icon orb when present. */
+  image?: ImageSourcePropType;
 }
 
 interface EduCarouselProps {
@@ -34,9 +37,13 @@ export function EduCarousel({ slides, onDone }: EduCarouselProps) {
 
       {/* Slide content */}
       <View style={styles.slideContent}>
-        <View style={[styles.orb, { backgroundColor: slide.tint || colors.jade500, shadowColor: slide.tint || colors.jade500 }]}>
-          {slide.icon}
-        </View>
+        {slide.image ? (
+          <Mascot key={index} source={slide.image} style={styles.mascot} mood={isLast ? 'cheer' : 'idle'} />
+        ) : (
+          <View style={[styles.orb, { backgroundColor: slide.tint || colors.jade500, shadowColor: slide.tint || colors.jade500 }]}>
+            {slide.icon}
+          </View>
+        )}
         <Text style={styles.title}>{slide.title}</Text>
         <Text style={styles.body}>{slide.body}</Text>
       </View>
@@ -93,6 +100,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 24,
   },
+  mascot: { width: 240, height: 240, marginBottom: 14 },
   orb: {
     width: 150,
     height: 150,
@@ -100,10 +108,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 24,
-    elevation: 10,
+    shadowOpacity: 0,
   },
   title: {
     fontFamily: fonts.display,

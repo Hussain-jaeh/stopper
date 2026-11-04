@@ -33,7 +33,7 @@ export function AchievementsGrid({
   const totalEarned = earnedCount + moneyEarned;
 
   return (
-    <Animated.View entering={FadeInDown.delay(index * 80).duration(550)} style={styles.card}>
+    <Animated.View style={styles.card}>
       <View style={styles.head}>
         <Text style={styles.title}>Milestones</Text>
         <Text style={styles.meta}>{totalEarned}/{totalCount} earned</Text>
@@ -45,9 +45,9 @@ export function AchievementsGrid({
           return (
             <View key={m.id} style={[styles.item, { opacity: earned ? 1 : 0.4 }]}>
               {earned ? (
-                <LinearGradient colors={[colors.jade400, colors.jade700]} start={{ x: 0.38, y: 0.32 }} end={{ x: 1, y: 1 }} style={styles.badge}>
+                <View style={[styles.badge, { backgroundColor: colors.jade600 }]}>
                   <Glyph size={23} color={colors.white} />
-                </LinearGradient>
+                </View>
               ) : (
                 <View style={[styles.badge, styles.badgeLocked]}>
                   <Glyph size={17} color={colors.textFaint} />
@@ -63,9 +63,9 @@ export function AchievementsGrid({
           return (
             <View key={`money-${i}`} style={[styles.item, { opacity: earned ? 1 : 0.4 }]}>
               {earned ? (
-                <LinearGradient colors={[colors.jade400, colors.jade700]} start={{ x: 0.38, y: 0.32 }} end={{ x: 1, y: 1 }} style={styles.badge}>
+                <View style={[styles.badge, { backgroundColor: colors.jade600 }]}>
                   <Glyph size={23} color={colors.white} />
-                </LinearGradient>
+                </View>
               ) : (
                 <View style={[styles.badge, styles.badgeLocked]}>
                   <Glyph size={17} color={colors.textFaint} />

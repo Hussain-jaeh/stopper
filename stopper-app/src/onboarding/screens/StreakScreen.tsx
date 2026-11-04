@@ -32,7 +32,7 @@ export function StreakScreen({ onBack, onNext, state }: StreakScreenProps) {
       <View style={[styles.content, { zIndex: 1 }]}>
         <Text style={styles.title}>Day zero{fn ? `, ${fn}` : ''}.</Text>
         <Text style={styles.subtitle}>
-          Your <Text style={{ color: colors.jade300, fontWeight: '700' }}>{h}-free</Text> journey starts now.
+          Your <Text style={{ color: colors.jade300, fontWeight: '700' }}>{h}-free</Text> streak starts now.
         </Text>
         <StreakCard days={0} since={today} reveal={reveal} />
         <Text style={styles.hint}>Check in every day to grow your streak.</Text>

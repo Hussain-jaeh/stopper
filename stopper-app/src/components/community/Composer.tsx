@@ -8,7 +8,7 @@ import { radius } from '../../constants/spacing';
 
 export function Composer({ myHandle, onPress, index = 1 }: { myHandle: string; onPress: () => void; index?: number }) {
   return (
-    <Animated.View entering={FadeInDown.delay(index * 80).duration(550)}>
+    <Animated.View>
       <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Create a post" style={styles.card}>
         <Avatar handle={myHandle} tint={colors.jade500} />
         <Text style={styles.prompt}>Share a win or ask for support…</Text>

@@ -29,7 +29,7 @@ export function CirclesList({ circles, onJoin, onOpen }: {
   return (
     <View style={{ gap: 12 }}>
       {circles.map((c, i) => (
-        <Animated.View key={c.id} entering={FadeInDown.delay((i + 1) * 70).duration(500)}>
+        <Animated.View key={c.id}>
           <Pressable style={styles.card} onPress={() => onOpen(c)} accessibilityRole="button" accessibilityLabel={`Open ${c.name}`}>
             <View style={[styles.icon, { backgroundColor: tintBg(c.tint) }]}>
               <c.icon size={23} color={c.tint} />
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   icon: { width: 48, height: 48, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   name: { fontWeight: '700', fontSize: 16, color: colors.white },
   meta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
-  btn: { paddingHorizontal: 18, paddingVertical: 9, borderRadius: 999 },
+  btn: { paddingHorizontal: 18, paddingVertical: 9, borderRadius: 12 },
   btnJoin: { backgroundColor: colors.jade500 },
   btnJoined: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.jade500 },
   btnTxt: { fontSize: 13.5, fontWeight: '700' },

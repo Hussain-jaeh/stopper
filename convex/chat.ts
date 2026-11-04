@@ -1,7 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { requireAuth } from "./lib/auth";
-import { makeHandle } from "./lib/handle";
+import { handleResolver } from "./lib/handle";
 
 function relTime(ts: number): string {
   const d = Date.now() - ts;
@@ -24,6 +24,7 @@ export const getMessages = query({
       .order("asc")
       .take(100);
 
+    const handleOf = handleResolver(ctx);
     return Promise.all(
       messages.map(async (m) => {
         let replyTo = null;
@@ -32,14 +33,14 @@ export const getMessages = query({
           if (replied) {
             replyTo = {
               id: replied._id as string,
-              handle: makeHandle(replied.userId),
+              handle: await handleOf(replied.userId),
               body: replied.body,
             };
           }
         }
         return {
           id: m._id as string,
-          handle: makeHandle(m.userId),
+          handle: await handleOf(m.userId),
           isMe: m.userId === userId,
           body: m.body,
           time: relTime(m.createdAt),

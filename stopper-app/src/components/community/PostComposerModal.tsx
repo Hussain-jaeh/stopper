@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation } from 'convex/react';
-import { X, LucideIcon, Smartphone, Cigarette, Brain, Wine, Moon, Camera, Video, XCircle } from 'lucide-react-native';
+import { X, LucideIcon, Smartphone, Cigarette, Brain, Wine, Moon, Camera, Video, XCircle, Images } from 'lucide-react-native';
 import { Avatar } from './Avatar';
 import { colors } from '../../constants/colors';
 import { radius, spacing } from '../../constants/spacing';
@@ -113,6 +113,42 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
       }
     } catch {
       Alert.alert('Could not open camera');
+    }
+  };
+
+  // Camera roll: photos and videos already on the phone. Previously the
+  // composer could only open the camera, so there was no way to share these.
+  const pickFromLibrary = async () => {
+    try {
+      const ImagePicker = require('expo-image-picker');
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') { Alert.alert('Allow photo access in Settings to share from your camera roll.'); return; }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images', 'videos'],
+        allowsEditing: true,
+        quality: 0.85,
+        videoMaxDuration: 60,
+      });
+      if (result.canceled) return;
+      const asset = result.assets[0];
+      if (asset.type === 'video') {
+        let thumb: string | null = null;
+        try {
+          const VideoThumbnails = require('expo-video-thumbnails');
+          thumb = (await VideoThumbnails.getThumbnailAsync(asset.uri, { time: 0 })).uri;
+        } catch {}
+        setMedia({
+          uri: asset.uri,
+          type: 'video',
+          mimeType: asset.mimeType ?? (asset.uri.endsWith('.mov') ? 'video/quicktime' : 'video/mp4'),
+        });
+        setThumbLocalUri(thumb);
+      } else {
+        setMedia({ uri: asset.uri, type: 'image', mimeType: asset.mimeType ?? 'image/jpeg' });
+        setThumbLocalUri(null);
+      }
+    } catch {
+      Alert.alert('Could not open your photos');
     }
   };
 
@@ -289,6 +325,10 @@ export function PostComposerModal({ visible, onClose, onSubmit, myHandle, circle
               <Pressable onPress={() => pickMedia('video')} style={styles.toolBtn} accessibilityLabel="Record video">
                 <Video size={20} color={colors.jade400} />
                 <Text style={styles.toolTxt}>Video</Text>
+              </Pressable>
+              <Pressable onPress={pickFromLibrary} style={styles.toolBtn} accessibilityLabel="Choose from camera roll">
+                <Images size={20} color={colors.jade400} />
+                <Text style={styles.toolTxt}>Library</Text>
               </Pressable>
             </View>
           )}

@@ -19,7 +19,7 @@ export function AuthSuccessScreen({ onEnter }: Props) {
             <Check size={46} color={colors.white} strokeWidth={3} />
           </View>
           <Text style={styles.h1}>You're all set</Text>
-          <Text style={styles.sub}>Your account is secured. Your journey is saved and synced.</Text>
+          <Text style={styles.sub}>Your account is set. Your progress is saved and synced.</Text>
         </View>
         <Pressable onPress={onEnter} style={styles.cta}>
           <Text style={styles.ctaLabel}>Enter Stopper</Text>

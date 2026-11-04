@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Mascot } from '../../components/stickers/Mascot';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Sprout } from 'lucide-react-native';
-import { Wordmark, PrimaryButton, DotTexture, PulseHero, PressRow, Dots } from '../../components/primitives';
+import { Wordmark, PrimaryButton, DotTexture, PulseHero, Dots } from '../../components/primitives';
 import { colors, fonts } from '../../theme/tokens';
 import { ChevronRight } from 'lucide-react-native';
 
@@ -23,9 +24,10 @@ export function HeroScreen({ onNext }: HeroScreenProps) {
 
         {/* Orb */}
         <View style={styles.orbWrap}>
-          <PulseHero
-            icon={<Sprout size={50} color={colors.white} strokeWidth={2.2} />}
-            size={210}
+          <Mascot
+            source={require('../../../assets/mascot/current.png')}
+            style={{ width: 230, height: 230 }}
+            accessibilityLabel="Stopper mascot holding a small flame"
           />
         </View>
 
@@ -33,14 +35,9 @@ export function HeroScreen({ onNext }: HeroScreenProps) {
         <View style={styles.textBlock}>
           <Text style={styles.title}>Welcome to Stopper</Text>
           <Text style={styles.subtitle}>
-            With over{' '}
-            <Text style={styles.bold}>2,000,000 users</Text>, Stopper is{' '}
-            <Text style={styles.bold}>class-leading</Text> and based on{' '}
-            <Text style={styles.bold}>years of research</Text>.
+            Track your streak, beat cravings in the moment, and{' '}
+            <Text style={styles.bold}>see how far you've come</Text>.
           </Text>
-          <View style={styles.pressRow}>
-            <PressRow />
-          </View>
         </View>
 
         {/* Dots */}

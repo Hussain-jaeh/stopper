@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { Mascot } from '../../components/stickers/Mascot';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Wordmark, SecondaryButton, Starfield, Laurel } from '../../components/primitives';
+import { Wordmark, SecondaryButton, Starfield } from '../../components/primitives';
 import { colors, fonts } from '../../theme/tokens';
 
 interface WelcomeScreenProps {
@@ -25,13 +26,16 @@ export function WelcomeScreen({ onNext, onSignIn }: WelcomeScreenProps) {
 
         {/* Content */}
         <View style={styles.content}>
+          <Mascot
+            source={require('../../../assets/mascot/current.png')}
+            style={styles.mascot}
+            mood="idle"
+            accessibilityLabel="Stopper mascot holding a small flame"
+          />
           <Text style={styles.headline}>Welcome!</Text>
           <Text style={styles.subtitle}>
             Let's start by finding out if your habit has a hold on you.
           </Text>
-          <View style={{ marginTop: 24 }}>
-            <Laurel size={30} />
-          </View>
         </View>
 
         {/* CTA */}
@@ -67,6 +71,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
   },
+  mascot: { width: 210, height: 210, alignSelf: 'center', marginBottom: 'auto', marginTop: 40 },
   headline: {
     fontFamily: fonts.display,
     fontSize: 44,

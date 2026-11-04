@@ -78,9 +78,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     paddingTop: 14,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 16,
+    shadowOpacity: 0,
     elevation: 8,
   },
   barValue: {
