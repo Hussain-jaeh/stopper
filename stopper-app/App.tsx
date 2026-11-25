@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, Component, type ReactNode } from 'react';
-import { View, Text, Pressable, ActivityIndicator, StyleSheet, AppState, AppStateStatus } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, StyleSheet, AppState, AppStateStatus, Alert } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as ExpoSplash from 'expo-splash-screen';
@@ -23,7 +23,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import Purchases from 'react-native-purchases';
 import { initPurchases, SUB_CACHE_KEY } from './src/lib/purchases';
-import { clearAuthIntent, isFirstEverLaunch } from './src/lib/session';
+import { clearAuthIntent, isFirstEverLaunch, markManualSignOut } from './src/lib/session';
 import { syncMilestonesFromQuitDate, scheduleReminder } from './src/notifications/reminders';
 import { AuthFlow } from './src/auth/AuthFlow';
 import { GuestUpgradeProvider } from './src/auth/GuestUpgrade';
@@ -231,7 +231,7 @@ function useAppLock() {
 
 function AppContent({ onBootDone }: { onBootDone: () => void }) {
   const { isLoading, isAuthenticated } = useConvexAuth();
-  const { signIn } = useAuthActions();
+  const { signIn, signOut } = useAuthActions();
   const profile = useQuery(api.users.getMyProfile);
   const recoveryProfile = useQuery(api.profiles.getProfile);
   const { locked, authenticate } = useAppLock();
@@ -418,6 +418,23 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
     // setting 'loading', and this effect is what resolves it.
   }, [isLoading, isAuthenticated, profile, phase, bootstrapGuestSession]);
 
+  // The routing effect waits while getMyProfile is null, which it only is when
+  // the server sees no identity behind a session the client still holds. That
+  // is normally a moment between sessions; if it lasts, the session is stale
+  // (e.g. the account was deleted but sign-out never completed) and the user
+  // would sit on the spinner forever. Sign out so the auth screen takes over.
+  useEffect(() => {
+    if (phase !== 'loading' || isLoading || !isAuthenticated || profile !== null) return;
+    if (upgradingRef.current || savingOnboardingRef.current) return;
+    const timer = setTimeout(() => {
+      console.warn('[auth] Signed in but no profile after 10s; signing out the stale session.');
+      markManualSignOut()
+        .then(() => signOut())
+        .catch(() => { setPhase('auth'); markBoot(); });
+    }, 10_000);
+    return () => clearTimeout(timer);
+  }, [phase, isLoading, isAuthenticated, profile, signOut, markBoot]);
+
   const handleAuthenticated = useCallback((authState?: AuthState) => {
     if (authState?.displayName) appleDisplayName.current = authState.displayName;
     // Hand routing back to the effect above rather than deciding here. `profile`
@@ -469,10 +486,24 @@ function AppContent({ onBootDone }: { onBootDone: () => void }) {
 
       entitledRef.current = false;
       setPhase('paywall');
+    } catch (e) {
+      // Phase is already 'loading' and the routing effect is told to stand
+      // aside while this runs, so a failed save used to leave the user on the
+      // spinner until they force-quit. Both mutations are upserts, so retrying
+      // with the same answers is safe and keeps everything they entered.
+      console.warn('[onboarding] Saving onboarding failed.', e);
+      Alert.alert(
+        "Couldn't save your answers",
+        'Check your internet connection and try again.',
+        [{ text: 'Try again', onPress: () => { void retryOnboardingRef.current?.(state); } }],
+        { cancelable: false },
+      );
     } finally {
       savingOnboardingRef.current = false;
     }
   }, [saveOnboarding, upsertProfile]);
+  const retryOnboardingRef = useRef<typeof handleOnboardingComplete | null>(null);
+  retryOnboardingRef.current = handleOnboardingComplete;
 
   const handlePurchase = useCallback(() => {
     entitledRef.current = true;
